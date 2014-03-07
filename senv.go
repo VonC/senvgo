@@ -65,17 +65,7 @@ func main() {
 	jar.jar = make(map[string][]*http.Cookie)
 	client.Jar = jar
 	fmt.Printf("client.Transport='%v'\n", client.Transport)
-	proxy := os.Getenv("HTTP_PROXY")
-	if proxy != "" {
-		proxyUrl, err := url.Parse(proxy)
-		if err != nil {
-			fmt.Println("Error while parsig url ", proxy, "-", err)
-			return
-		}
-		// http://stackoverflow.com/questions/14661511/setting-up-proxy-for-http-client
-		client.Transport = &http.Transport{Proxy: http.ProxyURL(proxyUrl)}
-		fmt.Printf("client.Transport='%v'\n", client.Transport)
-	}
+
 	countries := []string{"FR", "ES"}
 	for i := 0; i < len(countries); i++ {
 		url := "http://download.geonames.org/export/dump/" + countries[i] + ".zip"
