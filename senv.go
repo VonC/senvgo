@@ -7,6 +7,9 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"syscall"
+
+	"github.com/lxn/win"
 )
 
 // http://stackoverflow.com/questions/11361431/authenticated-http-client-requests-from-golang
@@ -62,6 +65,28 @@ var client = &http.Client{}
 var jar = &myjar{}
 
 func main() {
+
+	var root win.HKEY
+	rootpath, _ := syscall.UTF16PtrFromString(`Software\Microsoft\Windows\CurrentVersion\Internet Settings\Connections`)
+	fmt.Println(win.RegOpenKeyEx(win.HKEY_CURRENT_USER, rootpath, 0, win.KEY_READ, &root))
+
+	l := 720
+	var name_length uint32 = 720
+	var key_type uint32
+	var lpDataLength uint32 = 720
+	var zero_uint uint32 = 0
+	name := make([]uint16, l)
+	lpData := make([]byte, l)
+
+	fmt.Println(win.RegEnumValue(root, zero_uint, &name[0], &name_length, nil, &key_type, &lpData[0], &lpDataLength))
+	//fmt.Println(win.RegEnumValue(root, zero_uint, name, &name_length, nil, &key_type, lpData, &lpDataLength))
+
+	fmt.Printf("lpData='%v'\n", strings.TrimSpace(string(lpData)))
+
+	win.RegCloseKey(root)
+
+	return
+
 	jar.jar = make(map[string][]*http.Cookie)
 	client.Jar = jar
 	fmt.Printf("client.Transport='%v'\n", client.Transport)
