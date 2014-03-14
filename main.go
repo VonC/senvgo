@@ -19,6 +19,7 @@ type Prg struct {
 	name       string
 	extractVer *Extractor
 	extractUrl *Extractor
+	folder     string
 }
 
 type fextract func(str string) (string, fextract)
@@ -42,16 +43,17 @@ func install(prg *Prg) {
 }
 
 func (prg *Prg) GetFolder() string {
-	folder := ""
-	switch prg.name {
-	case "peazip":
-		folder = "pz5.2.2"
-	case "git":
-		folder = "git1.9"
-	case "invalid":
-		folder = "invalid<x:y"
+	if prg.folder == "" {
+		switch prg.name {
+		case "peazip":
+			prg.folder = "pz5.2.2"
+		case "git":
+			prg.folder = "git1.9"
+		case "invalid":
+			prg.folder = "invalid<x:y"
+		}
 	}
-	return "test/" + prg.name + "/" + folder
+	return "test/" + prg.name + "/" + prg.folder
 }
 
 // exists returns whether the given file or directory exists or not
