@@ -57,11 +57,6 @@ func (e *Extractable) Next() Extractor {
 	return e.next
 }
 
-func (e *Extractable) ExtractFrom(url string) string {
-	fmt.Println("KO!")
-	return ""
-}
-
 func (e *Extractable) Extract() string {
 	res := e.self.ExtractFrom(e.data)
 	if e.Next() != nil {
@@ -75,7 +70,7 @@ type ExtractorUrl struct {
 }
 
 func (eu *ExtractorUrl) ExtractFrom(url string) string {
-	fmt.Println("ok!" + url)
+	fmt.Println("ok! " + url)
 
 	return ""
 }
