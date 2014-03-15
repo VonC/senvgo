@@ -20,18 +20,7 @@ type Prg struct {
 	extractVer Extractor
 	extractUrl Extractor
 	folder     string
-	resource   ResourceGetter
-}
-
-type ResourceGetter interface {
-	Get(uri string) string
-}
-
-type ResourceRepo struct {
-}
-
-func (rr *ResourceRepo) Get(uri string) string {
-	return ""
+	cache      CacheGetter
 }
 
 type fextract func(str string) string
@@ -46,6 +35,17 @@ type CacheGetter interface {
 	Get(resource string) string
 	Next() CacheGetter
 }
+
+type Cache struct{}
+
+func (c *Cache) Get(resource string) string {
+	return ""
+}
+
+func (c *Cache) Next() CacheGetter {
+	return nil
+}
+
 type Extractable struct {
 	data  string
 	self  Extractor
@@ -75,16 +75,16 @@ func (eu *ExtractorUrl) ExtractFrom(url string) string {
 	return ""
 }
 
-func NewExtractorUrl(uri string) *ExtractorUrl {
-	res := &ExtractorUrl{Extractable{data: uri}}
+func NewExtractorUrl(uri string, cache CacheGetter) *ExtractorUrl {
+	res := &ExtractorUrl{Extractable{data: uri, cache: cache}}
 	res.self = res
 	return res
 }
 
 func ResolveDependencies(prgnames []string) []*Prg {
-	rscRepo := &ResourceRepo{}
-	dwnl := NewExtractorUrl("http://peazip.sourceforge.net/peazip-portable.html")
-	prgPeazip := &Prg{name: "peazip", resource: rscRepo, extractVer: dwnl}
+	cache := &Cache{}
+	dwnl := NewExtractorUrl("http://peazip.sourceforge.net/peazip-portable.html", cache)
+	prgPeazip := &Prg{name: "peazip", extractVer: dwnl, cache: cache}
 	prgGit := &Prg{name: "git"}
 	prgInvalid := &Prg{name: "invalid"}
 	return []*Prg{prgPeazip, prgGit, prgInvalid}
@@ -97,16 +97,10 @@ func install(prg *Prg) {
 	}
 }
 
-func (prg *Prg) GetVerPage(uri string) string {
-	return ""
-}
-
 func (prg *Prg) GetFolder() string {
 	if prg.folder == "" {
 		switch prg.name {
 		case "peazip":
-
-			//page := GetVerPage("")
 			prg.folder = prg.extractVer.Extract() // "pz5.2.2"
 		case "git":
 			prg.folder = "git1.9"
