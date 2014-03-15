@@ -37,12 +37,14 @@ func (rr *ResourceRepo) Get(uri string) string {
 type fextract func(str string) string
 
 type Extractor interface {
-	Extract(str string) string
+	ExtractFrom(str string) string
+	Extract() string
 	Next() Extractor
 }
 
 type Extractable struct {
 	data string
+	self Extractor
 	next Extractor
 }
 
@@ -50,10 +52,15 @@ func (e *Extractable) Next() Extractor {
 	return e.next
 }
 
-func Extract(e Extractor, data string) string {
-	res := e.Extract(data)
+func (e *Extractable) ExtractFrom(url string) string {
+	fmt.Println("KO!")
+	return ""
+}
+
+func (e *Extractable) Extract() string {
+	res := e.self.ExtractFrom(e.data)
 	if e.Next() != nil {
-		res = e.Next().Extract(res)
+		res = e.Next().ExtractFrom(res)
 	}
 	return res
 }
@@ -62,12 +69,14 @@ type ExtractorUrl struct {
 	Extractable
 }
 
-func (eu *ExtractorUrl) Extract(url string) string {
+func (eu *ExtractorUrl) ExtractFrom(url string) string {
+	fmt.Println("ok!")
 	return ""
 }
 
 func NewExtractorUrl(uri string) *ExtractorUrl {
 	res := &ExtractorUrl{Extractable{data: uri}}
+	res.self = res
 	return res
 }
 
@@ -97,7 +106,7 @@ func (prg *Prg) GetFolder() string {
 		case "peazip":
 
 			//page := GetVerPage("")
-			prg.folder = prg.extractVer.Extract("") // "pz5.2.2"
+			prg.folder = prg.extractVer.Extract() // "pz5.2.2"
 		case "git":
 			prg.folder = "git1.9"
 		case "invalid":
