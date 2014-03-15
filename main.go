@@ -42,10 +42,15 @@ type Extractor interface {
 	Next() Extractor
 }
 
+type CacheGetter interface {
+	Get(resource string) string
+	Next() CacheGetter
+}
 type Extractable struct {
-	data string
-	self Extractor
-	next Extractor
+	data  string
+	self  Extractor
+	next  Extractor
+	cache CacheGetter
 }
 
 func (e *Extractable) Next() Extractor {
@@ -70,7 +75,8 @@ type ExtractorUrl struct {
 }
 
 func (eu *ExtractorUrl) ExtractFrom(url string) string {
-	fmt.Println("ok!")
+	fmt.Println("ok!" + url)
+
 	return ""
 }
 
