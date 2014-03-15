@@ -17,8 +17,8 @@ func main() {
 
 type Prg struct {
 	name       string
-	extractVer Extractable
-	extractUrl Extractable
+	extractVer Extractor
+	extractUrl Extractor
 	folder     string
 	resource   ResourceGetter
 }
@@ -36,38 +36,38 @@ func (rr *ResourceRepo) Get(uri string) string {
 
 type fextract func(str string) string
 
-type Extractable interface {
-	ExtractFrom(str string) string
-	NextExtractable() Extractable
+type Extractor interface {
+	Extract(str string) string
+	Next() Extractor
 }
 
-type Extractor struct {
+type Extractable struct {
 	data string
-	next Extractable
+	next Extractor
 }
 
-func (e *Extractor) NextExtractable() Extractable {
+func (e *Extractable) Next() Extractor {
 	return e.next
 }
 
-func Extract(e Extractable, data string) string {
-	res := e.ExtractFrom(data)
-	if e.NextExtractable() != nil {
-		res = e.NextExtractable().ExtractFrom(res)
+func Extract(e Extractor, data string) string {
+	res := e.Extract(data)
+	if e.Next() != nil {
+		res = e.Next().Extract(res)
 	}
 	return res
 }
 
 type ExtractorUrl struct {
-	Extractor
+	Extractable
 }
 
-func (eu *ExtractorUrl) ExtractFrom(url string) string {
+func (eu *ExtractorUrl) Extract(url string) string {
 	return ""
 }
 
 func NewExtractorUrl(uri string) *ExtractorUrl {
-	res := &ExtractorUrl{Extractor{data: uri}}
+	res := &ExtractorUrl{Extractable{data: uri}}
 	return res
 }
 
@@ -97,7 +97,7 @@ func (prg *Prg) GetFolder() string {
 		case "peazip":
 
 			//page := GetVerPage("")
-			prg.folder = prg.extractVer.ExtractFrom("") // "pz5.2.2"
+			prg.folder = prg.extractVer.Extract("") // "pz5.2.2"
 		case "git":
 			prg.folder = "git1.9"
 		case "invalid":
