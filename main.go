@@ -66,7 +66,7 @@ type Cache struct {
 
 func (c *Cache) Get(resource string, name string) string {
 	dir := c.root + name
-	if isdir, err := exists(dir); !isdir && err != nil {
+	if isdir, err := exists(dir); !isdir && err == nil {
 		err := os.Mkdir(dir, 0755)
 		if err != nil {
 			fmt.Printf("Error creating cache folder for name '%v': '%v'\n", dir, err)
