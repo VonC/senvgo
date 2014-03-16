@@ -225,6 +225,15 @@ func install(prg *Prg) {
 	folder = "test/" + prg.name + "/" + folder
 	if hasFolder, err := exists(folder); !hasFolder && err == nil {
 		fmt.Printf("Need to install %v in '%v'\n", prg.name, folder)
+		archive := prg.ArchiveName()
+		fmt.Printf("Archive name: '%v'\n", archive)
+	}
+}
+
+func (prg *Prg) ArchiveName() string {
+	res := ""
+	if prg.extractUrl != nil {
+		res = prg.extractUrl.Extract()
 	}
 	return res
 }
