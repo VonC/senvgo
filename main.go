@@ -170,11 +170,22 @@ type ExtractorMatch struct {
 	regexp *regexp.Regexp
 }
 
-func (em *ExtractorMatch) GetRegexp() *regexp.Regexp {
+func (eu *ExtractorMatch) ExtractFrom(content string) string {
+	rx := eu.Regexp()
+	matches := rx.FindAllStringSubmatchIndex(content, -1)
+	res := ""
+	if len(matches) >= 1 && len(matches[0]) >= 4 {
+		res = content[matches[0][2]:matches[0][3]]
+		fmt.Printf("RES='%v'\n", res)
+	}
+	return res
+}
+
+func (em *ExtractorMatch) Regexp() *regexp.Regexp {
 	if em.regexp == nil {
 		rx := em.data
 		if em.arch != nil {
-			rx := strings.Replace(rx, "_$arc_", em.arch.Arch(), -1)
+			rx := strings.Replace(rx, "_$arch_", em.arch.Arch(), -1)
 			var err error = nil
 			if em.regexp, err = regexp.Compile(rx); err != nil {
 				em.regexp = nil
