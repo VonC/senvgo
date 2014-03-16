@@ -1,9 +1,14 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"os"
 	"runtime"
+	"sort"
+	"time"
 )
 
 func main() {
@@ -32,18 +37,50 @@ type Extractor interface {
 }
 
 type CacheGetter interface {
-	Get(resource string) string
+	Get(resource string, name string) string
+	Folder(name string) string
 	Next() CacheGetter
 }
 
-type Cache struct{}
+type Cache struct {
+	root string
+}
 
-func (c *Cache) Get(resource string) string {
-	return ""
+func (c *Cache) Get(resource string, name string) string {
+	dir := c.root + name
+	if isdir, err := exists(dir); !isdir && err != nil {
+		err := os.Mkdir(dir, 0755)
+		if err != nil {
+			fmt.Printf("Error creating cache folder for name '%v': '%v'\n", dir, err)
+		}
+		return ""
+	} else if err != nil {
+		fmt.Println("Error while testing dir existence '%v': '%v'\n", dir, err)
+		return ""
+	}
+	filepath := dir + "/" + getLastModifiedFile(dir)
+	if f, err := os.Open(filepath); err != nil {
+		fmt.Println("Error while reading content of '%v': '%v'\n", filepath, err)
+		return ""
+	} else {
+		defer f.Close()
+		content := ""
+		reader := bufio.NewReader(f)
+		if contents, err := ioutil.ReadAll(reader); err != nil {
+			fmt.Println("Error while reading content of '%v': '%v'\n", filepath, err)
+			return ""
+		} else {
+			content = string(contents)
+		}
+		return content
+	}
 }
 
 func (c *Cache) Next() CacheGetter {
 	return nil
+}
+func (c *Cache) Folder(name string) string {
+	return c.root + name + "/"
 }
 
 type Extractable struct {
