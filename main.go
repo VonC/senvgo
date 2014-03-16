@@ -26,6 +26,12 @@ type Prg struct {
 	extractUrl Extractor
 	folder     string
 	cache      CacheGetter
+	arc        *Arc
+}
+
+type Arc struct {
+	win32 string
+	win64 string
 }
 
 type fextract func(str string) string
@@ -157,7 +163,8 @@ func ResolveDependencies(prgnames []string) []*Prg {
 		fmt.Printf("Error while checking existence of cache root folder: '%v'\n", err)
 	}
 	dwnl := NewExtractorUrl("http://peazip.sourceforge.net/peazip-portable.html", cache, "peazip")
-	prgPeazip := &Prg{name: "peazip", extractVer: dwnl, cache: cache}
+	arc := &Arc{win32: "WINDOWS", win64: "WIN64"}
+	prgPeazip := &Prg{name: "peazip", extractVer: dwnl, cache: cache, arc: arc}
 	prgGit := &Prg{name: "git"}
 	prgInvalid := &Prg{name: "invalid"}
 	return []*Prg{prgPeazip, prgGit, prgInvalid}
