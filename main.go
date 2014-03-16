@@ -26,12 +26,22 @@ type Prg struct {
 	extractUrl Extractor
 	folder     string
 	cache      CacheGetter
-	arc        *Arc
 }
 
-type Arc struct {
+type Arch struct {
 	win32 string
 	win64 string
+}
+
+func (a *Arch) Arch() string {
+	// http://stackoverflow.com/questions/601089/detect-whether-current-windows-version-is-32-bit-or-64-bit
+	if isdir, err := exists("C:\\Program Files (x86)"); isdir && err == nil {
+		return a.win64
+	} else if err != nil {
+		fmt.Printf("Error checking C:\\Program Files (x86): '%v'", err)
+		return ""
+	}
+	return a.win32
 }
 
 type fextract func(str string) string
@@ -95,6 +105,7 @@ type Extractable struct {
 	self  Extractor
 	next  Extractor
 	cache CacheGetter
+	arch  *Arch
 }
 
 func (e *Extractable) Next() Extractor {
