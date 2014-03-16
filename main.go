@@ -165,6 +165,27 @@ func NewExtractorUrl(uri string, cache CacheGetter, name string, arch *Arch) *Ex
 	return res
 }
 
+type ExtractorMatch struct {
+	Extractable
+	regexp *regexp.Regexp
+}
+
+func (em *ExtractorMatch) GetRegexp() *regexp.Regexp {
+	if em.regexp == nil {
+		rx := em.data
+		if em.arch != nil {
+			rx := strings.Replace(rx, "_$arc_", em.arch.Arch(), -1)
+			var err error = nil
+			if em.regexp, err = regexp.Compile(rx); err != nil {
+				em.regexp = nil
+				fmt.Printf("Error compiling Regexp for '%v': '%v' => err '%v'", em.name, rx, err)
+			}
+		}
+
+	}
+	return em.regexp
+}
+
 func ResolveDependencies(prgnames []string) []*Prg {
 	cache := &Cache{root: "test/_cache/"}
 	if isdir, err := exists("test/_cache/"); !isdir && err == nil {
