@@ -209,6 +209,8 @@ func ResolveDependencies(prgnames []string) []*Prg {
 	}
 	arch := &Arch{win32: "WINDOWS", win64: "WIN64"}
 	dwnl := NewExtractorUrl("http://peazip.sourceforge.net/peazip-portable.html", cache, "peazip", arch)
+	rx := &ExtractorMatch{Extractable{data: `/(peazip_portable-.*?\._$arch_).zip/download`, cache: cache, name: "peazip", arch: arch}, nil}
+	dwnl.next = rx
 	prgPeazip := &Prg{name: "peazip", extractVer: dwnl, cache: cache}
 	prgGit := &Prg{name: "git"}
 	prgInvalid := &Prg{name: "invalid"}
@@ -218,7 +220,7 @@ func ResolveDependencies(prgnames []string) []*Prg {
 func install(prg *Prg) {
 	folder := prg.GetFolder()
 	if hasFolder, err := exists(folder); !hasFolder && err == nil {
-		fmt.Printf("Need to install %v in '%v'\n", prg.name)
+		fmt.Printf("Need to install %v in '%v'\n", prg.name, folder)
 	}
 }
 
