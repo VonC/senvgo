@@ -123,3 +123,37 @@ func exists(path string) (bool, error) {
 	}
 	return false, err
 }
+
+// https://groups.google.com/forum/#!topic/golang-nuts/Q7hYQ9GdX9Q
+
+type byDate []os.FileInfo
+
+func (f byDate) Len() int {
+	return len(f)
+}
+func (f byDate) Less(i, j int) bool {
+	return f[i].ModTime().Unix() > f[j].ModTime().Unix()
+}
+func (f byDate) Swap(i, j int) {
+	f[i], f[j] = f[j], f[i]
+}
+
+func getLastModifiedFile(dir string) string {
+	f, err := os.Open(dir)
+	if err != nil {
+		fmt.Printf("Error while opening dir '%v': '%v'\n", dir, err)
+		return ""
+	}
+	list, err := f.Readdir(-1)
+	if err != nil {
+		fmt.Printf("Error while reading dir '%v': '%v'\n", dir, err)
+		return ""
+	}
+	if len(list) == 0 {
+		return ""
+	}
+	fmt.Printf("t: '%v' => '%v'\n", list, list[0])
+	sort.Sort(byDate(list))
+	fmt.Printf("t: '%v' => '%v'\n", list, list[0])
+	return list[0].Name()
+}
