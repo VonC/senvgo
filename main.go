@@ -6,8 +6,10 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"regexp"
 	"runtime"
 	"sort"
+	"strings"
 	"time"
 )
 
@@ -157,8 +159,8 @@ func (eu *ExtractorUrl) ExtractFrom(url string) string {
 	return page
 }
 
-func NewExtractorUrl(uri string, cache CacheGetter, name string) *ExtractorUrl {
-	res := &ExtractorUrl{Extractable{data: uri, cache: cache, name: name}}
+func NewExtractorUrl(uri string, cache CacheGetter, name string, arch *Arch) *ExtractorUrl {
+	res := &ExtractorUrl{Extractable{data: uri, cache: cache, name: name, arch: arch}}
 	res.self = res
 	return res
 }
@@ -173,9 +175,9 @@ func ResolveDependencies(prgnames []string) []*Prg {
 	} else if err != nil {
 		fmt.Printf("Error while checking existence of cache root folder: '%v'\n", err)
 	}
-	dwnl := NewExtractorUrl("http://peazip.sourceforge.net/peazip-portable.html", cache, "peazip")
-	arc := &Arc{win32: "WINDOWS", win64: "WIN64"}
-	prgPeazip := &Prg{name: "peazip", extractVer: dwnl, cache: cache, arc: arc}
+	arch := &Arch{win32: "WINDOWS", win64: "WIN64"}
+	dwnl := NewExtractorUrl("http://peazip.sourceforge.net/peazip-portable.html", cache, "peazip", arch)
+	prgPeazip := &Prg{name: "peazip", extractVer: dwnl, cache: cache}
 	prgGit := &Prg{name: "git"}
 	prgInvalid := &Prg{name: "invalid"}
 	return []*Prg{prgPeazip, prgGit, prgInvalid}
