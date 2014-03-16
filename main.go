@@ -147,8 +147,16 @@ func NewExtractorUrl(uri string, cache CacheGetter, name string) *ExtractorUrl {
 }
 
 func ResolveDependencies(prgnames []string) []*Prg {
-	cache := &Cache{}
-	dwnl := NewExtractorUrl("http://peazip.sourceforge.net/peazip-portable.html", cache)
+	cache := &Cache{root: "test/_cache/"}
+	if isdir, err := exists("test/_cache/"); !isdir && err == nil {
+		err := os.Mkdir(cache.root, 0755)
+		if err != nil {
+			fmt.Printf("Error creating cache root folder: '%v'\n", err)
+		}
+	} else if err != nil {
+		fmt.Printf("Error while checking existence of cache root folder: '%v'\n", err)
+	}
+	dwnl := NewExtractorUrl("http://peazip.sourceforge.net/peazip-portable.html", cache, "peazip")
 	prgPeazip := &Prg{name: "peazip", extractVer: dwnl, cache: cache}
 	prgGit := &Prg{name: "git"}
 	prgInvalid := &Prg{name: "invalid"}
@@ -158,7 +166,7 @@ func ResolveDependencies(prgnames []string) []*Prg {
 func install(prg *Prg) {
 	folder := prg.GetFolder()
 	if hasFolder, err := exists(folder); !hasFolder && err == nil {
-		fmt.Printf("Need to install %v in '%v'\n", prg.name, folder)
+		fmt.Printf("Need to install %v in '%v'\n", prg.name)
 	}
 }
 
