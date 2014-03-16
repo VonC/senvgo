@@ -85,6 +85,7 @@ func (c *Cache) Folder(name string) string {
 
 type Extractable struct {
 	data  string
+	name  string
 	self  Extractor
 	next  Extractor
 	cache CacheGetter
@@ -108,12 +109,39 @@ type ExtractorUrl struct {
 
 func (eu *ExtractorUrl) ExtractFrom(url string) string {
 	fmt.Println("ok! " + url)
-
-	return ""
+	page := eu.cache.Get(url, eu.name)
+	if page == "" {
+		t := time.Now()
+		filename := eu.cache.Folder(eu.name) + "_" + t.Format("20060102") + "_" + t.Format("150405")
+		fmt.Println(filename)
+		fmt.Println("empty page for " + url)
+		response, err := http.Get(url)
+		if err != nil {
+			fmt.Println("Error while downloading", url, "-", err)
+			return ""
+		}
+		body, err := ioutil.ReadAll(response.Body)
+		if err != nil {
+			fmt.Println("Error while reading downloaded", url, "-", err)
+			return ""
+		}
+		err = ioutil.WriteFile(filename, body, 0666)
+		if err != nil {
+			fmt.Printf("Error while writing downloaded '%v': '%v'\n", url, err)
+			return ""
+		}
+		defer response.Body.Close()
+		page = string(body)
+		fmt.Printf("downloaded '%v' to cache '%v'\n", url, filename)
+	} else {
+		fmt.Printf("Got '%v' from cache\n", url)
+	}
+	fmt.Println(len(page))
+	return page
 }
 
-func NewExtractorUrl(uri string, cache CacheGetter) *ExtractorUrl {
-	res := &ExtractorUrl{Extractable{data: uri, cache: cache}}
+func NewExtractorUrl(uri string, cache CacheGetter, name string) *ExtractorUrl {
+	res := &ExtractorUrl{Extractable{data: uri, cache: cache, name: name}}
 	res.self = res
 	return res
 }
