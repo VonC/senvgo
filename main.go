@@ -219,23 +219,23 @@ func ResolveDependencies(prgnames []string) []*Prg {
 
 func install(prg *Prg) {
 	folder := prg.GetFolder()
+	if folder == "" {
+		return
+	}
+	folder = "test/" + prg.name + "/" + folder
 	if hasFolder, err := exists(folder); !hasFolder && err == nil {
 		fmt.Printf("Need to install %v in '%v'\n", prg.name, folder)
 	}
+	return res
 }
 
 func (prg *Prg) GetFolder() string {
 	if prg.folder == "" {
-		switch prg.name {
-		case "peazip":
-			prg.folder = prg.extractVer.Extract() // "pz5.2.2"
-		case "git":
-			prg.folder = "git1.9"
-		case "invalid":
-			prg.folder = "invalid<x:y"
+		if prg.extractVer != nil {
+			prg.folder = prg.extractVer.Extract()
 		}
 	}
-	return "test/" + prg.name + "/" + prg.folder
+	return prg.folder
 }
 
 // exists returns whether the given file or directory exists or not
