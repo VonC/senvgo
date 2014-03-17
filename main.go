@@ -1,11 +1,14 @@
 package main
 
 import (
+	"archive/zip"
 	"bufio"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path/filepath"
 	"regexp"
 	"runtime"
 	"sort"
@@ -329,4 +332,50 @@ func getLastModifiedFile(dir string) string {
 	sort.Sort(byDate(list))
 	fmt.Printf("t: '%v' => '%v'\n", list, list[0])
 	return list[0].Name()
+}
+
+// http://stackoverflow.com/questions/20357223/easy-way-to-unzip-file-with-golang
+
+func cloneZipItem(f *zip.File, dest string) {
+	// Create full directory path
+	path := filepath.Join(dest, f.Name)
+	fmt.Println("Creating", path)
+	err := os.MkdirAll(filepath.Dir(path), os.ModeDir|os.ModePerm)
+	if err != nil {
+		fmt.Printf("Error while mkdir zip element '%v' from '%v'\n", path, f)
+		return
+	}
+
+	// Clone if item is a file
+	rc, err := f.Open()
+	if err != nil {
+		fmt.Printf("Error while checking if zip element is a file: '%v'\n", f)
+		return
+	}
+	if !f.FileInfo().IsDir() {
+		// Use os.Create() since Zip don't store file permissions.
+		fileCopy, err := os.Create(path)
+		if err != nil {
+			fmt.Printf("Error while creating zip element to '%v' from '%v'\n", path, f)
+			return
+		}
+		_, err = io.Copy(fileCopy, rc)
+		fileCopy.Close()
+		if err != nil {
+			fmt.Printf("Error while copying zip element to '%v' from '%v'\n", fileCopy, rc)
+			return
+		}
+	}
+	rc.Close()
+}
+func unzip(zip_path, dest string) {
+	r, err := zip.OpenReader(zip_path)
+	if err != nil {
+		fmt.Printf("Error while opening zip '%v' for '%v'\n", zip_path, dest)
+		return
+	}
+	defer r.Close()
+	for _, f := range r.File {
+		cloneZipItem(f, dest)
+	}
 }
