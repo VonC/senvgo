@@ -131,7 +131,7 @@ func (eu *ExtractorUrl) ExtractFrom(url string) string {
 	page := eu.cache.Get(url, eu.name)
 	if page == "" {
 		t := time.Now()
-		filename := eu.cache.Folder(eu.name) + "_" + t.Format("20060102") + "_" + t.Format("150405")
+		filename := eu.cache.Folder(eu.name) + eu.name + "_" + t.Format("20060102") + "_" + t.Format("150405")
 		fmt.Println(filename)
 		fmt.Println("empty page for " + url)
 		response, err := http.Get(url)
