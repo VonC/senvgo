@@ -172,7 +172,9 @@ type ExtractorMatch struct {
 
 func (eu *ExtractorMatch) ExtractFrom(content string) string {
 	rx := eu.Regexp()
+	fmt.Printf("Rx for '%v' (%v): '%v'\n", eu.name, len(content), rx)
 	matches := rx.FindAllStringSubmatchIndex(content, -1)
+	fmt.Printf("matches: '%v'\n", matches)
 	res := ""
 	if len(matches) >= 1 && len(matches[0]) >= 4 {
 		res = content[matches[0][2]:matches[0][3]]
@@ -212,6 +214,12 @@ func ResolveDependencies(prgnames []string) []*Prg {
 	rx := &ExtractorMatch{Extractable{data: `/(peazip_portable-.*?\._$arch_).zip/download`, cache: cache, name: "peazip", arch: arch}, nil}
 	dwnl.next = rx
 	prgPeazip := &Prg{name: "peazip", extractVer: dwnl, cache: cache}
+
+	dwnlUrl := NewExtractorUrl("http://peazip.sourceforge.net/peazip-portable.html", cache, "peazip", arch)
+	rxUrl := &ExtractorMatch{Extractable{data: `(http.*portable-.*?\._$arch_\.zip/download)`, cache: cache, name: "peazip", arch: arch}, nil}
+	dwnlUrl.next = rxUrl
+	prgPeazip.extractUrl = dwnlUrl
+
 	prgGit := &Prg{name: "git"}
 	prgInvalid := &Prg{name: "invalid"}
 	return []*Prg{prgPeazip, prgGit, prgInvalid}
@@ -223,17 +231,19 @@ func install(prg *Prg) {
 		return
 	}
 	folder = "test/" + prg.name + "/" + folder
+	fmt.Printf("folder (%v): '%v'\n", prg.name, folder)
 	if hasFolder, err := exists(folder); !hasFolder && err == nil {
 		fmt.Printf("Need to install %v in '%v'\n", prg.name, folder)
-		archive := prg.ArchiveName()
-		fmt.Printf("Archive name: '%v'\n", archive)
+		url := prg.Url()
+		fmt.Printf("Url: '%v'\n", url)
 	}
 }
 
-func (prg *Prg) ArchiveName() string {
+func (prg *Prg) Url() string {
 	res := ""
 	if prg.extractUrl != nil {
 		res = prg.extractUrl.Extract()
+		fmt.Printf("Url for '%v': '%v'\n", prg.name, res)
 	}
 	return res
 }
