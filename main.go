@@ -134,29 +134,37 @@ func (eu *ExtractorUrl) ExtractFrom(url string) string {
 		filename := eu.cache.Folder(eu.name) + eu.name + "_" + t.Format("20060102") + "_" + t.Format("150405")
 		fmt.Println(filename)
 		fmt.Println("empty page for " + url)
-		response, err := http.Get(url)
-		if err != nil {
-			fmt.Println("Error while downloading", url, "-", err)
-			return ""
-		}
-		body, err := ioutil.ReadAll(response.Body)
-		if err != nil {
-			fmt.Println("Error while reading downloaded", url, "-", err)
-			return ""
-		}
-		err = ioutil.WriteFile(filename, body, 0666)
-		if err != nil {
-			fmt.Printf("Error while writing downloaded '%v': '%v'\n", url, err)
-			return ""
-		}
-		defer response.Body.Close()
-		page = string(body)
+		page = download(url, filename, true)
 		fmt.Printf("downloaded '%v' to cache '%v'\n", url, filename)
 	} else {
 		fmt.Printf("Got '%v' from cache\n", url)
 	}
 	fmt.Println(len(page))
 	return page
+}
+
+func download(url string, filename string, returnBody bool) string {
+	res := ""
+	response, err := http.Get(url)
+	if err != nil {
+		fmt.Println("Error while downloading", url, "-", err)
+		return ""
+	}
+	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		fmt.Println("Error while reading downloaded", url, "-", err)
+		return ""
+	}
+	err = ioutil.WriteFile(filename, body, 0666)
+	if err != nil {
+		fmt.Printf("Error while writing downloaded '%v': '%v'\n", url, err)
+		return ""
+	}
+	defer response.Body.Close()
+	if returnBody {
+		res = string(body)
+	}
+	return res
 }
 
 func NewExtractorUrl(uri string, cache CacheGetter, name string, arch *Arch) *ExtractorUrl {
@@ -230,12 +238,31 @@ func install(prg *Prg) {
 	if folder == "" {
 		return
 	}
-	folder = "test/" + prg.name + "/" + folder
-	fmt.Printf("folder (%v): '%v'\n", prg.name, folder)
-	if hasFolder, err := exists(folder); !hasFolder && err == nil {
-		fmt.Printf("Need to install %v in '%v'\n", prg.name, folder)
-		url := prg.Url()
-		fmt.Printf("Url: '%v'\n", url)
+	folderFull := "test/" + prg.name
+	if hasFolder, err := exists(folderFull); !hasFolder && err == nil {
+		err := os.MkdirAll(folderFull, 0755)
+		if err != nil {
+			fmt.Printf("Error creating main folder for name '%v': '%v'\n", folderFull, err)
+		}
+		return
+	} else if err != nil {
+		fmt.Println("Error while testing main folder existence '%v': '%v'\n", folderFull, err)
+		return
+	}
+	folderFull = folderFull + "/" + folder
+	fmt.Printf("folderFull (%v): '%v'\n", prg.name, folderFull)
+	if hasFolder, err := exists(folderFull); !hasFolder && err == nil {
+		fmt.Printf("Need to install %v in '%v'\n", prg.name, folderFull)
+		archive := folderFull + ".zip"
+		if hasArchive, err := exists(archive); !hasArchive && err == nil {
+			fmt.Printf("Need to download %v in '%v'\n", prg.name, archive)
+			url := prg.Url()
+			fmt.Printf("Url: '%v'\n", url)
+			download(url, archive, false)
+		}
+	} else if err != nil {
+		fmt.Println("Error while testing installation folder existence '%v': '%v'\n", folder, err)
+		return
 	}
 }
 
