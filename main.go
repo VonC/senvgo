@@ -67,7 +67,7 @@ type Cache struct {
 func (c *Cache) Get(resource string, name string) string {
 	dir := c.root + name
 	if isdir, err := exists(dir); !isdir && err == nil {
-		err := os.Mkdir(dir, 0755)
+		err := os.MkdirAll(dir, 0755)
 		if err != nil {
 			fmt.Printf("Error creating cache folder for name '%v': '%v'\n", dir, err)
 		}
@@ -200,7 +200,7 @@ func (em *ExtractorMatch) Regexp() *regexp.Regexp {
 func ResolveDependencies(prgnames []string) []*Prg {
 	cache := &Cache{root: "test/_cache/"}
 	if isdir, err := exists("test/_cache/"); !isdir && err == nil {
-		err := os.Mkdir(cache.root, 0755)
+		err := os.MkdirAll(cache.root, 0755)
 		if err != nil {
 			fmt.Printf("Error creating cache root folder: '%v'\n", err)
 		}
