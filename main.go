@@ -252,11 +252,13 @@ func install(prg *Prg) {
 		fmt.Println("Error while testing main folder existence '%v': '%v'\n", folderFull, err)
 		return
 	}
+	folderMain := folderFull
 	folderFull = folderFull + "/" + folder
+	archive := folderFull + ".zip"
 	fmt.Printf("folderFull (%v): '%v'\n", prg.name, folderFull)
+	alreadyInstalled := false
 	if hasFolder, err := exists(folderFull); !hasFolder && err == nil {
 		fmt.Printf("Need to install %v in '%v'\n", prg.name, folderFull)
-		archive := folderFull + ".zip"
 		if hasArchive, err := exists(archive); !hasArchive && err == nil {
 			fmt.Printf("Need to download %v in '%v'\n", prg.name, archive)
 			url := prg.Url()
@@ -266,7 +268,47 @@ func install(prg *Prg) {
 	} else if err != nil {
 		fmt.Println("Error while testing installation folder existence '%v': '%v'\n", folder, err)
 		return
+	} else {
+		fmt.Printf("'%v' already installed in '%v'\n", prg.name, folderFull)
+		alreadyInstalled = true
 	}
+	folderTmp := folderMain + "/tmp"
+	if hasFolder, err := exists(folderTmp); !hasFolder && err == nil {
+		fmt.Printf("Need to make tmp for %v in '%v'\n", prg.name, folderTmp)
+		err := os.MkdirAll(folderTmp, 0755)
+		if err != nil {
+			fmt.Printf("Error creating tmp folder for name '%v': '%v'\n", folderTmp, err)
+			return
+		}
+	} else if err != nil {
+		fmt.Println("Error while testing tmp folder existence '%v': '%v'\n", folderTmp, err)
+		return
+	} else if alreadyInstalled {
+		err := os.RemoveAll(folderTmp)
+		if err != nil {
+			fmt.Printf("Error removing tmp folder for name '%v': '%v'\n", folderTmp, err)
+			return
+		}
+		return
+	}
+	t := getLastModifiedFile(folderTmp)
+	if t == "" {
+		fmt.Printf("Need to uncompress '%v' in '%v'", archive, folderTmp)
+		unzip(archive, folderTmp)
+	}
+	folderToMove := folderTmp + "/" + folder
+	if hasFolder, err := exists(folderToMove); hasFolder && err == nil {
+		fmt.Printf("Need to move %v in '%v'\n", folderToMove, folderFull)
+		err := os.Rename(folderToMove, folderFull)
+		if err != nil {
+			fmt.Printf("Error moving tmp folder '%v' to '%v': '%v'\n", folderTmp, folderFull, err)
+			return
+		}
+	} else if err != nil {
+		fmt.Println("Error while testing tmp 'folder to move' existence '%v': '%v'\n", folderToMove, err)
+		return
+	}
+
 }
 
 func (prg *Prg) Url() string {
