@@ -3,6 +3,7 @@ package main
 import (
 	"archive/zip"
 	"bufio"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -283,7 +284,7 @@ func install(prg *Prg) {
 		fmt.Println("Error while testing tmp folder existence '%v': '%v'\n", folderTmp, err)
 		return
 	} else if alreadyInstalled {
-		err := os.RemoveAll(folderTmp)
+		err := deleteFolderContent(folderTmp)
 		if err != nil {
 			fmt.Printf("Error removing tmp folder for name '%v': '%v'\n", folderTmp, err)
 			return
@@ -373,6 +374,32 @@ func getLastModifiedFile(dir string) string {
 	sort.Sort(byDate(list))
 	fmt.Printf("t: '%v' => '%v'\n", list, list[0])
 	return list[0].Name()
+}
+
+func deleteFolderContent(dir string) error {
+	var res error = nil
+	f, err := os.Open(dir)
+	if err != nil {
+		res = errors.New(fmt.Sprintf("Error while opening dir for deletion '%v': '%v'\n", dir, err))
+		return res
+	}
+	list, err := f.Readdir(-1)
+	if err != nil {
+		res = errors.New(fmt.Sprintf("Error while reading dir for deletion '%v': '%v'\n", dir, err))
+		return res
+	}
+	if len(list) == 0 {
+		return res
+	}
+	for _, fi := range list {
+		fpath := filepath.Join(dir, fi.Name())
+		err := os.RemoveAll(fpath)
+		if err != nil {
+			res = errors.New(fmt.Sprintf("Error removing file '%v' in '%v': '%v'\n", fi.Name(), dir, err))
+			return res
+		}
+	}
+	return res
 }
 
 // http://stackoverflow.com/questions/20357223/easy-way-to-unzip-file-with-golang
