@@ -30,7 +30,6 @@ type Prg struct {
 	extractVer Extractor
 	extractUrl Extractor
 	folder     string
-	cache      CacheGetter
 }
 
 type Arch struct {
@@ -224,7 +223,7 @@ func ResolveDependencies(prgnames []string) []*Prg {
 	dwnl := NewExtractorUrl("http://peazip.sourceforge.net/peazip-portable.html", cache, "peazip", arch)
 	rx := &ExtractorMatch{Extractable{data: `/(peazip_portable-.*?\._$arch_).zip/download`, cache: cache, name: "peazip", arch: arch}, nil}
 	dwnl.next = rx
-	prgPeazip := &Prg{name: "peazip", extractVer: dwnl, cache: cache}
+	prgPeazip := &Prg{name: "peazip", extractVer: dwnl}
 
 	dwnlUrl := NewExtractorUrl("http://peazip.sourceforge.net/peazip-portable.html", cache, "peazip", arch)
 	rxUrl := &ExtractorMatch{Extractable{data: `(http.*portable-.*?\._$arch_\.zip/download)`, cache: cache, name: "peazip", arch: arch}, nil}
