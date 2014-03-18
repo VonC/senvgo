@@ -27,10 +27,10 @@ func main() {
 }
 
 type Prg struct {
-	name       string
-	extractVer Extractor
-	extractUrl Extractor
-	folder     string
+	name          string
+	extractFolder Extractor
+	extractUrl    Extractor
+	folder        string
 }
 
 type Arch struct {
@@ -224,7 +224,7 @@ func ResolveDependencies(prgnames []string) []*Prg {
 	dwnl := NewExtractorUrl("http://peazip.sourceforge.net/peazip-portable.html", cache, "peazip", arch)
 	rx := &ExtractorMatch{Extractable{data: `/(peazip_portable-.*?\._$arch_).zip/download`, cache: cache, name: "peazip", arch: arch}, nil}
 	dwnl.next = rx
-	prgPeazip := &Prg{name: "peazip", extractVer: dwnl}
+	prgPeazip := &Prg{name: "peazip", extractFolder: dwnl}
 
 	dwnlUrl := NewExtractorUrl("http://peazip.sourceforge.net/peazip-portable.html", cache, "peazip", arch)
 	rxUrl := &ExtractorMatch{Extractable{data: `(http.*portable-.*?\._$arch_\.zip/download)`, cache: cache, name: "peazip", arch: arch}, nil}
@@ -322,8 +322,8 @@ func (prg *Prg) Url() string {
 
 func (prg *Prg) GetFolder() string {
 	if prg.folder == "" {
-		if prg.extractVer != nil {
-			prg.folder = prg.extractVer.Extract()
+		if prg.extractFolder != nil {
+			prg.folder = prg.extractFolder.Extract()
 		}
 	}
 	return prg.folder
