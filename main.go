@@ -3,6 +3,8 @@ package main
 import (
 	"archive/zip"
 	"bufio"
+	"crypto/sha1"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
@@ -63,7 +65,7 @@ type Extractor interface {
 }
 
 type CacheGetter interface {
-	Get(resource string, name string) string
+	Get(resource string, name string, isArchive bool) string
 	Folder(name string) string
 	Next() CacheGetter
 }
@@ -72,19 +74,23 @@ type Cache struct {
 	root string
 }
 
-func (c *Cache) Get(resource string, name string) string {
+// resource is either an url or an archive extension (exe, zip, tar.gz, ...)
+// TODO split in two function GetUrl and GetArchive
+func (c *Cache) Get(resource string, name string, isArchive bool) string {
 	dir := c.root + name
-	if isdir, err := exists(dir); !isdir && err == nil {
-		err := os.MkdirAll(dir, 0755)
-		if err != nil {
-			fmt.Printf("Error creating cache folder for name '%v': '%v'\n", dir, err)
-		}
-		return ""
-	} else if err != nil {
-		fmt.Println("Error while testing dir existence '%v': '%v'\n", dir, err)
+	err := os.MkdirAll(dir, 0755)
+	if err != nil {
+		fmt.Printf("Error creating cache folder for name '%v': '%v'\n", dir, err)
 		return ""
 	}
-	filepath := dir + "/" + getLastModifiedFile(dir)
+	pattern := name + "_archive_.*." + resource
+	if !isArchive {
+		hasher := sha1.New()
+		hasher.Write([]byte(resource))
+		sha := base64.URLEncoding.EncodeToString(hasher.Sum(nil))
+		pattern = name + "_" + sha + "_.*"
+	}
+	filepath := dir + "/" + getLastModifiedFile(dir, pattern)
 	if f, err := os.Open(filepath); err != nil {
 		fmt.Println("Error while reading content of '%v': '%v'\n", filepath, err)
 		return ""
@@ -136,10 +142,16 @@ type ExtractorUrl struct {
 
 func (eu *ExtractorUrl) ExtractFrom(url string) string {
 	fmt.Println("ok! " + url)
-	page := eu.cache.Get(url, eu.name)
+	page := eu.cache.Get(url, eu.name, false)
 	if page == "" {
+
+		hasher := sha1.New()
+		hasher.Write([]byte(url))
+		sha := base64.URLEncoding.EncodeToString(hasher.Sum(nil))
+
 		t := time.Now()
-		filename := eu.cache.Folder(eu.name) + eu.name + "_" + t.Format("20060102") + "_" + t.Format("150405")
+		filename := eu.cache.Folder(eu.name) + eu.name + "_" + sha + "_" + t.Format("20060102") + "_" + t.Format("150405")
+
 		fmt.Println(filename)
 		fmt.Println("empty page for " + url)
 		page = download(url, filename, true)
@@ -298,7 +310,7 @@ func install(prg *Prg) {
 		}
 		return
 	}
-	t := getLastModifiedFile(folderTmp)
+	t := getLastModifiedFile(folderTmp, ".*")
 	if t == "" {
 		fmt.Printf("Need to uncompress '%v' in '%v'", archive, folderTmp)
 		unzip(archive, folderTmp)
@@ -363,7 +375,8 @@ func (f byDate) Swap(i, j int) {
 	f[i], f[j] = f[j], f[i]
 }
 
-func getLastModifiedFile(dir string) string {
+func getLastModifiedFile(dir string, pattern string) string {
+	fmt.Printf("Look in '%v' for '%v'\n", dir, pattern)
 	f, err := os.Open(dir)
 	if err != nil {
 		fmt.Printf("Error while opening dir '%v': '%v'\n", dir, err)
@@ -377,10 +390,21 @@ func getLastModifiedFile(dir string) string {
 	if len(list) == 0 {
 		return ""
 	}
-	fmt.Printf("t: '%v' => '%v'\n", list, list[0])
-	sort.Sort(byDate(list))
-	fmt.Printf("t: '%v' => '%v'\n", list, list[0])
-	return list[0].Name()
+	filteredList := []os.FileInfo{}
+	rx := regexp.MustCompile(pattern)
+	for _, fi := range list {
+		if rx.MatchString(fi.Name()) {
+			filteredList = append(filteredList, fi)
+		}
+	}
+	if len(filteredList) == 0 {
+		fmt.Printf("NO FILE in '%v' for '%v'\n", dir, pattern)
+		return ""
+	}
+	// fmt.Printf("t: '%v' => '%v'\n", filteredList, filteredList[0])
+	sort.Sort(byDate(filteredList))
+	// fmt.Printf("t: '%v' => '%v'\n", filteredList, filteredList[0])
+	return filteredList[0].Name()
 }
 
 func deleteFolderContent(dir string) error {
