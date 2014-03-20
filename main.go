@@ -218,14 +218,13 @@ func (em *ExtractorMatch) Regexp() *regexp.Regexp {
 	if em.regexp == nil {
 		rx := em.data
 		if em.arch != nil {
-			rx := strings.Replace(rx, "_$arch_", em.arch.Arch(), -1)
-			var err error = nil
-			if em.regexp, err = regexp.Compile(rx); err != nil {
-				em.regexp = nil
-				fmt.Printf("Error compiling Regexp for '%v': '%v' => err '%v'", em.name, rx, err)
-			}
+			rx = strings.Replace(rx, "_$arch_", em.arch.Arch(), -1)
 		}
-
+		var err error = nil
+		if em.regexp, err = regexp.Compile(rx); err != nil {
+			em.regexp = nil
+			fmt.Printf("Error compiling Regexp for '%v': '%v' => err '%v'", em.name, rx, err)
+		}
 	}
 	return em.regexp
 }
