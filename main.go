@@ -252,9 +252,15 @@ func ResolveDependencies(prgnames []string) []*Prg {
 
 	prgPeazip := &Prg{name: "peazip", exts: exts}
 
+	dwnl = NewExtractorUrl("https://github.com/bmatzelle/gow/releases", cache, "gow", arch)
+	rx = &ExtractorMatch{Extractable{data: `/download/v.*?/(Gow-.*?).exe`, cache: cache, name: "gow"}, nil}
+	dwnl.next = rx
+	exts = &Extractors{extractFolder: dwnl}
+	prgGow := &Prg{name: "gow", exts: exts}
+
 	prgGit := &Prg{name: "git"}
 	prgInvalid := &Prg{name: "invalid"}
-	return []*Prg{prgPeazip, prgGit, prgInvalid}
+	return []*Prg{prgPeazip, prgGow, prgGit, prgInvalid}
 }
 
 func install(prg *Prg) {
