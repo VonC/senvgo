@@ -284,6 +284,9 @@ func install(prg *Prg) {
 			fmt.Printf("Need to download %v in '%v'\n", prg.name, archive)
 			url := prg.Url()
 			fmt.Printf("Url: '%v'\n", url)
+			if url == "" {
+				return
+			}
 			download(url, archive, false)
 		}
 	} else if err != nil {
