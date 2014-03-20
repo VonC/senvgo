@@ -350,6 +350,7 @@ func (prg *Prg) GetFolder() string {
 			prg.folder = prg.exts.extractFolder.Extract()
 		}
 	}
+	prg.folder = strings.Replace(prg.folder, " ", "_", -1)
 	return prg.folder
 }
 
