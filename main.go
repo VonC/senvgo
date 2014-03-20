@@ -91,8 +91,11 @@ func (c *Cache) Get(resource string, name string, isArchive bool) string {
 		pattern = name + "_" + sha + "_.*"
 	}
 	filepath := dir + "/" + getLastModifiedFile(dir, pattern)
+	if filepath == dir+"/" {
+		return ""
+	}
 	if f, err := os.Open(filepath); err != nil {
-		fmt.Println("Error while reading content of '%v': '%v'\n", filepath, err)
+		fmt.Printf("Error while reading content of '%v': '%v'\n", filepath, err)
 		return ""
 	} else {
 		defer f.Close()
