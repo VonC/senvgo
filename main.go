@@ -31,13 +31,15 @@ func main() {
 type Prg struct {
 	name        string
 	folder      string
+	archive     string
 	exts        *Extractors
 	portableExt *Extractors
 }
 
 type Extractors struct {
-	extractFolder Extractor
-	extractUrl    Extractor
+	extractFolder  Extractor
+	extractArchive Extractor
+	extractUrl     Extractor
 }
 
 type Arch struct {
@@ -268,32 +270,35 @@ func install(prg *Prg) {
 	if folder == "" {
 		return
 	}
-	folderFull := "test/" + prg.name
-	if hasFolder, err := exists(folderFull); !hasFolder && err == nil {
-		err := os.MkdirAll(folderFull, 0755)
+	folderMain := "test/" + prg.name + "/"
+	if hasFolder, err := exists(folderMain); !hasFolder && err == nil {
+		err := os.MkdirAll(folderMain, 0755)
 		if err != nil {
-			fmt.Printf("Error creating main folder for name '%v': '%v'\n", folderFull, err)
+			fmt.Printf("Error creating main folder for name '%v': '%v'\n", folderMain, err)
 		}
 		return
 	} else if err != nil {
-		fmt.Println("Error while testing main folder existence '%v': '%v'\n", folderFull, err)
+		fmt.Println("Error while testing main folder existence '%v': '%v'\n", folderMain, err)
 		return
 	}
-	folderMain := folderFull
-	folderFull = folderFull + "/" + folder
-	archive := folderFull + ".zip"
+	folderFull := folderMain + "/" + folder
+	archive := prg.GetArchive()
+	if archive == "" {
+		return
+	}
+	archiveFullPath := folderMain + archive
 	fmt.Printf("folderFull (%v): '%v'\n", prg.name, folderFull)
 	alreadyInstalled := false
 	if hasFolder, err := exists(folderFull); !hasFolder && err == nil {
 		fmt.Printf("Need to install %v in '%v'\n", prg.name, folderFull)
-		if hasArchive, err := exists(archive); !hasArchive && err == nil {
-			fmt.Printf("Need to download %v in '%v'\n", prg.name, archive)
+		if hasArchive, err := exists(archiveFullPath); !hasArchive && err == nil {
+			fmt.Printf("Need to download %v in '%v'\n", prg.name, archiveFullPath)
 			url := prg.Url()
 			fmt.Printf("Url: '%v'\n", url)
 			if url == "" {
 				return
 			}
-			download(url, archive, false)
+			download(url, archiveFullPath, false)
 		}
 	} else if err != nil {
 		fmt.Println("Error while testing installation folder existence '%v': '%v'\n", folder, err)
@@ -358,6 +363,15 @@ func (prg *Prg) GetFolder() string {
 	}
 	prg.folder = strings.Replace(prg.folder, " ", "_", -1)
 	return prg.folder
+}
+
+func (prg *Prg) GetArchive() string {
+	if prg.archive == "" && prg.exts != nil {
+		if prg.exts.extractArchive != nil {
+			prg.archive = prg.exts.extractArchive.Extract()
+		}
+	}
+	return prg.archive
 }
 
 // exists returns whether the given file or directory exists or not
