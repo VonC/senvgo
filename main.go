@@ -285,11 +285,16 @@ func (em *ExtractorMatch) Regexp() *regexp.Regexp {
 	return em.regexp
 }
 
+var cfgRx, _ = regexp.Compile(`^([^\.]+)\.([^\.\s]+)\s+(.*?)$`)
+
 var defaultConfig = `
 [peazip]
   arch           WINDOWS,WIN64
   folder.get     http://peazip.sourceforge.net/peazip-portable.html
   folder.rx      /(peazip_portable-.*?\._$arch_).zip/download
+`
+
+/*
   url.rx         http.*portable-.*?\._$arch_\.zip/download
   name.rx        /(peazip_portable-.*?\._$arch_.zip)/download
 [gow]
@@ -298,8 +303,8 @@ var defaultConfig = `
   url.rx         /bmatzelle/gow/releases/download/v.*?/Gow-.*?.exe
   url.prepend    https://github.com
   name.rx        /download/v.*?/(Gow-.*?.exe)
-`
 
+*/
 func ReadConfig() []*Prg {
 
 	res := []*Prg{}
@@ -317,6 +322,9 @@ func ReadConfig() []*Prg {
 	config := strings.NewReader(defaultConfig)
 	scanner := bufio.NewScanner(config)
 	var currentPrg *Prg = nil
+	var exts *Extractors = nil
+	var currentExtractor Extractor = nil
+	var currentVariable string
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
 		if strings.HasPrefix(line, "[") {
@@ -325,8 +333,48 @@ func ReadConfig() []*Prg {
 				res = append(res, currentPrg)
 			}
 			name := line[1 : len(line)-1]
-			currentPrg = &Prg{name: name, cache: cache}
+			exts = &Extractors{}
+			currentPrg = &Prg{name: name, cache: cache, exts: exts}
 			continue
+		}
+		if strings.HasPrefix(line, "arch") {
+			line = strings.TrimSpace(line[len("arch"):])
+			archs := strings.Split(line, ",")
+			arch := &Arch{win32: archs[0], win64: archs[1]}
+			currentPrg.arch = arch
+			continue
+		}
+		m := cfgRx.FindSubmatchIndex([]byte(line))
+		if len(m) == 0 {
+			continue
+		}
+		fmt.Printf("line: '%v' => '%v'\n", line, m)
+
+		variable := line[m[2]:m[3]]
+		extractor := line[m[4]:m[5]]
+		data := line[m[6]:m[7]]
+		var e Extractor = nil
+		switch extractor {
+		case "get":
+			e = NewExtractorGet(data, currentPrg)
+		case "rx":
+			e = NewExtractorMatch(data, currentPrg)
+		}
+		if e != nil {
+			if currentVariable != "" && variable == currentVariable {
+				currentExtractor.SetNext(e)
+			} else {
+				switch variable {
+				case "folder":
+					exts.extractFolder = e
+				case "url":
+					exts.extractUrl = e
+				case "name":
+					exts.extractArchive = e
+				}
+			}
+			currentExtractor = e
+			currentVariable = variable
 		}
 	}
 	res = append(res, currentPrg)
