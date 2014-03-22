@@ -475,7 +475,7 @@ func install(prg *Prg) {
 	t := getLastModifiedFile(folderTmp, ".*")
 	if t == "" {
 		fmt.Printf("Need to uncompress '%v' in '%v'\n", archive, folderTmp)
-		unzip(archive, folderTmp)
+		unzip(folderMain+archive, folderTmp)
 	}
 	folderToMove := folderTmp + "/" + folder
 	if hasFolder, err := exists(folderToMove); hasFolder && err == nil {
@@ -642,7 +642,7 @@ func cloneZipItem(f *zip.File, dest string) {
 func unzip(zip_path, dest string) {
 	r, err := zip.OpenReader(zip_path)
 	if err != nil {
-		fmt.Printf("Error while opening zip '%v' for '%v'\n", zip_path, dest)
+		fmt.Printf("Error while opening zip '%v' for '%v'\n'%v'\n", zip_path, dest, err)
 		return
 	}
 	defer r.Close()
