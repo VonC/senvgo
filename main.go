@@ -23,7 +23,7 @@ func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	prgs := ReadConfig()
 	for _, prg := range prgs {
-		install(prg)
+		prg.install()
 		fmt.Printf("INSTALLED '%v'\n", prg)
 	}
 }
@@ -32,6 +32,7 @@ type Prg struct {
 	name        string
 	folder      string
 	archive     string
+	invoke      string
 	exts        *Extractors
 	portableExt *Extractors
 	cache       CacheGetter
@@ -330,6 +331,7 @@ var defaultConfig = `
   url.rx         (/bmatzelle/gow/releases/download/v.*?/Gow-.*?.exe)
   url.prepend    https://github.com
   name.rx        /download/v.*?/(Gow-.*?.exe)
+  invoke         @FILE@ /S /D=@DEST@
 `
 
 func ReadConfig() []*Prg {
@@ -411,7 +413,7 @@ func ReadConfig() []*Prg {
 	return res
 }
 
-func install(prg *Prg) {
+func (prg *Prg) install() {
 	folder := prg.GetFolder()
 	if folder == "" {
 		return
@@ -472,6 +474,19 @@ func install(prg *Prg) {
 		}
 		return
 	}
+	if strings.HasSuffix(archive, ".zip") {
+		prg.invokeZip()
+	} else if prg.invoke == "" {
+		fmt.Printf("Unknown command for installing '%v'\n", archive)
+	}
+}
+
+func (prg *Prg) invokeZip() {
+	folder := prg.GetFolder()
+	archive := prg.GetArchive()
+	folderMain := "test/" + prg.name + "/"
+	folderTmp := folderMain + "tmp"
+	folderFull := folderMain + folder
 	t := getLastModifiedFile(folderTmp, ".*")
 	if t == "" {
 		fmt.Printf("Need to uncompress '%v' in '%v'\n", archive, folderTmp)
@@ -489,7 +504,6 @@ func install(prg *Prg) {
 		fmt.Println("Error while testing tmp 'folder to move' existence '%v': '%v'\n", folderToMove, err)
 		return
 	}
-
 }
 
 func (prg *Prg) Url() string {
