@@ -92,6 +92,7 @@ type Extractor interface {
 	ExtractFrom(str string) string
 	Extract() string
 	Next() Extractor
+	SetNext(e Extractor)
 }
 
 type CacheGetter interface {
@@ -153,6 +154,24 @@ type Extractable struct {
 	self Extractor
 	next Extractor
 	prg  PrgData
+}
+
+func (e *Extractable) SetNext(next Extractor) {
+	e.next = next
+}
+
+func (e *Extractable) String() string {
+	res := fmt.Sprintf("data='%v' (%v)", len(e.data), e.Nb())
+	return res
+}
+
+func (e *Extractable) Nb() int {
+	res := 1
+	for n := e.next; n != nil; {
+		res = res + 1
+		n = n.Next()
+	}
+	return res
 }
 
 func (e *Extractable) Next() Extractor {
