@@ -207,7 +207,7 @@ func (eu *ExtractorGet) ExtractFrom(url string) string {
 		fmt.Println(filename)
 		fmt.Println("empty page for " + url)
 		page = download(url, filename, true)
-		fmt.Printf("downloaded '%v' to cache '%v'\n", url, filename)
+		fmt.Printf("downloaded '%v' to cache '%v'\n", len(url), filename)
 	} else {
 		fmt.Printf("Got '%v' from cache\n", url)
 	}
@@ -248,6 +248,12 @@ func NewExtractorGet(uri string, prg PrgData) *ExtractorGet {
 type ExtractorMatch struct {
 	Extractable
 	regexp *regexp.Regexp
+}
+
+func NewExtractorMatch(rx string, prg PrgData) *ExtractorMatch {
+	res := &ExtractorMatch{Extractable{data: rx, prg: prg}, nil}
+	res.self = res
+	return res
 }
 
 func (eu *ExtractorMatch) ExtractFrom(content string) string {
