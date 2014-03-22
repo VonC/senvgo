@@ -21,8 +21,7 @@ import (
 
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
-	prgnames := ""
-	prgs := ResolveDependencies([]string{prgnames})
+	prgs := ReadConfig()
 	for _, prg := range prgs {
 		install(prg)
 	}
@@ -242,19 +241,38 @@ func (eu *ExtractorMatch) ExtractFrom(content string) string {
 func (em *ExtractorMatch) Regexp() *regexp.Regexp {
 	if em.regexp == nil {
 		rx := em.data
-		if em.arch != nil {
-			rx = strings.Replace(rx, "_$arch_", em.arch.Arch(), -1)
+		arch := em.prg.GetArch()
+		if arch != nil {
+			rx = strings.Replace(rx, "_$arch_", arch.Arch(), -1)
 		}
 		var err error = nil
 		if em.regexp, err = regexp.Compile(rx); err != nil {
 			em.regexp = nil
-			fmt.Printf("Error compiling Regexp for '%v': '%v' => err '%v'", em.name, rx, err)
+			fmt.Printf("Error compiling Regexp for '%v': '%v' => err '%v'", em.prg.GetName(), rx, err)
 		}
 	}
 	return em.regexp
 }
 
-func ResolveDependencies(prgnames []string) []*Prg {
+var defaultConfig = `
+[peazip]
+  arch           WINDOWS,WIN64
+  folder.get     http://peazip.sourceforge.net/peazip-portable.html
+  folder.rx      /(peazip_portable-.*?\._$arch_).zip/download
+  url.rx         http.*portable-.*?\._$arch_\.zip/download
+  name.rx        /(peazip_portable-.*?\._$arch_.zip)/download
+[gow]
+  folder.get     https://github.com/bmatzelle/gow/releases
+  folder.rx      /download/v.*?/(Gow-.*?).exe
+  url.rx         /bmatzelle/gow/releases/download/v.*?/Gow-.*?.exe
+  url.prepend    https://github.com
+  name.rx        /download/v.*?/(Gow-.*?.exe)
+`
+
+func ReadConfig() []*Prg {
+
+	res := []*Prg{}
+
 	cache := &Cache{root: "test/_cache/"}
 	if isdir, err := exists("test/_cache/"); !isdir && err == nil {
 		err := os.MkdirAll(cache.root, 0755)
@@ -264,28 +282,25 @@ func ResolveDependencies(prgnames []string) []*Prg {
 	} else if err != nil {
 		fmt.Printf("Error while checking existence of cache root folder: '%v'\n", err)
 	}
-	arch := &Arch{win32: "WINDOWS", win64: "WIN64"}
-	dwnl := NewExtractorUrl("http://peazip.sourceforge.net/peazip-portable.html", cache, "peazip", arch)
-	rx := &ExtractorMatch{Extractable{data: `/(peazip_portable-.*?\._$arch_).zip/download`, cache: cache, name: "peazip", arch: arch}, nil}
-	dwnl.next = rx
 
-	dwnlUrl := NewExtractorUrl("http://peazip.sourceforge.net/peazip-portable.html", cache, "peazip", arch)
-	rxUrl := &ExtractorMatch{Extractable{data: `(http.*portable-.*?\._$arch_\.zip/download)`, cache: cache, name: "peazip", arch: arch}, nil}
-	dwnlUrl.next = rxUrl
-
-	exts := &Extractors{extractFolder: dwnl, extractUrl: dwnlUrl}
-
-	prgPeazip := &Prg{name: "peazip", exts: exts}
-
-	dwnl = NewExtractorUrl("https://github.com/bmatzelle/gow/releases", cache, "gow", arch)
-	rx = &ExtractorMatch{Extractable{data: `/download/v.*?/(Gow-.*?).exe`, cache: cache, name: "gow"}, nil}
-	dwnl.next = rx
-	exts = &Extractors{extractFolder: dwnl}
-	prgGow := &Prg{name: "gow", exts: exts}
-
-	prgGit := &Prg{name: "git"}
-	prgInvalid := &Prg{name: "invalid"}
-	return []*Prg{prgPeazip, prgGow, prgGit, prgInvalid}
+	config := strings.NewReader(defaultConfig)
+	scanner := bufio.NewScanner(config)
+	var currentPrg *Prg = nil
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if strings.HasPrefix(line, "[") {
+			if currentPrg != nil {
+				fmt.Printf("End of config for prg '%v'\n", currentPrg.name)
+				res = append(res, currentPrg)
+			}
+			name := line[1 : len(line)-1]
+			currentPrg = &Prg{name: name, cache: cache}
+			continue
+		}
+	}
+	res = append(res, currentPrg)
+	fmt.Printf("%v\n", res)
+	return res
 }
 
 func install(prg *Prg) {
