@@ -24,6 +24,7 @@ func main() {
 	prgs := ReadConfig()
 	for _, prg := range prgs {
 		install(prg)
+		fmt.Printf("INSTALLED '%v'\n", prg)
 	}
 }
 
@@ -38,7 +39,7 @@ type Prg struct {
 }
 
 func (p *Prg) String() string {
-	res := fmt.Sprintf("Prg\n'%v' folder='%v', archive='%v'\ncache '%v', arc '%v'>\n", p.name, p.folder, p.archive, p.cache, p.arch)
+	res := fmt.Sprintf("Prg\n'%v' folder='%v', archive='%v'\ncache '%v', arc '%v'>\nexts: '%v'\n", p.name, p.folder, p.archive, p.cache, p.arch, p.exts)
 	return res
 }
 
@@ -62,6 +63,11 @@ type Extractors struct {
 	extractFolder  Extractor
 	extractArchive Extractor
 	extractUrl     Extractor
+}
+
+func (es *Extractors) String() string {
+	res := fmt.Sprintf("extUrl='%v', extFolder='%v', extArchive='%v', ", es.extractUrl, es.extractFolder, es.extractArchive)
+	return res
 }
 
 type Arch struct {
