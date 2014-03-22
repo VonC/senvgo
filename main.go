@@ -411,7 +411,7 @@ func install(prg *Prg) {
 		fmt.Println("Error while testing main folder existence '%v': '%v'\n", folderMain, err)
 		return
 	}
-	folderFull := folderMain + "/" + folder
+	folderFull := folderMain + folder
 	archive := prg.GetArchive()
 	if archive == "" {
 		return
@@ -437,7 +437,7 @@ func install(prg *Prg) {
 		fmt.Printf("'%v' already installed in '%v'\n", prg.name, folderFull)
 		alreadyInstalled = true
 	}
-	folderTmp := folderMain + "/tmp"
+	folderTmp := folderMain + "tmp"
 	if hasFolder, err := exists(folderTmp); !hasFolder && err == nil {
 		fmt.Printf("Need to make tmp for %v in '%v'\n", prg.name, folderTmp)
 		err := os.MkdirAll(folderTmp, 0755)
@@ -458,7 +458,7 @@ func install(prg *Prg) {
 	}
 	t := getLastModifiedFile(folderTmp, ".*")
 	if t == "" {
-		fmt.Printf("Need to uncompress '%v' in '%v'", archive, folderTmp)
+		fmt.Printf("Need to uncompress '%v' in '%v'\n", archive, folderTmp)
 		unzip(archive, folderTmp)
 	}
 	folderToMove := folderTmp + "/" + folder
