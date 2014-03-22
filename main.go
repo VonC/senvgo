@@ -301,6 +301,20 @@ func (em *ExtractorMatch) Regexp() *regexp.Regexp {
 	return em.regexp
 }
 
+type ExtractorPrepend struct {
+	Extractable
+}
+
+func NewExtractorPrepend(rx string, prg PrgData) *ExtractorPrepend {
+	res := &ExtractorPrepend{Extractable{data: rx, prg: prg}}
+	res.self = res
+	return res
+}
+
+func (eu *ExtractorPrepend) ExtractFrom(content string) string {
+	return eu.data + content
+}
+
 var cfgRx, _ = regexp.Compile(`^([^\.]+)\.([^\.\s]+)\s+(.*?)$`)
 
 var defaultConfig = `
