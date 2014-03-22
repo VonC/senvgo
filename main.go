@@ -11,6 +11,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"runtime"
@@ -478,6 +479,16 @@ func (prg *Prg) install() {
 		prg.invokeZip()
 	} else if prg.invoke == "" {
 		fmt.Printf("Unknown command for installing '%v'\n", archive)
+		return
+	}
+
+	cmd := prg.invoke
+	strings.Replace(cmd, "@FILE@", archiveFullPath, -1)
+	strings.Replace(cmd, "@DEST@", folderFull, -1)
+	fmt.Printf("invoking for '%v': '%v'\n", prg.name, cmd)
+	c := exec.Command("cmd", "/C", cmd)
+	if err := c.Run(); err != nil {
+		fmt.Printf("Error invoking '%v'\n'%v': ", cmd, err)
 	}
 }
 
