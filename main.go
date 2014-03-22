@@ -39,7 +39,7 @@ type Prg struct {
 }
 
 func (p *Prg) String() string {
-	res := fmt.Sprintf("Prg\n'%v' folder='%v', archive='%v'\ncache '%v', arc '%v'>\nexts: '%v'\n", p.name, p.folder, p.archive, p.cache, p.arch, p.exts)
+	res := fmt.Sprintf("Prg\n'%v' folder='%v', archive='%v'\n%v, arc '%v'>\nexts: '%v'\n", p.name, p.folder, p.archive, p.cache, p.arch, p.exts)
 	return res
 }
 
@@ -99,10 +99,12 @@ type CacheGetter interface {
 	Get(resource string, name string, isArchive bool) string
 	Folder(name string) string
 	Next() CacheGetter
+	Last() string
 }
 
 type Cache struct {
 	root string
+	last string
 }
 
 // resource is either an url or an archive extension (exe, zip, tar.gz, ...)
@@ -110,6 +112,7 @@ type Cache struct {
 func (c *Cache) Get(resource string, name string, isArchive bool) string {
 	dir := c.root + name
 	err := os.MkdirAll(dir, 0755)
+	c.last = ""
 	if err != nil {
 		fmt.Printf("Error creating cache folder for name '%v': '%v'\n", dir, err)
 		return ""
@@ -138,8 +141,18 @@ func (c *Cache) Get(resource string, name string, isArchive bool) string {
 		} else {
 			content = string(contents)
 		}
+		c.last = content
 		return content
 	}
+}
+
+func (c *Cache) String() string {
+	res := fmt.Sprintf("Cache '%v' (%v)", c.root, len(c.last))
+	return res
+}
+
+func (c *Cache) Last() string {
+	return c.last
 }
 
 func (c *Cache) Next() CacheGetter {
@@ -258,6 +271,9 @@ func NewExtractorMatch(rx string, prg PrgData) *ExtractorMatch {
 
 func (eu *ExtractorMatch) ExtractFrom(content string) string {
 	rx := eu.Regexp()
+	if content == eu.data {
+		content = eu.prg.GetCache().Last()
+	}
 	fmt.Printf("Rx for '%v' (%v): '%v'\n", eu.prg.GetName(), len(content), rx)
 	matches := rx.FindAllStringSubmatchIndex(content, -1)
 	fmt.Printf("matches: '%v'\n", matches)
@@ -292,19 +308,16 @@ var defaultConfig = `
   arch           WINDOWS,WIN64
   folder.get     http://peazip.sourceforge.net/peazip-portable.html
   folder.rx      /(peazip_portable-.*?\._$arch_).zip/download
-`
-
-/*
-  url.rx         http.*portable-.*?\._$arch_\.zip/download
+  url.rx         (http.*portable-.*?\._$arch_\.zip/download)
   name.rx        /(peazip_portable-.*?\._$arch_.zip)/download
 [gow]
   folder.get     https://github.com/bmatzelle/gow/releases
   folder.rx      /download/v.*?/(Gow-.*?).exe
-  url.rx         /bmatzelle/gow/releases/download/v.*?/Gow-.*?.exe
+  url.rx         (/bmatzelle/gow/releases/download/v.*?/Gow-.*?.exe)
   url.prepend    https://github.com
   name.rx        /download/v.*?/(Gow-.*?.exe)
+`
 
-*/
 func ReadConfig() []*Prg {
 
 	res := []*Prg{}
