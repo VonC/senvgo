@@ -473,6 +473,7 @@ func (prg *Prg) install() {
 		fmt.Println("Error while testing tmp folder existence '%v': '%v'\n", folderTmp, err)
 		return
 	} else if alreadyInstalled {
+		prg.checkPortable()
 		err := deleteFolderContent(folderTmp)
 		if err != nil {
 			fmt.Printf("Error removing tmp folder for name '%v': '%v'\n", folderTmp, err)
@@ -482,7 +483,9 @@ func (prg *Prg) install() {
 	}
 	if strings.HasSuffix(archive, ".zip") {
 		prg.invokeZip()
-	} else if prg.invoke == "" {
+		return
+	}
+	if prg.invoke == "" {
 		fmt.Printf("Unknown command for installing '%v'\n", archive)
 		return
 	}
@@ -525,6 +528,31 @@ func (prg *Prg) invokeZip() {
 		fmt.Println("Error while testing tmp 'folder to move' existence '%v': '%v'\n", folderToMove, err)
 		return
 	}
+}
+
+func (prg *Prg) checkPortable() {
+	archive := prg.GetArchive()
+	if !strings.HasSuffix(archive, ".exe") {
+		return
+	}
+	portableArchive := strings.Replace(archive, ".exe", ".zip", -1)
+
+	if ispa, err := exists(portableArchive); err != nil {
+		fmt.Printf("Error while checking existence of portable archive '%v': '%v'\n", portableArchive, err)
+		return
+	} else if ispa {
+		fmt.Printf("Nothing to do: portable '%v' already there '%v'\n", prg.name, portableArchive)
+		return
+	}
+	fmt.Printf("Checking for remote portable archive '%v'\n", portableArchive)
+	if prg.portableExt == nil {
+		fmt.Printf("Abort: No remote portable archive Extractor defined for '%v'\n", portableArchive)
+		return
+	}
+
+	// folderMain := "test/" + prg.name + "/"
+	// folder := prg.GetFolder()
+	// folderFull := folderMain + folder
 }
 
 func (prg *Prg) Url() string {
