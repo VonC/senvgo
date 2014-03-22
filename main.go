@@ -186,11 +186,11 @@ func (e *Extractable) Extract() string {
 	return res
 }
 
-type ExtractorUrl struct {
+type ExtractorGet struct {
 	Extractable
 }
 
-func (eu *ExtractorUrl) ExtractFrom(url string) string {
+func (eu *ExtractorGet) ExtractFrom(url string) string {
 	fmt.Println("ok! " + url)
 	cache := eu.prg.GetCache()
 	name := eu.prg.GetName()
@@ -239,8 +239,8 @@ func download(url string, filename string, returnBody bool) string {
 	return res
 }
 
-func NewExtractorUrl(uri string, prg PrgData) *ExtractorUrl {
-	res := &ExtractorUrl{Extractable{data: uri, prg: prg}}
+func NewExtractorGet(uri string, prg PrgData) *ExtractorGet {
+	res := &ExtractorGet{Extractable{data: uri, prg: prg}}
 	res.self = res
 	return res
 }
