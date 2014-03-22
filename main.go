@@ -386,6 +386,8 @@ func ReadConfig() []*Prg {
 			e = NewExtractorGet(data, currentPrg)
 		case "rx":
 			e = NewExtractorMatch(data, currentPrg)
+		case "prepend":
+			e = NewExtractorPrepend(data, currentPrg)
 		}
 		if e != nil {
 			if currentVariable != "" && variable == currentVariable {
