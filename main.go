@@ -374,6 +374,11 @@ func ReadConfig() []*Prg {
 			currentPrg.arch = arch
 			continue
 		}
+		if strings.HasPrefix(line, "invoke") {
+			line = strings.TrimSpace(line[len("invoke"):])
+			currentPrg.invoke = line
+			continue
+		}
 		m := cfgRx.FindSubmatchIndex([]byte(line))
 		if len(m) == 0 {
 			continue
@@ -483,12 +488,17 @@ func (prg *Prg) install() {
 	}
 
 	cmd := prg.invoke
-	strings.Replace(cmd, "@FILE@", archiveFullPath, -1)
-	strings.Replace(cmd, "@DEST@", folderFull, -1)
+	dst, err := filepath.Abs(filepath.FromSlash(folderFull))
+	if err != nil {
+		fmt.Printf("Unable to get full path for '%v': '%v'\n%v", prg.name, folderFull, err)
+		return
+	}
+	cmd = strings.Replace(cmd, "@FILE@", filepath.FromSlash(archiveFullPath), -1)
+	cmd = strings.Replace(cmd, "@DEST@", dst, -1)
 	fmt.Printf("invoking for '%v': '%v'\n", prg.name, cmd)
 	c := exec.Command("cmd", "/C", cmd)
-	if err := c.Run(); err != nil {
-		fmt.Printf("Error invoking '%v'\n'%v': ", cmd, err)
+	if out, err := c.Output(); err != nil {
+		fmt.Printf("Error invoking '%v'\n''%v', %v': ", cmd, string(out), err)
 	}
 }
 
