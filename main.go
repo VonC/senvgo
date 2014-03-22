@@ -34,6 +34,29 @@ type Prg struct {
 	archive     string
 	exts        *Extractors
 	portableExt *Extractors
+	cache       CacheGetter
+	arch        *Arch
+}
+
+func (p *Prg) String() string {
+	res := fmt.Sprintf("Prg\n'%v' folder='%v', archive='%v'\ncache '%v', arc '%v'>\n", p.name, p.folder, p.archive, p.cache, p.arch)
+	return res
+}
+
+type PrgData interface {
+	GetName() string
+	GetArch() *Arch
+	GetCache() CacheGetter
+}
+
+func (p *Prg) GetName() string {
+	return p.name
+}
+func (p *Prg) GetCache() CacheGetter {
+	return p.cache
+}
+func (p *Prg) GetArch() *Arch {
+	return p.arch
 }
 
 type Extractors struct {
@@ -121,12 +144,10 @@ func (c *Cache) Folder(name string) string {
 }
 
 type Extractable struct {
-	data  string
-	name  string
-	self  Extractor
-	next  Extractor
-	cache CacheGetter
-	arch  *Arch
+	data string
+	self Extractor
+	next Extractor
+	prg  PrgData
 }
 
 func (e *Extractable) Next() Extractor {
@@ -147,7 +168,9 @@ type ExtractorUrl struct {
 
 func (eu *ExtractorUrl) ExtractFrom(url string) string {
 	fmt.Println("ok! " + url)
-	page := eu.cache.Get(url, eu.name, false)
+	cache := eu.prg.GetCache()
+	name := eu.prg.GetName()
+	page := cache.Get(url, name, false)
 	if page == "" {
 
 		hasher := sha1.New()
@@ -155,7 +178,7 @@ func (eu *ExtractorUrl) ExtractFrom(url string) string {
 		sha := base64.URLEncoding.EncodeToString(hasher.Sum(nil))
 
 		t := time.Now()
-		filename := eu.cache.Folder(eu.name) + eu.name + "_" + sha + "_" + t.Format("20060102") + "_" + t.Format("150405")
+		filename := cache.Folder(name) + name + "_" + sha + "_" + t.Format("20060102") + "_" + t.Format("150405")
 
 		fmt.Println(filename)
 		fmt.Println("empty page for " + url)
@@ -192,8 +215,8 @@ func download(url string, filename string, returnBody bool) string {
 	return res
 }
 
-func NewExtractorUrl(uri string, cache CacheGetter, name string, arch *Arch) *ExtractorUrl {
-	res := &ExtractorUrl{Extractable{data: uri, cache: cache, name: name, arch: arch}}
+func NewExtractorUrl(uri string, prg PrgData) *ExtractorUrl {
+	res := &ExtractorUrl{Extractable{data: uri, prg: prg}}
 	res.self = res
 	return res
 }
@@ -205,7 +228,7 @@ type ExtractorMatch struct {
 
 func (eu *ExtractorMatch) ExtractFrom(content string) string {
 	rx := eu.Regexp()
-	fmt.Printf("Rx for '%v' (%v): '%v'\n", eu.name, len(content), rx)
+	fmt.Printf("Rx for '%v' (%v): '%v'\n", eu.prg.GetName(), len(content), rx)
 	matches := rx.FindAllStringSubmatchIndex(content, -1)
 	fmt.Printf("matches: '%v'\n", matches)
 	res := ""
