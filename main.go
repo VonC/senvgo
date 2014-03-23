@@ -580,7 +580,7 @@ func ucompress7z(archive string, folder string, file string, msg string, extract
 	}
 	ffolder, err := filepath.Abs(filepath.FromSlash(folder))
 	if err != nil {
-		fmt.Printf("7z: Unable to get full path for archive: '%v'\n%v\n", archive, err)
+		fmt.Printf("7z: Unable to get full path for folder: '%v'\n%v\n", archive, err)
 		return
 	}
 	cmd := cmd7z()
@@ -603,9 +603,42 @@ func ucompress7z(archive string, folder string, file string, msg string, extract
 	fmt.Printf("%v'%v'%v => 7zU...\n", msg, archive, argFile)
 	c := exec.Command("cmd", "/C", cmd)
 	if out, err := c.Output(); err != nil {
-		fmt.Printf("Error invoking '%v'\n''%v' %v'\n", cmd, string(out), err)
+		fmt.Printf("Error invoking 7ZU '%v'\n''%v' %v'\n", cmd, string(out), err)
 	}
 	fmt.Printf("%v'%v'%v => 7zU... DONE\n", msg, archive, argFile)
+}
+
+func compress7z(archive string, folder string, file string, msg string) {
+
+	farchive, err := filepath.Abs(filepath.FromSlash(archive))
+	if err != nil {
+		fmt.Printf("7z: Unable to get full path for compress to archive: '%v'\n%v\n", archive, err)
+		return
+	}
+	ffolder, err := filepath.Abs(filepath.FromSlash(folder))
+	if err != nil {
+		fmt.Printf("7z: Unable to get full path for compress to folder: '%v'\n%v\n", archive, err)
+		return
+	}
+	cmd := cmd7z()
+	if cmd == "" {
+		return
+	}
+	argFile := ""
+	if file != "" {
+		argFile = " -- " + file
+	}
+	msg = strings.TrimSpace(msg)
+	if msg != "" {
+		msg = msg + ": "
+	}
+	cmd = fmt.Sprintf("%v a -tzip -mm=Deflate -mmt=on -mx5 -w `\"`%v`\" `\"`%v`\"%v", cmd, ffolder, farchive, argFile)
+	fmt.Printf("%v'%v'%v => 7zC...\n", msg, archive, argFile)
+	c := exec.Command("cmd", "/C", cmd)
+	if out, err := c.Output(); err != nil {
+		fmt.Printf("Error invoking 7zC '%v'\n''%v' %v'\n", cmd, string(out), err)
+	}
+	fmt.Printf("%v'%v'%v => 7zC... DONE\n", msg, archive, argFile)
 }
 
 func (prg *Prg) invokeZip() {
