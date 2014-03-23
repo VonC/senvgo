@@ -568,7 +568,7 @@ func cmd7z() string {
 		}
 		cmd = fcmd
 	}
-	return cmd + " "
+	return cmd
 }
 
 func ucompress7z(archive string, folder string, file string, msg string, extract bool) {
