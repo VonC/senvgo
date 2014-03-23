@@ -715,6 +715,23 @@ func (prg *Prg) checkPortable() {
 
 	fmt.Printf("GitHub client user agent: '%v'\n", client.UserAgent)
 
+	repo, _, err := client.Repositories.Get("VonC", prg.GetName())
+	if err != nil {
+		fmt.Printf("Error while getting repo VonC/'%v': '%v'\n", prg.GetName(), err)
+		return
+	}
+	fmt.Printf("repo='%v', err='%v'\n", repo, err)
+
+	releases, _, err := client.Repositories.ListReleases("VonC", prg.GetName())
+	if err != nil {
+		fmt.Printf("Error while getting releases from repo VonC/'%v': '%v'\n", prg.GetName(), err)
+		return
+	}
+
+	for _, r := range releases {
+		fmt.Printf("Release '%v'\n", r)
+	}
+
 	// folderMain := "test/" + prg.name + "/"
 	// folder := prg.GetFolder()
 	// folderFull := folderMain + folder
