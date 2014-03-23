@@ -41,7 +41,10 @@ type Prg struct {
 }
 
 func (p *Prg) String() string {
-	res := fmt.Sprintf("Prg\n'%v' folder='%v', archive='%v'\n%v, arc '%v'>\nexts: '%v'\n", p.name, p.folder, p.archive, p.cache, p.arch, p.exts)
+	res := fmt.Sprintf("Prg\n'%v' folder='%v', archive='%v'\n%v, arc '%v'>\nexts : '%v'\n", p.name, p.folder, p.archive, p.cache, p.arch, p.exts)
+	if p.portableExt != nil {
+		res = res + fmt.Sprintf("pexts: '%v'\n", p.portableExt)
+	}
 	return res
 }
 
@@ -332,6 +335,7 @@ var defaultConfig = `
   url.rx         (/bmatzelle/gow/releases/download/v.*?/Gow-.*?.exe)
   url.prepend    https://github.com
   name.rx        /download/v.*?/(Gow-.*?.exe)
+  portable.folder.get     https://github.com/VonC/gow/releases
   invoke         @FILE@ /S /D=@DEST@
 `
 
@@ -357,6 +361,13 @@ func ReadConfig() []*Prg {
 	var currentVariable string
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
+		if strings.HasPrefix(line, "portable.") {
+			if currentPrg.portableExt == nil {
+				exts = &Extractors{}
+				currentPrg.portableExt = exts
+				line = line[len("portable."):]
+			}
+		}
 		if strings.HasPrefix(line, "[") {
 			if currentPrg != nil {
 				fmt.Printf("End of config for prg '%v'\n", currentPrg.name)
