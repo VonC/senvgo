@@ -19,6 +19,10 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/google/go-github/github"
+
+	"code.google.com/p/goauth2/oauth"
 )
 
 func main() {
@@ -612,6 +616,15 @@ func (prg *Prg) checkPortable() {
 	}
 	pat := strings.TrimSpace(string(contents))
 	fmt.Printf("GitHub authentication PAT '%v'\n", pat)
+
+	t := &oauth.Transport{
+		Token: &oauth.Token{AccessToken: pat},
+	}
+
+	client := github.NewClient(t.Client())
+
+	fmt.Printf("GitHub client user agent: '%v'\n", client.UserAgent)
+
 	// folderMain := "test/" + prg.name + "/"
 	// folder := prg.GetFolder()
 	// folderFull := folderMain + folder
