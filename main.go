@@ -31,14 +31,18 @@ func main() {
 }
 
 type Prg struct {
-	name        string
-	folder      string
-	archive     string
-	invoke      string
-	exts        *Extractors
-	portableExt *Extractors
-	cache       CacheGetter
-	arch        *Arch
+	name            string
+	folder          string
+	archive         string
+	url             string
+	portableFolder  string
+	portableArchive string
+	portableUrl     string
+	invoke          string
+	exts            *Extractors
+	portableExt     *Extractors
+	cache           CacheGetter
+	arch            *Arch
 }
 
 func (p *Prg) String() string {
@@ -485,7 +489,7 @@ func (prg *Prg) install() {
 		fmt.Printf("Need to install %v in '%v'\n", prg.name, folderFull)
 		if hasArchive, err := exists(archiveFullPath); !hasArchive && err == nil {
 			fmt.Printf("Need to download %v in '%v'\n", prg.name, archiveFullPath)
-			url := prg.Url()
+			url := prg.GetUrl()
 			fmt.Printf("Url: '%v'\n", url)
 			if url == "" {
 				return
@@ -603,32 +607,56 @@ func (prg *Prg) checkPortable() {
 	// folderFull := folderMain + folder
 }
 
-func (prg *Prg) Url() string {
-	res := ""
-	if prg.exts != nil && prg.exts.extractUrl != nil {
-		res = prg.exts.extractUrl.Extract()
-		fmt.Printf("Url for '%v': '%v'\n", prg.name, res)
-	}
-	return res
-}
-
 func (prg *Prg) GetFolder() string {
-	if prg.folder == "" && prg.exts != nil {
-		if prg.exts.extractFolder != nil {
-			prg.folder = prg.exts.extractFolder.Extract()
-		}
+	if prg.exts != nil {
+		prg.folder = get(prg.folder, prg.exts.extractFolder, true)
 	}
-	prg.folder = strings.Replace(prg.folder, " ", "_", -1)
 	return prg.folder
 }
-
 func (prg *Prg) GetArchive() string {
-	if prg.archive == "" && prg.exts != nil {
-		if prg.exts.extractArchive != nil {
-			prg.archive = prg.exts.extractArchive.Extract()
-		}
+	if prg.exts != nil {
+		prg.archive = get(prg.archive, prg.exts.extractArchive, false)
 	}
 	return prg.archive
+}
+func (prg *Prg) GetUrl() string {
+	if prg.exts != nil {
+		prg.url = get(prg.url, prg.exts.extractUrl, false)
+	}
+	return prg.url
+}
+
+func (prg *Prg) GetPortableFolder() string {
+	if prg.portableExt != nil {
+		prg.portableFolder = get(prg.portableFolder, prg.portableExt.extractFolder, true)
+	}
+	return prg.portableFolder
+}
+func (prg *Prg) GetPortableArchive() string {
+	if prg.portableExt != nil {
+		prg.portableArchive = get(prg.portableArchive, prg.portableExt.extractArchive, false)
+	}
+	return prg.portableArchive
+}
+func (prg *Prg) GetPortableUrl() string {
+	if prg.portableExt != nil {
+		prg.portableUrl = get(prg.portableUrl, prg.portableExt.extractUrl, false)
+	}
+	return prg.portableUrl
+}
+
+func get(iniValue string, ext Extractor, underscore bool) string {
+	if iniValue != "" {
+		return iniValue
+	}
+	if ext == nil {
+		return ""
+	}
+	res := ext.Extract()
+	if underscore {
+		res = strings.Replace(res, " ", "_", -1)
+	}
+	return res
 }
 
 // exists returns whether the given file or directory exists or not
