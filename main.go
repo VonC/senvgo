@@ -13,6 +13,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
 	"regexp"
 	"runtime"
 	"sort"
@@ -98,6 +99,7 @@ type Extractor interface {
 	Extract() string
 	Next() Extractor
 	SetNext(e Extractor)
+	Nb() int
 }
 
 type CacheGetter interface {
@@ -320,6 +322,29 @@ func (eu *ExtractorPrepend) ExtractFrom(content string) string {
 	return eu.data + content
 }
 
+func (p *Prg) updatePortable() {
+	if p.portableExt == nil {
+		return
+	}
+	if p.portableExt.extractFolder.Nb() == 1 {
+		p.portableExt.extractFolder.SetNext(p.exts.extractFolder.Next())
+	}
+	if p.portableExt.extractUrl == nil {
+		if strings.HasSuffix(reflect.TypeOf(p.exts.extractUrl).Name(), "ExtractorGet") {
+			p.portableExt.extractUrl = p.exts.extractUrl.Next()
+		} else {
+			p.portableExt.extractUrl = p.exts.extractUrl
+		}
+	}
+	if p.portableExt.extractArchive == nil {
+		if strings.HasSuffix(reflect.TypeOf(p.exts.extractArchive).Name(), "ExtractorGet") {
+			p.portableExt.extractArchive = p.exts.extractArchive.Next()
+		} else {
+			p.portableExt.extractArchive = p.exts.extractArchive
+		}
+	}
+}
+
 var cfgRx, _ = regexp.Compile(`^([^\.]+)\.([^\.\s]+)\s+(.*?)$`)
 
 var defaultConfig = `
@@ -371,6 +396,7 @@ func ReadConfig() []*Prg {
 		if strings.HasPrefix(line, "[") {
 			if currentPrg != nil {
 				fmt.Printf("End of config for prg '%v'\n", currentPrg.name)
+				currentPrg.updatePortable()
 				res = append(res, currentPrg)
 			}
 			name := line[1 : len(line)-1]
@@ -425,6 +451,7 @@ func ReadConfig() []*Prg {
 			currentVariable = variable
 		}
 	}
+	currentPrg.updatePortable()
 	res = append(res, currentPrg)
 	fmt.Printf("%v\n", res)
 	return res
