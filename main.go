@@ -550,6 +550,16 @@ func (prg *Prg) checkPortable() {
 		return
 	}
 
+	contents, err := ioutil.ReadFile("../senvgo.pat")
+	if err != nil {
+		fmt.Printf("Unable to access ../senvgo.pat for GitHub authentication\n", err)
+		return
+	}
+	if len(contents) < 20 {
+		fmt.Printf("Invalid content for GitHub authentication PAT ../senvgo.pat\n")
+	}
+	pat := strings.TrimSpace(string(contents))
+	fmt.Printf("GitHub authentication PAT '%v'\n", pat)
 	// folderMain := "test/" + prg.name + "/"
 	// folder := prg.GetFolder()
 	// folderFull := folderMain + folder
