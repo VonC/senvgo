@@ -550,8 +550,62 @@ func (prg *Prg) install() {
 	fmt.Printf("invoking for '%v': '%v'\n", prg.name, cmd)
 	c := exec.Command("cmd", "/C", cmd)
 	if out, err := c.Output(); err != nil {
-		fmt.Printf("Error invoking '%v'\n''%v', %v': ", cmd, string(out), err)
+		fmt.Printf("Error invoking '%v'\n''%v': %v'\n", cmd, string(out), err)
 	}
+}
+
+var fcmd = ""
+
+func cmd7z() string {
+	cmd := fcmd
+	if fcmd == "" {
+		cmd = "test/peazip/latest/res/7z/7z.exe"
+		var err error
+		fcmd, err = filepath.Abs(filepath.FromSlash(cmd))
+		if err != nil {
+			fmt.Printf("7z: Unable to get full path for cmd: '%v'\n%v", cmd, err)
+			return ""
+		}
+		cmd = fcmd
+	}
+	return cmd + " "
+}
+
+func ucompress7z(archive string, folder string, file string, msg string, extract bool) {
+
+	farchive, err := filepath.Abs(filepath.FromSlash(archive))
+	if err != nil {
+		fmt.Printf("7z: Unable to get full path for archive: '%v'\n%v\n", archive, err)
+		return
+	}
+	ffolder, err := filepath.Abs(filepath.FromSlash(folder))
+	if err != nil {
+		fmt.Printf("7z: Unable to get full path for archive: '%v'\n%v\n", archive, err)
+		return
+	}
+	cmd := cmd7z()
+	if cmd == "" {
+		return
+	}
+	argFile := ""
+	if file != "" {
+		argFile = " -- " + file
+	}
+	msg = strings.TrimSpace(msg)
+	if msg != "" {
+		msg = msg + ": "
+	}
+	extractCmd := "x"
+	if extract {
+		extractCmd = "e"
+	}
+	cmd = fmt.Sprintf("%v %v -aos -o`%v` -pdefault -sccUTF-8 `%v`%v", cmd, extractCmd, ffolder, farchive, argFile)
+	fmt.Printf("%v'%v'%v => 7zU...\n", msg, archive, argFile)
+	c := exec.Command("cmd", "/C", cmd)
+	if out, err := c.Output(); err != nil {
+		fmt.Printf("Error invoking '%v'\n''%v' %v'\n", cmd, string(out), err)
+	}
+	fmt.Printf("%v'%v'%v => 7zU... DONE\n", msg, archive, argFile)
 }
 
 func (prg *Prg) invokeZip() {
