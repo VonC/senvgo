@@ -671,26 +671,29 @@ func (prg *Prg) checkPortable() {
 	if !strings.HasSuffix(archive, ".exe") {
 		return
 	}
+	if prg.portableExt == nil {
+		fmt.Printf("Abort: No remote portable archive Extractor defined for '%v'\n", prg.GetName())
+		return
+	}
+	folderMain := "test/" + prg.name + "/"
 	portableArchive := strings.Replace(archive, ".exe", ".zip", -1)
 
-	if ispa, err := exists(portableArchive); err != nil {
-		fmt.Printf("Error while checking existence of portable archive '%v': '%v'\n", portableArchive, err)
-		return
-	} else if ispa {
-		fmt.Printf("Nothing to do: portable '%v' already there '%v'\n", prg.name, portableArchive)
-		return
-	}
 	fmt.Printf("Checking for remote portable archive '%v'\n", portableArchive)
-	if prg.portableExt == nil {
-		fmt.Printf("Abort: No remote portable archive Extractor defined for '%v'\n", portableArchive)
+	ispa, err := exists(folderMain + portableArchive)
+	if err != nil {
+		fmt.Printf("Error while checking existence of portable archive '%v': '%v'\n", folderMain+portableArchive, err)
 		return
 	}
+	folder := prg.GetFolder()
 	portableFolder := prg.GetPortableFolder()
-	if prg.GetFolder() == portableFolder {
+	if folder == portableFolder {
 		fmt.Printf("portable folder already there '%v'\n", portableFolder)
 		return
 	} else {
 		fmt.Printf("Old portable folder: '%v'\n", portableFolder)
+	}
+	if !ispa {
+		compress7z(folderMain+portableArchive, folderMain+folder, "", fmt.Sprintf("Compress '%v' for '%v'", portableArchive, prg.GetName()))
 	}
 
 	contents, err := ioutil.ReadFile("../senvgo.pat")
