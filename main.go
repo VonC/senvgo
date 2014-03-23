@@ -632,11 +632,11 @@ func compress7z(archive string, folder string, file string, msg string) {
 	if msg != "" {
 		msg = msg + ": "
 	}
-	cmd = fmt.Sprintf("%v a -tzip -mm=Deflate -mmt=on -mx5 -w `\"`%v`\" `\"`%v`\"%v", cmd, ffolder, farchive, argFile)
+	cmd = fmt.Sprintf("%v a -tzip -mm=Deflate -mmt=on -mx5 -w %v %v%v", cmd, farchive, ffolder, argFile)
 	fmt.Printf("%v'%v'%v => 7zC...\n", msg, archive, argFile)
 	c := exec.Command("cmd", "/C", cmd)
 	if out, err := c.Output(); err != nil {
-		fmt.Printf("Error invoking 7zC '%v'\n''%v' %v'\n", cmd, string(out), err)
+		fmt.Printf("Error invoking 7zC '%v'\nout='%v' => err='%v'\n", cmd, string(out), err)
 	}
 	fmt.Printf("%v'%v'%v => 7zC... DONE\n", msg, archive, argFile)
 }
