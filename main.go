@@ -365,6 +365,9 @@ var defaultConfig = `
   url.prepend    https://github.com
   name.rx        /download/v.*?/(Gow-.*?.exe)
   portable.folder.get     https://github.com/VonC/gow/releases
+  folder.rx      /download/v.*?/(Gow-.*?).zip
+  url.rx         (/VonC/gow/releases/download/v.*?/Gow-.*?.zip)
+  url.prepend    https://github.com
   invoke         @FILE@ /S /D=@DEST@
 `
 
@@ -590,6 +593,13 @@ func (prg *Prg) checkPortable() {
 	if prg.portableExt == nil {
 		fmt.Printf("Abort: No remote portable archive Extractor defined for '%v'\n", portableArchive)
 		return
+	}
+	portableFolder := prg.GetPortableFolder()
+	if prg.GetFolder() == portableFolder {
+		fmt.Printf("portable folder already there '%v'\n", portableFolder)
+		return
+	} else {
+		fmt.Printf("Old portable folder: '%v'\n", portableFolder)
 	}
 
 	contents, err := ioutil.ReadFile("../senvgo.pat")
