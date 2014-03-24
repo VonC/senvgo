@@ -816,18 +816,80 @@ func (prg *Prg) checkPortable() {
 	}
 
 	tagFound := false
-	for _, tag := range tags {
-		fmt.Printf("Tags '%v'\n", tag)
-		if *tag.Name == folder {
+	for _, tagShort := range tags {
+		fmt.Printf("Tags '%v' => %v\n", *tagShort.Name, *tagShort.CommitTag.SHA)
+		if *tagShort.Name == "v"+folder {
 			tagFound = true
 			break
 		}
 	}
 
-	if !tagFound {
-		fmt.Printf("Must create tag '%v' for repo VonC/'%v'.\n", folder, prg.GetName())
+	tagShort := tags[0]
+
+	tag, _, err := client.Repositories.GetTag("VonC", prg.GetName(), *tagShort.CommitTag.SHA)
+	if err != nil {
+		fmt.Printf("Error while getting tag '%v'-'%v' from repo VonC/'%v': '%v'\n", *tagShort.Name, *tagShort.CommitTag.SHA, prg.GetName(), err)
 	}
 
+	if !tagFound {
+		fmt.Printf("Must create tag '%v' for repo VonC/'%v'.\n", "v"+folder, prg.GetName())
+		input := &github.DataTag{
+			Tag:     github.String("v" + folder),
+			Message: github.String("a test\n"),
+			Object:  github.String("8dfd37977c708c97293aa81c5a0715d367f4f201"),
+			Type:    github.String("commit"),
+			Tagger: &github.Tagger{
+				Name:  github.String("VonC"),
+				Email: github.String("me@me.com"),
+				Date:  &github.Timestamp{time.Date(2011, 01, 02, 16, 04, 05, 0, time.UTC)},
+			},
+		}
+		tag, _, err = client.Repositories.CreateTag("VonC", prg.GetName(), input)
+		if err != nil {
+			fmt.Printf("Error while creating tag '%v'-'%v' from repo VonC/'%v': '%v'\n", *input.Tag, *input.Object, prg.GetName(), err)
+			return
+		}
+		ref, _, err := client.Git.CreateRef("VonC", prg.GetName(), &github.Reference{
+			Ref: github.String("tags/" + "v" + folder),
+			Object: &github.GitObject{
+				SHA: github.String(*tag.SHA),
+			},
+		})
+		if err != nil {
+			fmt.Printf("Error while creating reference to tag '%v'-'%v' from repo VonC/'%v': '%v'\n", *tag.Tag, *tag.SHA, prg.GetName(), err)
+			return
+		}
+		fmt.Printf("Ref created: '%v'\n", ref)
+	}
+
+	fmt.Printf("Tag found: '%v'\n", tag)
+	/*
+				   Tag found: 'github.RepositoryTag{Tag:"vGow-0.8.0",
+				   SHA:"fe1193a94e6d19aac0e57de7d6a269264d42de60",
+				   URL:"https://api.github.com/repos/VonC/gow/git/tags/fe1193a94e6d19aac0e57de7d6a269264d42de60",
+				   Message:"a test", Tagger:github.Tagger{Name:"VonC", Email:"me@me.com", Date:github.Timestamp{2011-01-02 15:04:05 +0000 UTC}}, ObjectTag:github.ObjectTag{Name:"commit", SHA:"8dfd37977c708c97293aa81c5a0715d367f4f201", URL:"https://api.github.com/repos/VonC/gow/git/commits/8dfd37977c708c97293aa81c5a0715d367f4f201"}}'
+
+					Tag found: 'github.RepositoryTag{Tag:"vGow-0.8.0",
+					SHA:"e91a70c35330fad5ba2e168645e10df830986e5f",
+					URL:"https://api.github.com/repos/VonC/gow/git/tags/e91a70c35330fad5ba2e168645e10df830986e5f",
+					Message:"a test", Tagger:github.Tagger{Name:"VonC", Email:"me@me.com", Date:github.Timestamp{2011-01-02 16:04:05 +0000 UTC}}, ObjectTag:github.ObjectTag{Name:"commit", SHA:"8dfd37977c708c97293aa81c5a0715d367f4f201", URL:"https://api.github.com/repos/VonC/gow/git/commits/8dfd37977c708c97293aa81c5a0715d367f4f201"}}'
+
+					Tag found: 'github.RepositoryTag{Tag:"vGow-0.8.0",
+					SHA:"e91a70c35330fad5ba2e168645e10df830986e5f",
+					URL:"https://api.github.com/repos/VonC/gow/git/tags/e91a70c35330fad5ba2e168645e10df830986e5f",
+					Message:"a test", Tagger:github.Tagger{Name:"VonC", Email:"me@me.com", Date:github.Timestamp{2011-01-02 16:04:05 +0000 UTC}}, ObjectTag:github.ObjectTag{Name:"commit", SHA:"8dfd37977c708c97293aa81c5a0715d367f4f201", URL:"https://api.github.com/repos/VonC/gow/git/commits/8dfd37977c708c97293aa81c5a0715d367f4f201"}}'
+
+					Ref created: 'github.Reference{Ref:"refs/tags/vGow-0.8.0",
+					URL:"https://api.github.com/repos/VonC/gow/git/refs/tags/vGow-0.8.0",
+					Object:github.GitObject{Type:"tag",
+					SHA:"e91a70c35330fad5ba2e168645e10df830986e5f",
+					URL:"https://api.github.com/repos/VonC/gow/git/tags/e91a70c35330fad5ba2e168645e10df830986e5f"}}'
+
+		Tag found: 'github.RepositoryTag{Tag:"vGow-0.8.0", SHA:"e91a70c35330fad5ba2e168645e10df830986e5f", URL:"https://api.github.com/repos/VonC/gow/git/tags/e91a70c35330fad5ba2e168645e10
+		df830986e5f", Message:"a test
+		", Tagger:github.Tagger{Name:"VonC", Email:"me@me.com", Date:github.Timestamp{2011-01-02 16:04:05 +0000 UTC}}, ObjectTag:github.ObjectTag{Name:"commit", SHA:"8dfd37977c708c97293aa8
+		1c5a0715d367f4f201", URL:"https://api.github.com/repos/VonC/gow/git/commits/8dfd37977c708c97293aa81c5a0715d367f4f201"}}'
+	*/
 	// folderMain := "test/" + prg.name + "/"
 	// folder := prg.GetFolder()
 	// folderFull := folderMain + folder
