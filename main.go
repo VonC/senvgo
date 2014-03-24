@@ -468,6 +468,80 @@ func ReadConfig() []*Prg {
 	return res
 }
 
+func (prg *Prg) checkLatest() {
+	folder := prg.GetFolder()
+	folderMain := "test/" + prg.name + "/"
+	folderFull := folderMain + folder
+	folderLatest := folderMain + "latest/"
+
+	hasLatest, err := exists(folderLatest)
+	if err != nil {
+		fmt.Println("Error while testing folderLatest existence '%v': '%v'\n", folderLatest, err)
+		return
+	}
+	mainf, err := filepath.Abs(filepath.FromSlash(folderMain))
+	if err != nil {
+		fmt.Printf("Unable to get full path for folderMain '%v': '%v'\n%v", prg.name, folderMain, err)
+		return
+	}
+	latest, err := filepath.Abs(filepath.FromSlash(folderLatest))
+	if err != nil {
+		fmt.Printf("Unable to get full path for LATEST '%v': '%v'\n%v", prg.name, folderLatest, err)
+		return
+	}
+	full, err := filepath.Abs(filepath.FromSlash(folderFull))
+	if err != nil {
+		fmt.Printf("Unable to get full path for folderFull '%v': '%v'\n%v", prg.name, folderFull, err)
+		return
+	}
+	if !hasLatest {
+		junction(latest, full, prg.name)
+	} else {
+		err := os.Remove(latest)
+		if err != nil {
+			fmt.Printf("Error removing LATEST '%v' in '%v': '%v'\n", latest, folderLatest, err)
+			return
+		}
+		target := readJunction("latest", mainf, prg.GetName())
+		fmt.Printf("Target='%v'\n", target)
+		if target != full {
+			junction(latest, full, prg.name)
+		}
+	}
+}
+
+func junction(link, dst, name string) {
+	cmd := "mklink /J " + link + " " + dst
+	fmt.Printf("invoking for '%v': '%v'\n", name, cmd)
+	c := exec.Command("cmd", "/C", cmd)
+	if out, err := c.Output(); err != nil {
+		fmt.Printf("Error invoking '%v'\n''%v': %v'\n", cmd, string(out), err)
+	}
+}
+
+var junctionRx, _ = regexp.Compile(`N>\s+latest\s+\[([^\]]*?)\]`)
+
+func readJunction(link, folder, name string) string {
+	cmd := "dir /A:L " + folder
+	fmt.Printf("invoking for '%v': '%v'\n", name, cmd)
+	c := exec.Command("cmd", "/C", cmd)
+	out, err := c.Output()
+	sout := string(out)
+	matches := junctionRx.FindAllStringSubmatchIndex(sout, -1)
+	fmt.Printf("matches OUT: '%v'\n", matches)
+	res := ""
+	if len(matches) >= 1 && len(matches[0]) >= 4 {
+		res = sout[matches[0][2]:matches[0][3]]
+		fmt.Printf("RES OUT='%v'\n", res)
+	}
+	if err != nil && res == "" {
+		fmt.Printf("Error invoking '%v'\n'%v':\nerr='%v'\n", cmd, sout, err)
+		return ""
+	}
+	fmt.Printf("OUT ===> '%v'\n", sout)
+	return res
+}
+
 func (prg *Prg) install() {
 	folder := prg.GetFolder()
 	if folder == "" {
@@ -509,6 +583,7 @@ func (prg *Prg) install() {
 	} else {
 		fmt.Printf("'%v' already installed in '%v'\n", prg.name, folderFull)
 		alreadyInstalled = true
+		prg.checkLatest()
 	}
 	folderTmp := folderMain + "tmp"
 	if hasFolder, err := exists(folderTmp); !hasFolder && err == nil {
@@ -552,6 +627,8 @@ func (prg *Prg) install() {
 	if out, err := c.Output(); err != nil {
 		fmt.Printf("Error invoking '%v'\n''%v': %v'\n", cmd, string(out), err)
 	}
+	prg.checkPortable()
+	prg.checkLatest()
 }
 
 var fcmd = ""
@@ -698,7 +775,7 @@ func (prg *Prg) checkPortable() {
 
 	contents, err := ioutil.ReadFile("../senvgo.pat")
 	if err != nil {
-		fmt.Printf("Unable to access ../senvgo.pat for GitHub authentication\n", err)
+		fmt.Printf("Unable to access ../senvgo.pat for GitHub authentication\n'%v'\n", err)
 		return
 	}
 	if len(contents) < 20 {
