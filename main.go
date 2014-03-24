@@ -20,7 +20,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/go-github/github"
+	"github.com/VonC/go-github/github"
 
 	"code.google.com/p/goauth2/oauth"
 )
@@ -807,6 +807,25 @@ func (prg *Prg) checkPortable() {
 
 	for _, r := range releases {
 		fmt.Printf("Release '%v'\n", r)
+	}
+
+	tags, _, err := client.Repositories.ListTags("VonC", prg.GetName())
+	if err != nil {
+		fmt.Printf("Error while getting tags from repo VonC/'%v': '%v'\n", prg.GetName(), err)
+		return
+	}
+
+	tagFound := false
+	for _, tag := range tags {
+		fmt.Printf("Tags '%v'\n", tag)
+		if *tag.Name == folder {
+			tagFound = true
+			break
+		}
+	}
+
+	if !tagFound {
+		fmt.Printf("Must create tag '%v' for repo VonC/'%v'.\n", folder, prg.GetName())
 	}
 
 	// folderMain := "test/" + prg.name + "/"
