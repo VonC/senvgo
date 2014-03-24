@@ -497,14 +497,14 @@ func (prg *Prg) checkLatest() {
 	if !hasLatest {
 		junction(latest, full, prg.name)
 	} else {
-		err := os.Remove(latest)
-		if err != nil {
-			fmt.Printf("Error removing LATEST '%v' in '%v': '%v'\n", latest, folderLatest, err)
-			return
-		}
 		target := readJunction("latest", mainf, prg.GetName())
 		fmt.Printf("Target='%v'\n", target)
 		if target != full {
+			err := os.Remove(latest)
+			if err != nil {
+				fmt.Printf("Error removing LATEST '%v' in '%v': '%v'\n", latest, folderLatest, err)
+				return
+			}
 			junction(latest, full, prg.name)
 		}
 	}
