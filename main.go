@@ -886,6 +886,16 @@ func (prg *Prg) checkPortable() {
 	} else {
 		fmt.Printf("Repo Release found: '%v'\n", rel)
 	}
+
+	assets, _, err := client.Repositories.ListReleaseAssets("VonC", prg.GetName(), *rel.ID)
+	if err != nil {
+		fmt.Printf("Error while getting assets from release'%v'(%v): '%v'\n", *rel.Name, *rel.ID, err)
+		return
+	}
+
+	if len(assets) == 0 {
+		fmt.Printf("Must upload asset to release '%v'\n", *rel.Name)
+	}
 	/*
 				   Tag found: 'github.RepositoryTag{Tag:"vGow-0.8.0",
 				   SHA:"fe1193a94e6d19aac0e57de7d6a269264d42de60",
