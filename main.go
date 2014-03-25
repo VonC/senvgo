@@ -799,16 +799,6 @@ func (prg *Prg) checkPortable() {
 	}
 	fmt.Printf("repo='%v', err='%v'\n", repo, err)
 
-	releases, _, err := client.Repositories.ListReleases("VonC", prg.GetName())
-	if err != nil {
-		fmt.Printf("Error while getting releases from repo VonC/'%v': '%v'\n", prg.GetName(), err)
-		return
-	}
-
-	for _, r := range releases {
-		fmt.Printf("Release '%v'\n", r)
-	}
-
 	tags, _, err := client.Repositories.ListTags("VonC", prg.GetName())
 	if err != nil {
 		fmt.Printf("Error while getting tags from repo VonC/'%v': '%v'\n", prg.GetName(), err)
@@ -865,6 +855,37 @@ func (prg *Prg) checkPortable() {
 		fmt.Printf("Ref created: '%v'\n", ref)
 	}
 
+	releases, _, err := client.Repositories.ListReleases("VonC", prg.GetName())
+	if err != nil {
+		fmt.Printf("Error while getting releasesfrom repo VonC/'%v': '%v'\n", prg.GetName(), err)
+		return
+	}
+
+	var rel github.RepositoryRelease
+	relFound := false
+	for _, rel = range releases {
+		if *rel.Name == folder {
+			relFound = true
+			break
+		}
+	}
+
+	if !relFound {
+		fmt.Printf("Must create release '%v' for repo VonC/'%v'.\n", folder, prg.GetName())
+		reprel := &github.RepositoryRelease{
+			TagName:         github.String(*tagShort.Name),
+			TargetCommitish: github.String(*tagShort.CommitTag.SHA),
+			Name:            github.String(folder),
+			Body:            github.String("Portable version of " + folder),
+		}
+		reprel, _, err = client.Repositories.CreateRelease("VonC", prg.GetName(), reprel)
+		if err != nil {
+			fmt.Printf("Error while creating repo release '%v'-'%v' for repo VonC/'%v': '%v'\n", folder, *tagShort.Name, prg.GetName(), err)
+			return
+		}
+	} else {
+		fmt.Printf("Repo Release found: '%v'\n", rel)
+	}
 	/*
 				   Tag found: 'github.RepositoryTag{Tag:"vGow-0.8.0",
 				   SHA:"fe1193a94e6d19aac0e57de7d6a269264d42de60",
