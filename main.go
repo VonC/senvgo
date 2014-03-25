@@ -816,21 +816,24 @@ func (prg *Prg) checkPortable() {
 	}
 
 	tagFound := false
-	for _, tagShort := range tags {
+	var tagShort github.RepositoryTagShort
+	for _, tagShort = range tags {
 		fmt.Printf("Tags '%v' => %v\n", *tagShort.Name, *tagShort.CommitTag.SHA)
 		if *tagShort.Name == "v"+folder {
 			tagFound = true
+			fmt.Printf("Tag '%v' found: '%v-%v-%v'\n", "v"+folder, *tagShort.Name, *tagShort.CommitTag.SHA, *tagShort.CommitTag.URL)
 			break
 		}
 	}
 
-	tagShort := tags[0]
-
-	tag, _, err := client.Repositories.GetTag("VonC", prg.GetName(), *tagShort.CommitTag.SHA)
-	if err != nil {
-		fmt.Printf("Error while getting tag '%v'-'%v' from repo VonC/'%v': '%v'\n", *tagShort.Name, *tagShort.CommitTag.SHA, prg.GetName(), err)
-	}
-
+	fmt.Printf("Tag found: '%v'\n", tagShort)
+	//tagShort = tags[0]
+	/*
+		tag, _, err := client.Repositories.GetTag("VonC", prg.GetName(), *tagShort.CommitTag.SHA)
+		if err != nil {
+			fmt.Printf("Error while getting tag '%v'-'%v' from repo VonC/'%v': '%v'\n", *tagShort.Name, *tagShort.CommitTag.SHA, prg.GetName(), err)
+		}
+	*/
 	if !tagFound {
 		fmt.Printf("Must create tag '%v' for repo VonC/'%v'.\n", "v"+folder, prg.GetName())
 		input := &github.DataTag{
@@ -844,7 +847,7 @@ func (prg *Prg) checkPortable() {
 				Date:  &github.Timestamp{time.Date(2011, 01, 02, 16, 04, 05, 0, time.UTC)},
 			},
 		}
-		tag, _, err = client.Repositories.CreateTag("VonC", prg.GetName(), input)
+		tag, _, err := client.Repositories.CreateTag("VonC", prg.GetName(), input)
 		if err != nil {
 			fmt.Printf("Error while creating tag '%v'-'%v' from repo VonC/'%v': '%v'\n", *input.Tag, *input.Object, prg.GetName(), err)
 			return
@@ -862,7 +865,6 @@ func (prg *Prg) checkPortable() {
 		fmt.Printf("Ref created: '%v'\n", ref)
 	}
 
-	fmt.Printf("Tag found: '%v'\n", tag)
 	/*
 				   Tag found: 'github.RepositoryTag{Tag:"vGow-0.8.0",
 				   SHA:"fe1193a94e6d19aac0e57de7d6a269264d42de60",
