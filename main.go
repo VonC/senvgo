@@ -355,13 +355,15 @@ func (p *Prg) updatePortable() {
 
 var cfgRx, _ = regexp.Compile(`^([^\.]+)\.([^\.\s]+)\s+(.*?)$`)
 
-var defaultConfig = `
+/*
 [peazip]
   arch           WINDOWS,WIN64
   folder.get     http://peazip.sourceforge.net/peazip-portable.html
   folder.rx      /(peazip_portable-.*?\._$arch_).zip/download
   url.rx         (http.*portable-.*?\._$arch_\.zip/download)
   name.rx        /(peazip_portable-.*?\._$arch_.zip)/download
+*/
+var defaultConfig = `
 [gow]
   folder.get     https://github.com/bmatzelle/gow/releases
   folder.rx      /download/v.*?/(Gow-.*?).exe
@@ -789,17 +791,26 @@ func (prg *Prg) checkPortable() {
 	}
 
 	client := github.NewClient(t.Client())
-
 	fmt.Printf("GitHub client user agent: '%v'\n", client.UserAgent)
 
-	repo, _, err := client.Repositories.Get("VonC", prg.GetName())
+	authUser, _, err := client.Users.Get("")
+	if err != nil {
+		fmt.Printf("Error while getting authenticated user\n")
+		return
+	}
+	fmt.Printf("Authenticated user: '%v'\n", *authUser.Name)
+	authUserName := *authUser.Name
+
+	repos := client.Repositories
+
+	repo, _, err := repos.Get(authUserName, prg.GetName())
 	if err != nil {
 		fmt.Printf("Error while getting repo VonC/'%v': '%v'\n", prg.GetName(), err)
 		return
 	}
 	fmt.Printf("repo='%v', err='%v'\n", repo, err)
 
-	tags, _, err := client.Repositories.ListTags("VonC", prg.GetName())
+	tags, _, err := repos.ListTags(authUserName, prg.GetName())
 	if err != nil {
 		fmt.Printf("Error while getting tags from repo VonC/'%v': '%v'\n", prg.GetName(), err)
 		return
@@ -819,7 +830,7 @@ func (prg *Prg) checkPortable() {
 	fmt.Printf("Tag found: '%v'\n", tagShort)
 	//tagShort = tags[0]
 	/*
-		tag, _, err := client.Repositories.GetTag("VonC", prg.GetName(), *tagShort.CommitTag.SHA)
+		tag, _, err := repos.GetTag(authUserName, prg.GetName(), *tagShort.CommitTag.SHA)
 		if err != nil {
 			fmt.Printf("Error while getting tag '%v'-'%v' from repo VonC/'%v': '%v'\n", *tagShort.Name, *tagShort.CommitTag.SHA, prg.GetName(), err)
 		}
@@ -832,17 +843,17 @@ func (prg *Prg) checkPortable() {
 			Object:  github.String("8dfd37977c708c97293aa81c5a0715d367f4f201"),
 			Type:    github.String("commit"),
 			Tagger: &github.Tagger{
-				Name:  github.String("VonC"),
+				Name:  github.String(authUserName),
 				Email: github.String("me@me.com"),
 				Date:  &github.Timestamp{time.Date(2011, 01, 02, 16, 04, 05, 0, time.UTC)},
 			},
 		}
-		tag, _, err := client.Repositories.CreateTag("VonC", prg.GetName(), input)
+		tag, _, err := repos.CreateTag(authUserName, prg.GetName(), input)
 		if err != nil {
 			fmt.Printf("Error while creating tag '%v'-'%v' from repo VonC/'%v': '%v'\n", *input.Tag, *input.Object, prg.GetName(), err)
 			return
 		}
-		ref, _, err := client.Git.CreateRef("VonC", prg.GetName(), &github.Reference{
+		ref, _, err := client.Git.CreateRef(authUserName, prg.GetName(), &github.Reference{
 			Ref: github.String("tags/" + "v" + folder),
 			Object: &github.GitObject{
 				SHA: github.String(*tag.SHA),
@@ -855,7 +866,7 @@ func (prg *Prg) checkPortable() {
 		fmt.Printf("Ref created: '%v'\n", ref)
 	}
 
-	releases, _, err := client.Repositories.ListReleases("VonC", prg.GetName())
+	releases, _, err := repos.ListReleases(authUserName, prg.GetName())
 	if err != nil {
 		fmt.Printf("Error while getting releasesfrom repo VonC/'%v': '%v'\n", prg.GetName(), err)
 		return
@@ -878,7 +889,7 @@ func (prg *Prg) checkPortable() {
 			Name:            github.String(folder),
 			Body:            github.String("Portable version of " + folder),
 		}
-		reprel, _, err = client.Repositories.CreateRelease("VonC", prg.GetName(), reprel)
+		reprel, _, err = repos.CreateRelease(authUserName, prg.GetName(), reprel)
 		if err != nil {
 			fmt.Printf("Error while creating repo release '%v'-'%v' for repo VonC/'%v': '%v'\n", folder, *tagShort.Name, prg.GetName(), err)
 			return
@@ -887,7 +898,7 @@ func (prg *Prg) checkPortable() {
 		fmt.Printf("Repo Release found: '%v'\n", rel)
 	}
 
-	assets, _, err := client.Repositories.ListReleaseAssets("VonC", prg.GetName(), *rel.ID)
+	assets, _, err := repos.ListReleaseAssets(authUserName, prg.GetName(), *rel.ID)
 	if err != nil {
 		fmt.Printf("Error while getting assets from release'%v'(%v): '%v'\n", *rel.Name, *rel.ID, err)
 		return
@@ -900,17 +911,17 @@ func (prg *Prg) checkPortable() {
 				   Tag found: 'github.RepositoryTag{Tag:"vGow-0.8.0",
 				   SHA:"fe1193a94e6d19aac0e57de7d6a269264d42de60",
 				   URL:"https://api.github.com/repos/VonC/gow/git/tags/fe1193a94e6d19aac0e57de7d6a269264d42de60",
-				   Message:"a test", Tagger:github.Tagger{Name:"VonC", Email:"me@me.com", Date:github.Timestamp{2011-01-02 15:04:05 +0000 UTC}}, ObjectTag:github.ObjectTag{Name:"commit", SHA:"8dfd37977c708c97293aa81c5a0715d367f4f201", URL:"https://api.github.com/repos/VonC/gow/git/commits/8dfd37977c708c97293aa81c5a0715d367f4f201"}}'
+				   Message:"a test", Tagger:github.Tagger{Name:authUserName, Email:"me@me.com", Date:github.Timestamp{2011-01-02 15:04:05 +0000 UTC}}, ObjectTag:github.ObjectTag{Name:"commit", SHA:"8dfd37977c708c97293aa81c5a0715d367f4f201", URL:"https://api.github.com/repos/VonC/gow/git/commits/8dfd37977c708c97293aa81c5a0715d367f4f201"}}'
 
 					Tag found: 'github.RepositoryTag{Tag:"vGow-0.8.0",
 					SHA:"e91a70c35330fad5ba2e168645e10df830986e5f",
 					URL:"https://api.github.com/repos/VonC/gow/git/tags/e91a70c35330fad5ba2e168645e10df830986e5f",
-					Message:"a test", Tagger:github.Tagger{Name:"VonC", Email:"me@me.com", Date:github.Timestamp{2011-01-02 16:04:05 +0000 UTC}}, ObjectTag:github.ObjectTag{Name:"commit", SHA:"8dfd37977c708c97293aa81c5a0715d367f4f201", URL:"https://api.github.com/repos/VonC/gow/git/commits/8dfd37977c708c97293aa81c5a0715d367f4f201"}}'
+					Message:"a test", Tagger:github.Tagger{Name:authUserName, Email:"me@me.com", Date:github.Timestamp{2011-01-02 16:04:05 +0000 UTC}}, ObjectTag:github.ObjectTag{Name:"commit", SHA:"8dfd37977c708c97293aa81c5a0715d367f4f201", URL:"https://api.github.com/repos/VonC/gow/git/commits/8dfd37977c708c97293aa81c5a0715d367f4f201"}}'
 
 					Tag found: 'github.RepositoryTag{Tag:"vGow-0.8.0",
 					SHA:"e91a70c35330fad5ba2e168645e10df830986e5f",
 					URL:"https://api.github.com/repos/VonC/gow/git/tags/e91a70c35330fad5ba2e168645e10df830986e5f",
-					Message:"a test", Tagger:github.Tagger{Name:"VonC", Email:"me@me.com", Date:github.Timestamp{2011-01-02 16:04:05 +0000 UTC}}, ObjectTag:github.ObjectTag{Name:"commit", SHA:"8dfd37977c708c97293aa81c5a0715d367f4f201", URL:"https://api.github.com/repos/VonC/gow/git/commits/8dfd37977c708c97293aa81c5a0715d367f4f201"}}'
+					Message:"a test", Tagger:github.Tagger{Name:authUserName, Email:"me@me.com", Date:github.Timestamp{2011-01-02 16:04:05 +0000 UTC}}, ObjectTag:github.ObjectTag{Name:"commit", SHA:"8dfd37977c708c97293aa81c5a0715d367f4f201", URL:"https://api.github.com/repos/VonC/gow/git/commits/8dfd37977c708c97293aa81c5a0715d367f4f201"}}'
 
 					Ref created: 'github.Reference{Ref:"refs/tags/vGow-0.8.0",
 					URL:"https://api.github.com/repos/VonC/gow/git/refs/tags/vGow-0.8.0",
@@ -920,7 +931,7 @@ func (prg *Prg) checkPortable() {
 
 		Tag found: 'github.RepositoryTag{Tag:"vGow-0.8.0", SHA:"e91a70c35330fad5ba2e168645e10df830986e5f", URL:"https://api.github.com/repos/VonC/gow/git/tags/e91a70c35330fad5ba2e168645e10
 		df830986e5f", Message:"a test
-		", Tagger:github.Tagger{Name:"VonC", Email:"me@me.com", Date:github.Timestamp{2011-01-02 16:04:05 +0000 UTC}}, ObjectTag:github.ObjectTag{Name:"commit", SHA:"8dfd37977c708c97293aa8
+		", Tagger:github.Tagger{Name:authUserName, Email:"me@me.com", Date:github.Timestamp{2011-01-02 16:04:05 +0000 UTC}}, ObjectTag:github.ObjectTag{Name:"commit", SHA:"8dfd37977c708c97293aa8
 		1c5a0715d367f4f201", URL:"https://api.github.com/repos/VonC/gow/git/commits/8dfd37977c708c97293aa81c5a0715d367f4f201"}}'
 	*/
 	// folderMain := "test/" + prg.name + "/"
