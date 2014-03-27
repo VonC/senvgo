@@ -822,7 +822,7 @@ func (prg *Prg) checkPortable() {
 
 	if *repocommit.Commit.Message != "version for portable "+portableArchive {
 		fmt.Println("Must create commit")
-		c := &github.CommitRequest{Message: github.String("version for portable " + portableArchive), Tree: repocommit.Commit.Tree.SHA}
+		c := &github.CommitRequest{Message: github.String("version for portable " + portableArchive), Tree: repocommit.Commit.Tree.SHA, Parents: []string{*repocommit.SHA}}
 		c.Committer = &github.CommitAuthor{Name: authUser.Name, Email: authUser.Email}
 		fmt.Println(c)
 		commit, _, err := client.Git.CreateCommit(owner, *repo.Name, c)
