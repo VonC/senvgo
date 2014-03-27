@@ -831,6 +831,14 @@ func (prg *Prg) checkPortable() {
 			return
 		}
 		fmt.Printf("COMMIT CREATED: '%v'\n", commit)
+
+		refc := &github.Reference{Ref: github.String("heads/master"), Object: &github.GitObject{SHA: github.String(*commit.SHA)}}
+		ref, _, err := client.Git.UpdateRef(owner, *repo.Name, refc, false)
+		if err != nil {
+			fmt.Printf("Error while updating ref '%v' for commit '%v' for repo %v/'%v': '%v'\n", refc, commit, owner, *repo.Name, err)
+			return
+		}
+		fmt.Printf("REF UPDATED: '%v'\n", ref)
 		return
 	}
 
