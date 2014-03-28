@@ -897,7 +897,6 @@ func (prg *Prg) checkPortable() {
 		}
 		fmt.Printf("Ref created: '%v'\n", ref)
 	}
-	return
 	releases, _, err := repos.ListReleases(owner, prg.GetName())
 	if err != nil {
 		fmt.Printf("Error while getting releasesfrom repo VonC/'%v': '%v'\n", prg.GetName(), err)
@@ -915,21 +914,22 @@ func (prg *Prg) checkPortable() {
 
 	if !relFound {
 		fmt.Printf("Must create release '%v' for repo VonC/'%v'.\n", folder, prg.GetName())
+
 		reprel := &github.RepositoryRelease{
-			TagName:         github.String(*tagShort.Name),
-			TargetCommitish: github.String(*tagShort.CommitTag.SHA),
+			TagName:         github.String("v" + folder),
+			TargetCommitish: github.String(sha),
 			Name:            github.String(folder),
 			Body:            github.String("Portable version of " + folder),
 		}
 		reprel, _, err = repos.CreateRelease(owner, prg.GetName(), reprel)
 		if err != nil {
-			fmt.Printf("Error while creating repo release '%v'-'%v' for repo VonC/'%v': '%v'\n", folder, *tagShort.Name, prg.GetName(), err)
+			fmt.Printf("Error while creating repo release '%v'-'%v' for repo VonC/'%v': '%v'\n", folder, "v"+folder, prg.GetName(), err)
 			return
 		}
 	} else {
 		fmt.Printf("Repo Release found: '%v'\n", rel)
 	}
-
+	return
 	assets, _, err := repos.ListReleaseAssets(owner, prg.GetName(), *rel.ID)
 	if err != nil {
 		fmt.Printf("Error while getting assets from release'%v'(%v): '%v'\n", *rel.Name, *rel.ID, err)
