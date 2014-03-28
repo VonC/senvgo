@@ -818,6 +818,7 @@ func (prg *Prg) checkPortable() {
 	}
 
 	repocommit := commits[0]
+	sha := *repocommit.SHA
 	fmt.Printf("Commit '%v' => '%v'\n", *repocommit.SHA, repocommit.Commit.Tree)
 
 	if *repocommit.Commit.Message != "version for portable "+portableArchive {
@@ -831,6 +832,7 @@ func (prg *Prg) checkPortable() {
 			return
 		}
 		fmt.Printf("COMMIT CREATED: '%v'\n", commit)
+		sha = *commit.SHA
 
 		refc := &github.Reference{Ref: github.String("heads/master"), Object: &github.GitObject{SHA: github.String(*commit.SHA)}}
 		ref, _, err := client.Git.UpdateRef(owner, *repo.Name, refc, false)
