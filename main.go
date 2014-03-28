@@ -844,8 +844,6 @@ func (prg *Prg) checkPortable() {
 		return
 	}
 
-	return
-
 	tags, _, err := repos.ListTags(owner, prg.GetName())
 	if err != nil {
 		fmt.Printf("Error while getting tags from repo VonC/'%v': '%v'\n", prg.GetName(), err)
@@ -863,25 +861,23 @@ func (prg *Prg) checkPortable() {
 		}
 	}
 
-	fmt.Printf("Tag found: '%v'\n", tagShort)
-	//tagShort = tags[0]
-	/*
-		tag, _, err := repos.GetTag(owner, prg.GetName(), *tagShort.CommitTag.SHA)
-		if err != nil {
-			fmt.Printf("Error while getting tag '%v'-'%v' from repo VonC/'%v': '%v'\n", *tagShort.Name, *tagShort.CommitTag.SHA, prg.GetName(), err)
-		}
-	*/
+	if tagFound && *tagShort.CommitTag.SHA != sha {
+		fmt.Printf("Must delete tag (actually ref) found '%v'", tagShort)
+		tagFound = false
+		return
+	}
+
 	if !tagFound {
-		fmt.Printf("Must create tag '%v' for repo VonC/'%v'.\n", "v"+folder, prg.GetName())
+		fmt.Printf("Must create tag '%v' for commit '%v', repo VonC/'%v'.\n", "v"+folder, sha, prg.GetName())
+
 		input := &github.DataTag{
 			Tag:     github.String("v" + folder),
-			Message: github.String("a test\n"),
-			Object:  github.String("8dfd37977c708c97293aa81c5a0715d367f4f201"),
+			Message: github.String("tag for version portable " + portableArchive),
+			Object:  github.String(sha),
 			Type:    github.String("commit"),
 			Tagger: &github.Tagger{
 				Name:  github.String(owner),
-				Email: github.String("me@me.com"),
-				Date:  &github.Timestamp{time.Date(2011, 01, 02, 16, 04, 05, 0, time.UTC)},
+				Email: github.String(email),
 			},
 		}
 		tag, _, err := repos.CreateTag(owner, prg.GetName(), input)
@@ -901,7 +897,7 @@ func (prg *Prg) checkPortable() {
 		}
 		fmt.Printf("Ref created: '%v'\n", ref)
 	}
-
+	return
 	releases, _, err := repos.ListReleases(owner, prg.GetName())
 	if err != nil {
 		fmt.Printf("Error while getting releasesfrom repo VonC/'%v': '%v'\n", prg.GetName(), err)
