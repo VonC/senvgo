@@ -903,6 +903,7 @@ func (prg *Prg) checkPortable() {
 		return
 	}
 
+	rid := 0
 	var rel github.RepositoryRelease
 	relFound := false
 	for _, rel = range releases {
@@ -926,49 +927,30 @@ func (prg *Prg) checkPortable() {
 			fmt.Printf("Error while creating repo release '%v'-'%v' for repo VonC/'%v': '%v'\n", folder, "v"+folder, prg.GetName(), err)
 			return
 		}
+		rid = *reprel.ID
 	} else {
 		fmt.Printf("Repo Release found: '%v'\n", rel)
+		rid = *rel.ID
 	}
-	return
-	assets, _, err := repos.ListReleaseAssets(owner, prg.GetName(), *rel.ID)
+
+	assets, _, err := repos.ListReleaseAssets(owner, prg.GetName(), rid)
 	if err != nil {
-		fmt.Printf("Error while getting assets from release'%v'(%v): '%v'\n", *rel.Name, *rel.ID, err)
+		fmt.Printf("Error while getting assets from release'%v'(%v): '%v'\n", *rel.Name, rid, err)
 		return
 	}
 
-	if len(assets) == 0 {
+	var rela github.ReleaseAsset
+	relaFound := false
+	for _, rela = range assets {
+		if *rela.Name == folder+".zip" {
+			relaFound = true
+			break
+		}
+	}
+	if !relaFound {
 		fmt.Printf("Must upload asset to release '%v'\n", *rel.Name)
 	}
-	/*
-				   Tag found: 'github.RepositoryTag{Tag:"vGow-0.8.0",
-				   SHA:"fe1193a94e6d19aac0e57de7d6a269264d42de60",
-				   URL:"https://api.github.com/repos/VonC/gow/git/tags/fe1193a94e6d19aac0e57de7d6a269264d42de60",
-				   Message:"a test", Tagger:github.Tagger{Name:owner, Email:"me@me.com", Date:github.Timestamp{2011-01-02 15:04:05 +0000 UTC}}, ObjectTag:github.ObjectTag{Name:"commit", SHA:"8dfd37977c708c97293aa81c5a0715d367f4f201", URL:"https://api.github.com/repos/VonC/gow/git/commits/8dfd37977c708c97293aa81c5a0715d367f4f201"}}'
 
-					Tag found: 'github.RepositoryTag{Tag:"vGow-0.8.0",
-					SHA:"e91a70c35330fad5ba2e168645e10df830986e5f",
-					URL:"https://api.github.com/repos/VonC/gow/git/tags/e91a70c35330fad5ba2e168645e10df830986e5f",
-					Message:"a test", Tagger:github.Tagger{Name:owner, Email:"me@me.com", Date:github.Timestamp{2011-01-02 16:04:05 +0000 UTC}}, ObjectTag:github.ObjectTag{Name:"commit", SHA:"8dfd37977c708c97293aa81c5a0715d367f4f201", URL:"https://api.github.com/repos/VonC/gow/git/commits/8dfd37977c708c97293aa81c5a0715d367f4f201"}}'
-
-					Tag found: 'github.RepositoryTag{Tag:"vGow-0.8.0",
-					SHA:"e91a70c35330fad5ba2e168645e10df830986e5f",
-					URL:"https://api.github.com/repos/VonC/gow/git/tags/e91a70c35330fad5ba2e168645e10df830986e5f",
-					Message:"a test", Tagger:github.Tagger{Name:owner, Email:"me@me.com", Date:github.Timestamp{2011-01-02 16:04:05 +0000 UTC}}, ObjectTag:github.ObjectTag{Name:"commit", SHA:"8dfd37977c708c97293aa81c5a0715d367f4f201", URL:"https://api.github.com/repos/VonC/gow/git/commits/8dfd37977c708c97293aa81c5a0715d367f4f201"}}'
-
-					Ref created: 'github.Reference{Ref:"refs/tags/vGow-0.8.0",
-					URL:"https://api.github.com/repos/VonC/gow/git/refs/tags/vGow-0.8.0",
-					Object:github.GitObject{Type:"tag",
-					SHA:"e91a70c35330fad5ba2e168645e10df830986e5f",
-					URL:"https://api.github.com/repos/VonC/gow/git/tags/e91a70c35330fad5ba2e168645e10df830986e5f"}}'
-
-		Tag found: 'github.RepositoryTag{Tag:"vGow-0.8.0", SHA:"e91a70c35330fad5ba2e168645e10df830986e5f", URL:"https://api.github.com/repos/VonC/gow/git/tags/e91a70c35330fad5ba2e168645e10
-		df830986e5f", Message:"a test
-		", Tagger:github.Tagger{Name:owner, Email:"me@me.com", Date:github.Timestamp{2011-01-02 16:04:05 +0000 UTC}}, ObjectTag:github.ObjectTag{Name:"commit", SHA:"8dfd37977c708c97293aa8
-		1c5a0715d367f4f201", URL:"https://api.github.com/repos/VonC/gow/git/commits/8dfd37977c708c97293aa81c5a0715d367f4f201"}}'
-	*/
-	// folderMain := "test/" + prg.name + "/"
-	// folder := prg.GetFolder()
-	// folderFull := folderMain + folder
 }
 
 func (prg *Prg) GetFolder() string {
