@@ -45,7 +45,7 @@ type Prg struct {
 	invoke          string
 	exts            *Extractors
 	portableExt     *Extractors
-	cache           CacheGetter
+	cache           Cache
 	arch            *Arch
 }
 
@@ -60,13 +60,13 @@ func (p *Prg) String() string {
 type PrgData interface {
 	GetName() string
 	GetArch() *Arch
-	GetCache() CacheGetter
+	GetCache() Cache
 }
 
 func (p *Prg) GetName() string {
 	return p.name
 }
-func (p *Prg) GetCache() CacheGetter {
+func (p *Prg) GetCache() Cache {
 	return p.cache
 }
 func (p *Prg) GetArch() *Arch {
@@ -110,21 +110,53 @@ type Extractor interface {
 	Nb() int
 }
 
-type CacheGetter interface {
+type Cache interface {
 	Get(resource string, name string, isArchive bool) string
-	Folder(name string) string
-	Next() CacheGetter
+	Next() Cache
 	Last() string
+	Nb() int
+	Add(cache Cache)
 }
 
-type Cache struct {
-	root string
+type CacheData struct {
+	id   string
+	next Cache
 	last string
+}
+
+func (c *CacheData) String() string {
+	res := fmt.Sprintf("(%v)", len(c.last))
+	return res
+}
+
+func (c *CacheData) Add(cache Cache) {
+	/*if cache.(*CacheData).id == "" {
+		return
+	}*/
+	if c.next == nil {
+		c.next = cache
+	} else {
+		c.next.Add(cache)
+	}
+}
+
+type CacheDisk struct {
+	*CacheData
+	root string
+}
+
+type CacheGitHub struct {
+	CacheData
+	owner string
+}
+
+func (c *CacheGitHub) Get(resource string, name string, isArchive bool) string {
+	return ""
 }
 
 // resource is either an url or an archive extension (exe, zip, tar.gz, ...)
 // TODO split in two function GetUrl and GetArchive
-func (c *Cache) Get(resource string, name string, isArchive bool) string {
+func (c *CacheDisk) Get(resource string, name string, isArchive bool) string {
 	dir := c.root + name
 	err := os.MkdirAll(dir, 0755)
 	c.last = ""
@@ -161,19 +193,26 @@ func (c *Cache) Get(resource string, name string, isArchive bool) string {
 	}
 }
 
-func (c *Cache) String() string {
-	res := fmt.Sprintf("Cache '%v' (%v)", c.root, len(c.last))
+func (c *CacheDisk) String() string {
+	res := fmt.Sprintf("CacheDisk '%v'[%v] (%v)", c.root, c.Nb(), len(c.last))
 	return res
 }
 
-func (c *Cache) Last() string {
+func (c *CacheData) Last() string {
 	return c.last
 }
 
-func (c *Cache) Next() CacheGetter {
-	return nil
+func (c *CacheData) Nb() int {
+	if c.next == nil {
+		return 1
+	}
+	return 1 + c.next.Nb()
 }
-func (c *Cache) Folder(name string) string {
+
+func (c *CacheData) Next() Cache {
+	return c.next
+}
+func (c *CacheDisk) Folder(name string) string {
 	return c.root + name + "/"
 }
 
@@ -230,7 +269,7 @@ func (eu *ExtractorGet) ExtractFrom(url string) string {
 		sha := base64.URLEncoding.EncodeToString(hasher.Sum(nil))
 
 		t := time.Now()
-		filename := cache.Folder(name) + name + "_" + sha + "_" + t.Format("20060102") + "_" + t.Format("150405")
+		filename := cache.(*CacheDisk).Folder(name) + name + "_" + sha + "_" + t.Format("20060102") + "_" + t.Format("150405")
 
 		fmt.Println(filename)
 		fmt.Println("empty page for " + url)
