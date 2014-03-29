@@ -152,6 +152,9 @@ type CacheGitHub struct {
 
 func (c *CacheGitHub) Get(resource string, name string, isArchive bool) string {
 	fmt.Printf("Get '%v' (%v) for '%v' from '%v'\n", resource, isArchive, name, c.String())
+	if !isArchive || !strings.HasSuffix(resource, ".zip") {
+		return ""
+	}
 	c.last = ""
 	if c.Next() != nil {
 		c.last = c.Next().Get(resource, name, isArchive)
