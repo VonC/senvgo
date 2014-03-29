@@ -112,6 +112,7 @@ type Extractor interface {
 
 type Cache interface {
 	Get(resource string, name string, isArchive bool) string
+	Update(resource string, name string, isArchive bool, content string)
 	Next() Cache
 	Last() string
 	Nb() int
@@ -165,15 +166,54 @@ func (c *CacheGitHub) Get(resource string, name string, isArchive bool) string {
 	return c.last
 }
 
+func (c *CacheGitHub) Update(resource string, name string, isArchive bool, content string) {
+	fmt.Printf("UPD '%v' (%v) for '%v' from '%v'\n", resource, isArchive, name, c.String())
+	if !isArchive || !strings.HasSuffix(resource, ".zip") {
+		return
+	}
+}
+
+func (c *CacheDisk) Update(resource string, name string, isArchive bool, content string) {
+	fmt.Printf("UPD '%v' (%v) for '%v' from '%v'\n", resource, isArchive, name, c.String())
+	c.last = c.getFile(resource, name, isArchive)
+	if c.last == "" {
+		c.last = content
+		c.updateFile(resource, name, isArchive)
+	}
+	if c.next != nil {
+		c.Next().Update(resource, name, isArchive, content)
+	}
+}
+
+func (c *CacheDisk) updateFile(resource string, name string, isArchive bool) {
+}
+
 // resource is either an url or an archive extension (exe, zip, tar.gz, ...)
 func (c *CacheDisk) Get(resource string, name string, isArchive bool) string {
 	fmt.Printf("Get '%v' (%v) for '%v' from '%v'\n", resource, isArchive, name, c.String())
 	c.last = c.getFile(resource, name, isArchive)
-	if c.last == "" && c.Next() != nil {
-		c.last = c.Next().Get(resource, name, isArchive)
+	if c.next != nil {
+		if c.last == "" {
+			c.last = c.Next().Get(resource, name, isArchive)
+			c.updateFile(resource, name, isArchive)
+		} else {
+			c.Next().Update(resource, name, isArchive, c.last)
+		}
 	}
 	return c.last
 }
+
+func (c *CacheDisk) getResourceName(resource string, name string, isArchive bool) string {
+	res := resource
+	if !isArchive {
+		hasher := sha1.New()
+		hasher.Write([]byte(resource))
+		sha := base64.URLEncoding.EncodeToString(hasher.Sum(nil))
+		res = sha
+	}
+	return res
+}
+
 func (c *CacheDisk) getFile(resource string, name string, isArchive bool) string {
 	c.last = ""
 	dir := c.root + name
@@ -183,12 +223,10 @@ func (c *CacheDisk) getFile(resource string, name string, isArchive bool) string
 		fmt.Printf("Error creating cache folder for name '%v': '%v'\n", dir, err)
 		return ""
 	}
-	pattern := name + "_archive_.*." + resource
+	rsc := c.getResourceName(resource, name, isArchive)
+	pattern := name + "_archive_.*." + rsc
 	if !isArchive {
-		hasher := sha1.New()
-		hasher.Write([]byte(resource))
-		sha := base64.URLEncoding.EncodeToString(hasher.Sum(nil))
-		pattern = name + "_" + sha + "_.*"
+		pattern = name + "_" + rsc + "_.*"
 	}
 	filepath := dir + "/" + getLastModifiedFile(dir, pattern)
 	if filepath == dir+"/" {
