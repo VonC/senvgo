@@ -151,12 +151,27 @@ type CacheGitHub struct {
 }
 
 func (c *CacheGitHub) Get(resource string, name string, isArchive bool) string {
-	return ""
+	fmt.Printf("Get '%v' (%v) for '%v' from '%v'\n", resource, isArchive, name, c.String())
+	c.last = ""
+	if c.Next() != nil {
+		c.last = c.Next().Get(resource, name, isArchive)
+		if c.last != "" {
+			return c.last
+		}
+	}
+	return c.last
 }
 
 // resource is either an url or an archive extension (exe, zip, tar.gz, ...)
-// TODO split in two function GetUrl and GetArchive
 func (c *CacheDisk) Get(resource string, name string, isArchive bool) string {
+	fmt.Printf("Get '%v' (%v) for '%v' from '%v'\n", resource, isArchive, name, c.String())
+	c.last = ""
+	if c.Next() != nil {
+		c.last = c.Next().Get(resource, name, isArchive)
+		if c.last != "" {
+			return c.last
+		}
+	}
 	dir := c.root + name
 	err := os.MkdirAll(dir, 0755)
 	c.last = ""
@@ -193,8 +208,13 @@ func (c *CacheDisk) Get(resource string, name string, isArchive bool) string {
 	}
 }
 
+func (c *CacheGitHub) String() string {
+	res := fmt.Sprintf("CacheGitHub '%v'[%v] '%v' %v", c.id, c.Nb(), c.owner, c.CacheData)
+	return res
+}
+
 func (c *CacheDisk) String() string {
-	res := fmt.Sprintf("CacheDisk '%v'[%v] (%v)", c.root, c.Nb(), len(c.last))
+	res := fmt.Sprintf("CacheDisk '%v'[%v] '%v' %v", c.id, c.Nb(), c.root, c.CacheData)
 	return res
 }
 
@@ -258,7 +278,7 @@ type ExtractorGet struct {
 }
 
 func (eu *ExtractorGet) ExtractFrom(url string) string {
-	fmt.Println("ok! " + url)
+	//fmt.Println("ok! " + url)
 	cache := eu.prg.GetCache()
 	name := eu.prg.GetName()
 	page := cache.Get(url, name, false)
@@ -403,9 +423,9 @@ var cfgRx, _ = regexp.Compile(`^([^\.]+)\.([^\.\s]+)\s+(.*?)$`)
   name.rx        /(peazip_portable-.*?\._$arch_.zip)/download
 */
 var defaultConfig = `
-[cache id="secondary"]
-  root "test/_secondary"
-[cache id="githubvonc"]
+[cache id secondary]
+  root test/_secondary
+[cache id githubvonc]
   owner "VonC"
 [gow]
   folder.get     https://github.com/bmatzelle/gow/releases
@@ -456,7 +476,8 @@ func ReadConfig() []*Prg {
 				exts = &Extractors{}
 				currentPrg = &Prg{name: name, cache: cache, exts: exts}
 			} else {
-				currentCacheName = strings.TrimSpace(line[len("[cache "):])
+				currentCacheName = strings.TrimSpace(line[len("[cache id "):])
+				currentCacheName = strings.TrimSpace(currentCacheName[0 : len(currentCacheName)-1])
 			}
 			continue
 		}
@@ -474,11 +495,14 @@ func ReadConfig() []*Prg {
 		}
 		if strings.HasPrefix(line, "root") && currentCacheName != "" {
 			line = strings.TrimSpace(line[len("root"):])
+			if !strings.HasSuffix(line, string(filepath.Separator)) {
+				line = line + string(filepath.Separator)
+			}
 			currentCache = &CacheDisk{CacheData: &CacheData{id: currentCacheName}, root: line}
 			continue
 		}
-		if strings.HasPrefix(line, "root") && currentCacheName != "" {
-			line = strings.TrimSpace(line[len("root"):])
+		if strings.HasPrefix(line, "owner") && currentCacheName != "" {
+			line = strings.TrimSpace(line[len("owner"):])
 			currentCache = &CacheGitHub{CacheData: CacheData{id: currentCacheName}, owner: line}
 			continue
 		}
@@ -486,7 +510,7 @@ func ReadConfig() []*Prg {
 		if len(m) == 0 {
 			continue
 		}
-		fmt.Printf("line: '%v' => '%v'\n", line, m)
+		//fmt.Printf("line: '%v' => '%v'\n", line, m)
 
 		variable := line[m[2]:m[3]]
 		extractor := line[m[4]:m[5]]
