@@ -942,13 +942,32 @@ func (prg *Prg) checkPortable() {
 	var rela github.ReleaseAsset
 	relaFound := false
 	for _, rela = range assets {
-		if *rela.Name == folder+".zip" {
+		if *rela.Name == portableArchive {
 			relaFound = true
 			break
 		}
 	}
 	if !relaFound {
 		fmt.Printf("Must upload asset to release '%v'\n", *rel.Name)
+		file, err := os.Open(folderMain + portableArchive)
+		if err != nil {
+			fmt.Printf("Error while opening release asset file '%v'(%v): '%v'\n", folderMain+portableArchive, prg.GetName(), err)
+			return
+		}
+		defer func() {
+			if err := file.Close(); err != nil {
+				fmt.Printf("Error while closing release asset file '%v'(%v): '%v'\n", folderMain+portableArchive, prg.GetName(), err)
+				return
+			}
+		}()
+		rela, _, err := repos.UploadReleaseAsset(owner, prg.GetName(), rid, &github.UploadOptions{Name: portableArchive}, file)
+		if err != nil {
+			fmt.Printf("Error while uploading release asset '%v'(%v): '%v'\n", *rel.Name, rid, err)
+			return
+		}
+		fmt.Printf("Release ASSET CREATED: '%v'\n", rela)
+	} else {
+		fmt.Printf("Release ASSET FOUND: '%v'\n", rela)
 	}
 
 }
