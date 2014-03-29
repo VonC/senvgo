@@ -168,13 +168,14 @@ func (c *CacheGitHub) Get(resource string, name string, isArchive bool) string {
 // resource is either an url or an archive extension (exe, zip, tar.gz, ...)
 func (c *CacheDisk) Get(resource string, name string, isArchive bool) string {
 	fmt.Printf("Get '%v' (%v) for '%v' from '%v'\n", resource, isArchive, name, c.String())
-	c.last = ""
-	if c.Next() != nil {
+	c.last = c.getFile(resource, name, isArchive)
+	if c.last == "" && c.Next() != nil {
 		c.last = c.Next().Get(resource, name, isArchive)
-		if c.last != "" {
-			return c.last
-		}
 	}
+	return c.last
+}
+func (c *CacheDisk) getFile(resource string, name string, isArchive bool) string {
+	c.last = ""
 	dir := c.root + name
 	err := os.MkdirAll(dir, 0755)
 	c.last = ""
