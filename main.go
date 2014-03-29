@@ -954,12 +954,7 @@ func (prg *Prg) checkPortable() {
 			fmt.Printf("Error while opening release asset file '%v'(%v): '%v'\n", folderMain+portableArchive, prg.GetName(), err)
 			return
 		}
-		defer func() {
-			if err := file.Close(); err != nil {
-				fmt.Printf("Error while closing release asset file '%v'(%v): '%v'\n", folderMain+portableArchive, prg.GetName(), err)
-				return
-			}
-		}()
+		// no need to close, or "Invalid argument"
 		rela, _, err := repos.UploadReleaseAsset(owner, prg.GetName(), rid, &github.UploadOptions{Name: portableArchive}, file)
 		if err != nil {
 			fmt.Printf("Error while uploading release asset '%v'(%v): '%v'\n", *rel.Name, rid, err)
