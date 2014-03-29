@@ -403,16 +403,16 @@ var cfgRx, _ = regexp.Compile(`^([^\.]+)\.([^\.\s]+)\s+(.*?)$`)
   name.rx        /(peazip_portable-.*?\._$arch_.zip)/download
 */
 var defaultConfig = `
+[cache id="secondary"]
+  root "test/_secondary"
+[cache id="githubvonc"]
+  owner "VonC"
 [gow]
   folder.get     https://github.com/bmatzelle/gow/releases
   folder.rx      /download/v.*?/(Gow-.*?).exe
   url.rx         (/bmatzelle/gow/releases/download/v.*?/Gow-.*?.exe)
   url.prepend    https://github.com
   name.rx        /download/v.*?/(Gow-.*?.exe)
-  portable.folder.get     https://github.com/VonC/gow/releases
-  folder.rx      /download/v.*?/(Gow-.*?).zip
-  url.rx         (/VonC/gow/releases/download/v.*?/Gow-.*?.zip)
-  url.prepend    https://github.com
   invoke         @FILE@ /S /D=@DEST@
 `
 
@@ -420,7 +420,7 @@ func ReadConfig() []*Prg {
 
 	res := []*Prg{}
 
-	cache := &Cache{root: "test/_cache/"}
+	cache := &CacheDisk{CacheData: &CacheData{id: "main"}, root: "test/_cache/"}
 	if isdir, err := exists("test/_cache/"); !isdir && err == nil {
 		err := os.MkdirAll(cache.root, 0755)
 		if err != nil {
@@ -428,44 +428,58 @@ func ReadConfig() []*Prg {
 		}
 	} else if err != nil {
 		fmt.Printf("Error while checking existence of cache root folder: '%v'\n", err)
+		return res
 	}
 
 	config := strings.NewReader(defaultConfig)
 	scanner := bufio.NewScanner(config)
 	var currentPrg *Prg = nil
+	var currentCache Cache = nil
 	var exts *Extractors = nil
 	var currentExtractor Extractor = nil
 	var currentVariable string
+	currentCacheName := ""
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
-		if strings.HasPrefix(line, "portable.") {
-			if currentPrg.portableExt == nil {
-				exts = &Extractors{}
-				currentPrg.portableExt = exts
-				line = line[len("portable."):]
-			}
-		}
 		if strings.HasPrefix(line, "[") {
 			if currentPrg != nil {
 				fmt.Printf("End of config for prg '%v'\n", currentPrg.name)
 				currentPrg.updatePortable()
 				res = append(res, currentPrg)
+				currentPrg = nil
 			}
-			name := line[1 : len(line)-1]
-			exts = &Extractors{}
-			currentPrg = &Prg{name: name, cache: cache, exts: exts}
+			cache.Add(currentCache)
+			currentCache = nil
+			currentCacheName = ""
+			if !strings.Contains(line, "[cache") {
+				name := line[1 : len(line)-1]
+				exts = &Extractors{}
+				currentPrg = &Prg{name: name, cache: cache, exts: exts}
+			} else {
+				currentCacheName = strings.TrimSpace(line[len("[cache "):])
+			}
 			continue
 		}
-		if strings.HasPrefix(line, "arch") {
+		if strings.HasPrefix(line, "arch") && currentPrg != nil {
 			line = strings.TrimSpace(line[len("arch"):])
 			archs := strings.Split(line, ",")
 			arch := &Arch{win32: archs[0], win64: archs[1]}
 			currentPrg.arch = arch
 			continue
 		}
-		if strings.HasPrefix(line, "invoke") {
+		if strings.HasPrefix(line, "invoke") && currentPrg != nil {
 			line = strings.TrimSpace(line[len("invoke"):])
 			currentPrg.invoke = line
+			continue
+		}
+		if strings.HasPrefix(line, "root") && currentCacheName != "" {
+			line = strings.TrimSpace(line[len("root"):])
+			currentCache = &CacheDisk{CacheData: &CacheData{id: currentCacheName}, root: line}
+			continue
+		}
+		if strings.HasPrefix(line, "root") && currentCacheName != "" {
+			line = strings.TrimSpace(line[len("root"):])
+			currentCache = &CacheGitHub{CacheData: CacheData{id: currentCacheName}, owner: line}
 			continue
 		}
 		m := cfgRx.FindSubmatchIndex([]byte(line))
