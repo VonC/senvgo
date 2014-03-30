@@ -709,6 +709,7 @@ func readJunction(link, folder, name string) string {
 func (p *Prg) install() {
 	folder := p.GetFolder()
 	if folder == "" {
+		fmt.Printf("[install] ERR: no folder on '%v'\n", p.GetName())
 		return
 	}
 	folderMain := "test/" + p.name + "/"
@@ -739,8 +740,11 @@ func (p *Prg) install() {
 			url := p.GetURL()
 			fmt.Printf("Url: '%v'\n", url)
 			if url == "" {
+				fmt.Printf("[install] ERR: no url on '%v'\n", p.GetName())
 				return
 			}
+			fmt.Printf("[install] DBG: no download yet on '%v'\n", p.GetName())
+			return
 			download(url, archiveFullPath, false)
 		}
 	} else if err != nil {
@@ -751,6 +755,8 @@ func (p *Prg) install() {
 		alreadyInstalled = true
 		p.checkLatest()
 	}
+	fmt.Printf("[install] DBG: no install yet on '%v'\n", p.GetName())
+	return
 	folderTmp := folderMain + "tmp"
 	if hasFolder, err := exists(folderTmp); !hasFolder && err == nil {
 		fmt.Printf("Need to make tmp for %v in '%v'\n", p.name, folderTmp)
