@@ -41,7 +41,7 @@ type Prg struct {
 	url             string
 	portableFolder  string
 	portableArchive string
-	portableUrl     string
+	portableURL     string
 	invoke          string
 	exts            *Extractors
 	portableExt     *Extractors
@@ -76,11 +76,11 @@ func (p *Prg) GetArch() *Arch {
 type Extractors struct {
 	extractFolder  Extractor
 	extractArchive Extractor
-	extractUrl     Extractor
+	extractURL     Extractor
 }
 
 func (es *Extractors) String() string {
-	res := fmt.Sprintf("extUrl='%v', extFolder='%v', extArchive='%v', ", es.extractUrl, es.extractFolder, es.extractArchive)
+	res := fmt.Sprintf("extUrl='%v', extFolder='%v', extArchive='%v', ", es.extractURL, es.extractFolder, es.extractArchive)
 	return res
 }
 
@@ -385,12 +385,12 @@ func NewExtractorMatch(rx string, p PrgData) *ExtractorMatch {
 	return res
 }
 
-func (eu *ExtractorMatch) ExtractFrom(content string) string {
-	rx := eu.Regexp()
-	if content == eu.data {
-		content = eu.p.GetCache().Last()
+func (em *ExtractorMatch) ExtractFrom(content string) string {
+	rx := em.Regexp()
+	if content == em.data {
+		content = em.p.GetCache().Last()
 	}
-	fmt.Printf("Rx for '%v' (%v): '%v'\n", eu.p.GetName(), len(content), rx)
+	fmt.Printf("Rx for '%v' (%v): '%v'\n", em.p.GetName(), len(content), rx)
 	matches := rx.FindAllStringSubmatchIndex(content, -1)
 	fmt.Printf("matches: '%v'\n", matches)
 	res := ""
@@ -438,11 +438,11 @@ func (p *Prg) updatePortable() {
 	if p.portableExt.extractFolder.Nb() == 1 {
 		p.portableExt.extractFolder.SetNext(p.exts.extractFolder.Next())
 	}
-	if p.portableExt.extractUrl == nil {
-		if strings.HasSuffix(reflect.TypeOf(p.exts.extractUrl).Name(), "ExtractorGet") {
-			p.portableExt.extractUrl = p.exts.extractUrl.Next()
+	if p.portableExt.extractURL == nil {
+		if strings.HasSuffix(reflect.TypeOf(p.exts.extractURL).Name(), "ExtractorGet") {
+			p.portableExt.extractURL = p.exts.extractURL.Next()
 		} else {
-			p.portableExt.extractUrl = p.exts.extractUrl
+			p.portableExt.extractURL = p.exts.extractURL
 		}
 	}
 	if p.portableExt.extractArchive == nil {
@@ -574,7 +574,7 @@ func ReadConfig() []*Prg {
 				case "folder":
 					exts.extractFolder = e
 				case "url":
-					exts.extractUrl = e
+					exts.extractURL = e
 				case "name":
 					exts.extractArchive = e
 				}
@@ -691,7 +691,7 @@ func (p *Prg) install() {
 		fmt.Printf("Need to install %v in '%v'\n", p.name, folderFull)
 		if hasArchive, err := exists(archiveFullPath); !hasArchive && err == nil {
 			fmt.Printf("Need to download %v in '%v'\n", p.name, archiveFullPath)
-			url := p.GetUrl()
+			url := p.GetURL()
 			fmt.Printf("Url: '%v'\n", url)
 			if url == "" {
 				return
@@ -1098,9 +1098,9 @@ func (p *Prg) GetArchive() string {
 	}
 	return p.archive
 }
-func (p *Prg) GetUrl() string {
+func (p *Prg) GetURL() string {
 	if p.exts != nil {
-		p.url = get(p.url, p.exts.extractUrl, false)
+		p.url = get(p.url, p.exts.extractURL, false)
 	}
 	return p.url
 }
@@ -1117,11 +1117,11 @@ func (p *Prg) GetPortableArchive() string {
 	}
 	return p.portableArchive
 }
-func (p *Prg) GetPortableUrl() string {
+func (p *Prg) GetPortableURL() string {
 	if p.portableExt != nil {
-		p.portableUrl = get(p.portableUrl, p.portableExt.extractUrl, false)
+		p.portableURL = get(p.portableURL, p.portableExt.extractURL, false)
 	}
-	return p.portableUrl
+	return p.portableURL
 }
 
 func get(iniValue string, ext Extractor, underscore bool) string {
@@ -1257,10 +1257,10 @@ func cloneZipItem(f *zip.File, dest string) {
 	}
 	rc.Close()
 }
-func unzip(zip_path, dest string) {
-	r, err := zip.OpenReader(zip_path)
+func unzip(zipPath, dest string) {
+	r, err := zip.OpenReader(zipPath)
 	if err != nil {
-		fmt.Printf("Error while opening zip '%v' for '%v'\n'%v'\n", zip_path, dest, err)
+		fmt.Printf("Error while opening zip '%v' for '%v'\n'%v'\n", zipPath, dest, err)
 		return
 	}
 	defer r.Close()
