@@ -227,8 +227,10 @@ func (c *CacheDisk) Get(resource string, name string, isArchive bool) string {
 		filename := c.Folder(name) + name + "_" + sha + "_" + t.Format("20060102") + "_" + t.Format("150405")
 		fmt.Printf("Get '%v' downloads '%v' for '%v'\n", c.id, filename, resource)
 		c.last = download(resource, filename, true)
-		fmt.Printf("Get '%v' has downloaded '%v' bytes in '%v' for '%v'\n", c.id, len(c.last), filename, resource)
-		if c.next != nil {
+		if c.last != "" {
+			fmt.Printf("Get '%v' has downloaded '%v' bytes in '%v' for '%v'\n", c.id, len(c.last), filename, resource)
+		}
+		if c.next != nil && c.last != "" {
 			c.next.Update(resource, name, isArchive, c.last)
 		}
 	}
@@ -714,18 +716,20 @@ func (p *Prg) install() {
 		err := os.MkdirAll(folderMain, 0755)
 		if err != nil {
 			fmt.Printf("Error creating main folder for name '%v': '%v'\n", folderMain, err)
+			return
 		}
-		return
 	} else if err != nil {
 		fmt.Printf("Error while testing main folder existence '%v': '%v'\n", folderMain, err)
 		return
 	}
 	folderFull := folderMain + folder
 	archive := p.GetArchive()
+	fmt.Printf("[install] GetArchive()='%v'\n", archive)
 	if archive == "" {
+		fmt.Printf("[install] ERR: no archive on '%v'\n", p.GetName())
 		return
 	}
-	archiveFullPath := folderMain + archive
+	archiveFullPath := cache.Get(archive, p.GetName(), true)
 	fmt.Printf("folderFull (%v): '%v'\n", p.name, folderFull)
 	alreadyInstalled := false
 	if hasFolder, err := exists(folderFull); !hasFolder && err == nil {
