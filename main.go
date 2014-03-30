@@ -240,7 +240,7 @@ func (c *CacheDisk) getFile(resource string, name string, isArchive bool) string
 		content := ""
 		reader := bufio.NewReader(f)
 		if contents, err := ioutil.ReadAll(reader); err != nil {
-			fmt.Println("Error while reading content of '%v': '%v'\n", filepath, err)
+			fmt.Printf("Error while reading content of '%v': '%v'\n", filepath, err)
 			return ""
 		} else {
 			content = string(contents)
@@ -597,7 +597,7 @@ func (prg *Prg) checkLatest() {
 
 	hasLatest, err := exists(folderLatest)
 	if err != nil {
-		fmt.Println("Error while testing folderLatest existence '%v': '%v'\n", folderLatest, err)
+		fmt.Printf("Error while testing folderLatest existence '%v': '%v'\n", folderLatest, err)
 		return
 	}
 	mainf, err := filepath.Abs(filepath.FromSlash(folderMain))
@@ -676,7 +676,7 @@ func (prg *Prg) install() {
 		}
 		return
 	} else if err != nil {
-		fmt.Println("Error while testing main folder existence '%v': '%v'\n", folderMain, err)
+		fmt.Printf("Error while testing main folder existence '%v': '%v'\n", folderMain, err)
 		return
 	}
 	folderFull := folderMain + folder
@@ -699,7 +699,7 @@ func (prg *Prg) install() {
 			download(url, archiveFullPath, false)
 		}
 	} else if err != nil {
-		fmt.Println("Error while testing installation folder existence '%v': '%v'\n", folder, err)
+		fmt.Printf("Error while testing installation folder existence '%v': '%v'\n", folder, err)
 		return
 	} else {
 		fmt.Printf("'%v' already installed in '%v'\n", prg.name, folderFull)
@@ -715,7 +715,7 @@ func (prg *Prg) install() {
 			return
 		}
 	} else if err != nil {
-		fmt.Println("Error while testing tmp folder existence '%v': '%v'\n", folderTmp, err)
+		fmt.Printf("Error while testing tmp folder existence '%v': '%v'\n", folderTmp, err)
 		return
 	} else if alreadyInstalled {
 		prg.checkPortable()
@@ -859,7 +859,7 @@ func (prg *Prg) invokeZip() {
 			return
 		}
 	} else if err != nil {
-		fmt.Println("Error while testing tmp 'folder to move' existence '%v': '%v'\n", folderToMove, err)
+		fmt.Printf("Error while testing tmp 'folder to move' existence '%v': '%v'\n", folderToMove, err)
 		return
 	}
 }
