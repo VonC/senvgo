@@ -922,7 +922,7 @@ func (p *Prg) checkPortable() {
 		return
 	}
 	folder := p.GetFolder()
-	portableFolder := p.GetPortableFolder()
+	portableFolder := folder
 	if folder == portableFolder {
 		fmt.Printf("portable folder already there '%v'\n", portableFolder)
 		return
@@ -1147,30 +1147,6 @@ func (p *Prg) GetURL() string {
 		p.url = get(p.url, p.exts.extractURL, false)
 	}
 	return p.url
-}
-
-// GetPortableFolder TOBEREMOVED
-func (p *Prg) GetPortableFolder() string {
-	if p.portableExt != nil {
-		p.portableFolder = get(p.portableFolder, p.portableExt.extractFolder, true)
-	}
-	return p.portableFolder
-}
-
-// GetPortableArchive TOBEREMOVED
-func (p *Prg) GetPortableArchive() string {
-	if p.portableExt != nil {
-		p.portableArchive = get(p.portableArchive, p.portableExt.extractArchive, false)
-	}
-	return p.portableArchive
-}
-
-// GetPortableURL TOBEREMOVED
-func (p *Prg) GetPortableURL() string {
-	if p.portableExt != nil {
-		p.portableURL = get(p.portableURL, p.portableExt.extractURL, false)
-	}
-	return p.portableURL
 }
 
 func get(iniValue string, ext Extractor, underscore bool) string {
