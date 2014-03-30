@@ -1200,12 +1200,12 @@ func deleteFolderContent(dir string) error {
 	var res error
 	f, err := os.Open(dir)
 	if err != nil {
-		res = fmt.Errorf("Error while opening dir for deletion '%v': '%v'\n", dir, err)
+		res = fmt.Errorf("error while opening dir for deletion '%v': '%v'\n", dir, err)
 		return res
 	}
 	list, err := f.Readdir(-1)
 	if err != nil {
-		res = fmt.Errorf("Error while reading dir for deletion '%v': '%v'\n", dir, err)
+		res = fmt.Errorf("error while reading dir for deletion '%v': '%v'\n", dir, err)
 		return res
 	}
 	if len(list) == 0 {
@@ -1215,7 +1215,7 @@ func deleteFolderContent(dir string) error {
 		fpath := filepath.Join(dir, fi.Name())
 		err := os.RemoveAll(fpath)
 		if err != nil {
-			res = fmt.Errorf("Error removing file '%v' in '%v': '%v'\n", fi.Name(), dir, err)
+			res = fmt.Errorf("error removing file '%v' in '%v': '%v'\n", fi.Name(), dir, err)
 			return res
 		}
 	}
