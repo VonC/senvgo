@@ -232,22 +232,22 @@ func (c *CacheDisk) getFile(resource string, name string, isArchive bool) string
 	if filepath == dir+"/" {
 		return ""
 	}
-	if f, err := os.Open(filepath); err != nil {
+	var f *os.File
+	if f, err = os.Open(filepath); err != nil {
 		fmt.Printf("Error while reading content of '%v': '%v'\n", filepath, err)
 		return ""
-	} else {
-		defer f.Close()
-		content := ""
-		reader := bufio.NewReader(f)
-		if contents, err := ioutil.ReadAll(reader); err != nil {
-			fmt.Printf("Error while reading content of '%v': '%v'\n", filepath, err)
-			return ""
-		} else {
-			content = string(contents)
-		}
-		c.last = content
-		return content
 	}
+	defer f.Close()
+	content := ""
+	reader := bufio.NewReader(f)
+	var contents []byte
+	if contents, err = ioutil.ReadAll(reader); err != nil {
+		fmt.Printf("Error while reading content of '%v': '%v'\n", filepath, err)
+		return ""
+	}
+	content = string(contents)
+	c.last = content
+	return content
 }
 
 func (c *CacheGitHub) String() string {
@@ -887,9 +887,9 @@ func (p *Prg) checkPortable() {
 	if folder == portableFolder {
 		fmt.Printf("portable folder already there '%v'\n", portableFolder)
 		return
-	} else {
-		fmt.Printf("Old portable folder: '%v'\n", portableFolder)
 	}
+	fmt.Printf("Old portable folder: '%v'\n", portableFolder)
+
 	if !ispa {
 		compress7z(folderMain+portableArchive, folderMain+folder, "", fmt.Sprintf("Compress '%v' for '%v'", portableArchive, p.GetName()))
 	}
