@@ -319,10 +319,10 @@ type ExtractorGet struct {
 	Extractable
 }
 
-func (eu *ExtractorGet) ExtractFrom(url string) string {
+func (eg *ExtractorGet) ExtractFrom(url string) string {
 	//fmt.Println("ok! " + url)
-	cache := eu.p.GetCache()
-	name := eu.p.GetName()
+	cache := eg.p.GetCache()
+	name := eg.p.GetName()
 	page := cache.Get(url, name, false)
 	if page == "" {
 
@@ -427,8 +427,8 @@ func NewExtractorPrepend(rx string, p PrgData) *ExtractorPrepend {
 	return res
 }
 
-func (eu *ExtractorPrepend) ExtractFrom(content string) string {
-	return eu.data + content
+func (ep *ExtractorPrepend) ExtractFrom(content string) string {
+	return ep.data + content
 }
 
 func (p *Prg) updatePortable() {
