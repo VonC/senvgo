@@ -408,7 +408,7 @@ func (em *ExtractorMatch) Regexp() *regexp.Regexp {
 		if arch != nil {
 			rx = strings.Replace(rx, "_$arch_", arch.Arch(), -1)
 		}
-		var err error = nil
+		var err error
 		if em.regexp, err = regexp.Compile(rx); err != nil {
 			em.regexp = nil
 			fmt.Printf("Error compiling Regexp for '%v': '%v' => err '%v'", em.p.GetName(), rx, err)
@@ -495,10 +495,10 @@ func ReadConfig() []*Prg {
 
 	config := strings.NewReader(defaultConfig)
 	scanner := bufio.NewScanner(config)
-	var currentPrg *Prg = nil
-	var currentCache Cache = nil
-	var exts *Extractors = nil
-	var currentExtractor Extractor = nil
+	var currentPrg *Prg
+	var currentCache Cache
+	var exts *Extractors
+	var currentExtractor Extractor
 	var currentVariable string
 	currentCacheName := ""
 	for scanner.Scan() {
@@ -557,7 +557,7 @@ func ReadConfig() []*Prg {
 		variable := line[m[2]:m[3]]
 		extractor := line[m[4]:m[5]]
 		data := line[m[6]:m[7]]
-		var e Extractor = nil
+		var e Extractor
 		switch extractor {
 		case "get":
 			e = NewExtractorGet(data, currentPrg)
@@ -1198,7 +1198,7 @@ func getLastModifiedFile(dir string, pattern string) string {
 }
 
 func deleteFolderContent(dir string) error {
-	var res error = nil
+	var res error
 	f, err := os.Open(dir)
 	if err != nil {
 		res = errors.New(fmt.Sprintf("Error while opening dir for deletion '%v': '%v'\n", dir, err))
