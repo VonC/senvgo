@@ -212,14 +212,16 @@ func (c *CacheDisk) Update(resource string, name string, isArchive bool, content
 func (c *CacheDisk) Get(resource string, name string, isArchive bool) string {
 	fmt.Printf("Get '%v' (%v) for '%v' from '%v'\n", resource, isArchive, name, c.String())
 	c.last = c.getFile(resource, name, isArchive)
+	wasNotFound := true
 	if c.next != nil {
 		if c.last == "" {
 			c.last = c.Next().Get(resource, name, isArchive)
 		} else {
+			wasNotFound = false
 			c.Next().Update(resource, name, isArchive, c.last)
 		}
 	}
-	if c.last == "" {
+	if c.last == "" || wasNotFound {
 		sha := c.getResourceName(resource, name, isArchive)
 		t := time.Now()
 		filename := c.Folder(name) + name + "_" + sha + "_" + t.Format("20060102") + "_" + t.Format("150405")
