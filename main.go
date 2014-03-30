@@ -28,9 +28,9 @@ import (
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	prgs := ReadConfig()
-	for _, prg := range prgs {
-		prg.install()
-		fmt.Printf("INSTALLED '%v'\n", prg)
+	for _, p := range prgs {
+		p.install()
+		fmt.Printf("INSTALLED '%v'\n", p)
 	}
 }
 
@@ -282,7 +282,7 @@ type Extractable struct {
 	data string
 	self Extractor
 	next Extractor
-	prg  PrgData
+	p    PrgData
 }
 
 func (e *Extractable) SetNext(next Extractor) {
@@ -321,8 +321,8 @@ type ExtractorGet struct {
 
 func (eu *ExtractorGet) ExtractFrom(url string) string {
 	//fmt.Println("ok! " + url)
-	cache := eu.prg.GetCache()
-	name := eu.prg.GetName()
+	cache := eu.p.GetCache()
+	name := eu.p.GetName()
 	page := cache.Get(url, name, false)
 	if page == "" {
 
@@ -368,8 +368,8 @@ func download(url string, filename string, returnBody bool) string {
 	return res
 }
 
-func NewExtractorGet(uri string, prg PrgData) *ExtractorGet {
-	res := &ExtractorGet{Extractable{data: uri, prg: prg}}
+func NewExtractorGet(uri string, p PrgData) *ExtractorGet {
+	res := &ExtractorGet{Extractable{data: uri, p: p}}
 	res.self = res
 	return res
 }
@@ -379,8 +379,8 @@ type ExtractorMatch struct {
 	regexp *regexp.Regexp
 }
 
-func NewExtractorMatch(rx string, prg PrgData) *ExtractorMatch {
-	res := &ExtractorMatch{Extractable{data: rx, prg: prg}, nil}
+func NewExtractorMatch(rx string, p PrgData) *ExtractorMatch {
+	res := &ExtractorMatch{Extractable{data: rx, p: p}, nil}
 	res.self = res
 	return res
 }
@@ -388,9 +388,9 @@ func NewExtractorMatch(rx string, prg PrgData) *ExtractorMatch {
 func (eu *ExtractorMatch) ExtractFrom(content string) string {
 	rx := eu.Regexp()
 	if content == eu.data {
-		content = eu.prg.GetCache().Last()
+		content = eu.p.GetCache().Last()
 	}
-	fmt.Printf("Rx for '%v' (%v): '%v'\n", eu.prg.GetName(), len(content), rx)
+	fmt.Printf("Rx for '%v' (%v): '%v'\n", eu.p.GetName(), len(content), rx)
 	matches := rx.FindAllStringSubmatchIndex(content, -1)
 	fmt.Printf("matches: '%v'\n", matches)
 	res := ""
@@ -404,14 +404,14 @@ func (eu *ExtractorMatch) ExtractFrom(content string) string {
 func (em *ExtractorMatch) Regexp() *regexp.Regexp {
 	if em.regexp == nil {
 		rx := em.data
-		arch := em.prg.GetArch()
+		arch := em.p.GetArch()
 		if arch != nil {
 			rx = strings.Replace(rx, "_$arch_", arch.Arch(), -1)
 		}
 		var err error = nil
 		if em.regexp, err = regexp.Compile(rx); err != nil {
 			em.regexp = nil
-			fmt.Printf("Error compiling Regexp for '%v': '%v' => err '%v'", em.prg.GetName(), rx, err)
+			fmt.Printf("Error compiling Regexp for '%v': '%v' => err '%v'", em.p.GetName(), rx, err)
 		}
 	}
 	return em.regexp
@@ -421,8 +421,8 @@ type ExtractorPrepend struct {
 	Extractable
 }
 
-func NewExtractorPrepend(rx string, prg PrgData) *ExtractorPrepend {
-	res := &ExtractorPrepend{Extractable{data: rx, prg: prg}}
+func NewExtractorPrepend(rx string, p PrgData) *ExtractorPrepend {
+	res := &ExtractorPrepend{Extractable{data: rx, p: p}}
 	res.self = res
 	return res
 }
@@ -589,9 +589,9 @@ func ReadConfig() []*Prg {
 	return res
 }
 
-func (prg *Prg) checkLatest() {
-	folder := prg.GetFolder()
-	folderMain := "test/" + prg.name + "/"
+func (p *Prg) checkLatest() {
+	folder := p.GetFolder()
+	folderMain := "test/" + p.name + "/"
 	folderFull := folderMain + folder
 	folderLatest := folderMain + "latest/"
 
@@ -602,23 +602,23 @@ func (prg *Prg) checkLatest() {
 	}
 	mainf, err := filepath.Abs(filepath.FromSlash(folderMain))
 	if err != nil {
-		fmt.Printf("Unable to get full path for folderMain '%v': '%v'\n%v", prg.name, folderMain, err)
+		fmt.Printf("Unable to get full path for folderMain '%v': '%v'\n%v", p.name, folderMain, err)
 		return
 	}
 	latest, err := filepath.Abs(filepath.FromSlash(folderLatest))
 	if err != nil {
-		fmt.Printf("Unable to get full path for LATEST '%v': '%v'\n%v", prg.name, folderLatest, err)
+		fmt.Printf("Unable to get full path for LATEST '%v': '%v'\n%v", p.name, folderLatest, err)
 		return
 	}
 	full, err := filepath.Abs(filepath.FromSlash(folderFull))
 	if err != nil {
-		fmt.Printf("Unable to get full path for folderFull '%v': '%v'\n%v", prg.name, folderFull, err)
+		fmt.Printf("Unable to get full path for folderFull '%v': '%v'\n%v", p.name, folderFull, err)
 		return
 	}
 	if !hasLatest {
-		junction(latest, full, prg.name)
+		junction(latest, full, p.name)
 	} else {
-		target := readJunction("latest", mainf, prg.GetName())
+		target := readJunction("latest", mainf, p.GetName())
 		fmt.Printf("Target='%v'\n", target)
 		if target != full {
 			err := os.Remove(latest)
@@ -626,7 +626,7 @@ func (prg *Prg) checkLatest() {
 				fmt.Printf("Error removing LATEST '%v' in '%v': '%v'\n", latest, folderLatest, err)
 				return
 			}
-			junction(latest, full, prg.name)
+			junction(latest, full, p.name)
 		}
 	}
 }
@@ -663,12 +663,12 @@ func readJunction(link, folder, name string) string {
 	return res
 }
 
-func (prg *Prg) install() {
-	folder := prg.GetFolder()
+func (p *Prg) install() {
+	folder := p.GetFolder()
 	if folder == "" {
 		return
 	}
-	folderMain := "test/" + prg.name + "/"
+	folderMain := "test/" + p.name + "/"
 	if hasFolder, err := exists(folderMain); !hasFolder && err == nil {
 		err := os.MkdirAll(folderMain, 0755)
 		if err != nil {
@@ -680,18 +680,18 @@ func (prg *Prg) install() {
 		return
 	}
 	folderFull := folderMain + folder
-	archive := prg.GetArchive()
+	archive := p.GetArchive()
 	if archive == "" {
 		return
 	}
 	archiveFullPath := folderMain + archive
-	fmt.Printf("folderFull (%v): '%v'\n", prg.name, folderFull)
+	fmt.Printf("folderFull (%v): '%v'\n", p.name, folderFull)
 	alreadyInstalled := false
 	if hasFolder, err := exists(folderFull); !hasFolder && err == nil {
-		fmt.Printf("Need to install %v in '%v'\n", prg.name, folderFull)
+		fmt.Printf("Need to install %v in '%v'\n", p.name, folderFull)
 		if hasArchive, err := exists(archiveFullPath); !hasArchive && err == nil {
-			fmt.Printf("Need to download %v in '%v'\n", prg.name, archiveFullPath)
-			url := prg.GetUrl()
+			fmt.Printf("Need to download %v in '%v'\n", p.name, archiveFullPath)
+			url := p.GetUrl()
 			fmt.Printf("Url: '%v'\n", url)
 			if url == "" {
 				return
@@ -702,13 +702,13 @@ func (prg *Prg) install() {
 		fmt.Printf("Error while testing installation folder existence '%v': '%v'\n", folder, err)
 		return
 	} else {
-		fmt.Printf("'%v' already installed in '%v'\n", prg.name, folderFull)
+		fmt.Printf("'%v' already installed in '%v'\n", p.name, folderFull)
 		alreadyInstalled = true
-		prg.checkLatest()
+		p.checkLatest()
 	}
 	folderTmp := folderMain + "tmp"
 	if hasFolder, err := exists(folderTmp); !hasFolder && err == nil {
-		fmt.Printf("Need to make tmp for %v in '%v'\n", prg.name, folderTmp)
+		fmt.Printf("Need to make tmp for %v in '%v'\n", p.name, folderTmp)
 		err := os.MkdirAll(folderTmp, 0755)
 		if err != nil {
 			fmt.Printf("Error creating tmp folder for name '%v': '%v'\n", folderTmp, err)
@@ -718,7 +718,7 @@ func (prg *Prg) install() {
 		fmt.Printf("Error while testing tmp folder existence '%v': '%v'\n", folderTmp, err)
 		return
 	} else if alreadyInstalled {
-		prg.checkPortable()
+		p.checkPortable()
 		err := deleteFolderContent(folderTmp)
 		if err != nil {
 			fmt.Printf("Error removing tmp folder for name '%v': '%v'\n", folderTmp, err)
@@ -727,29 +727,29 @@ func (prg *Prg) install() {
 		return
 	}
 	if strings.HasSuffix(archive, ".zip") {
-		prg.invokeZip()
+		p.invokeZip()
 		return
 	}
-	if prg.invoke == "" {
+	if p.invoke == "" {
 		fmt.Printf("Unknown command for installing '%v'\n", archive)
 		return
 	}
 
-	cmd := prg.invoke
+	cmd := p.invoke
 	dst, err := filepath.Abs(filepath.FromSlash(folderFull))
 	if err != nil {
-		fmt.Printf("Unable to get full path for '%v': '%v'\n%v", prg.name, folderFull, err)
+		fmt.Printf("Unable to get full path for '%v': '%v'\n%v", p.name, folderFull, err)
 		return
 	}
 	cmd = strings.Replace(cmd, "@FILE@", filepath.FromSlash(archiveFullPath), -1)
 	cmd = strings.Replace(cmd, "@DEST@", dst, -1)
-	fmt.Printf("invoking for '%v': '%v'\n", prg.name, cmd)
+	fmt.Printf("invoking for '%v': '%v'\n", p.name, cmd)
 	c := exec.Command("cmd", "/C", cmd)
 	if out, err := c.Output(); err != nil {
 		fmt.Printf("Error invoking '%v'\n''%v': %v'\n", cmd, string(out), err)
 	}
-	prg.checkPortable()
-	prg.checkLatest()
+	p.checkPortable()
+	p.checkLatest()
 }
 
 var fcmd = ""
@@ -839,10 +839,10 @@ func compress7z(archive string, folder string, file string, msg string) {
 	fmt.Printf("%v'%v'%v => 7zC... DONE\n", msg, archive, argFile)
 }
 
-func (prg *Prg) invokeZip() {
-	folder := prg.GetFolder()
-	archive := prg.GetArchive()
-	folderMain := "test/" + prg.name + "/"
+func (p *Prg) invokeZip() {
+	folder := p.GetFolder()
+	archive := p.GetArchive()
+	folderMain := "test/" + p.name + "/"
 	folderTmp := folderMain + "tmp"
 	folderFull := folderMain + folder
 	t := getLastModifiedFile(folderTmp, ".*")
@@ -864,16 +864,16 @@ func (prg *Prg) invokeZip() {
 	}
 }
 
-func (prg *Prg) checkPortable() {
-	archive := prg.GetArchive()
+func (p *Prg) checkPortable() {
+	archive := p.GetArchive()
 	if !strings.HasSuffix(archive, ".exe") {
 		return
 	}
-	if prg.portableExt == nil {
-		fmt.Printf("Abort: No remote portable archive Extractor defined for '%v'\n", prg.GetName())
+	if p.portableExt == nil {
+		fmt.Printf("Abort: No remote portable archive Extractor defined for '%v'\n", p.GetName())
 		return
 	}
-	folderMain := "test/" + prg.name + "/"
+	folderMain := "test/" + p.name + "/"
 	portableArchive := strings.Replace(archive, ".exe", ".zip", -1)
 
 	fmt.Printf("Checking for remote portable archive '%v'\n", portableArchive)
@@ -882,8 +882,8 @@ func (prg *Prg) checkPortable() {
 		fmt.Printf("Error while checking existence of portable archive '%v': '%v'\n", folderMain+portableArchive, err)
 		return
 	}
-	folder := prg.GetFolder()
-	portableFolder := prg.GetPortableFolder()
+	folder := p.GetFolder()
+	portableFolder := p.GetPortableFolder()
 	if folder == portableFolder {
 		fmt.Printf("portable folder already there '%v'\n", portableFolder)
 		return
@@ -891,7 +891,7 @@ func (prg *Prg) checkPortable() {
 		fmt.Printf("Old portable folder: '%v'\n", portableFolder)
 	}
 	if !ispa {
-		compress7z(folderMain+portableArchive, folderMain+folder, "", fmt.Sprintf("Compress '%v' for '%v'", portableArchive, prg.GetName()))
+		compress7z(folderMain+portableArchive, folderMain+folder, "", fmt.Sprintf("Compress '%v' for '%v'", portableArchive, p.GetName()))
 	}
 
 	contents, err := ioutil.ReadFile("../senvgo.pat")
@@ -923,9 +923,9 @@ func (prg *Prg) checkPortable() {
 
 	repos := client.Repositories
 
-	repo, _, err := repos.Get(owner, prg.GetName())
+	repo, _, err := repos.Get(owner, p.GetName())
 	if err != nil {
-		fmt.Printf("Error while getting repo VonC/'%v': '%v'\n", prg.GetName(), err)
+		fmt.Printf("Error while getting repo VonC/'%v': '%v'\n", p.GetName(), err)
 		return
 	}
 	fmt.Printf("repo='%v', err='%v'\n", *repo.Name, err)
@@ -963,9 +963,9 @@ func (prg *Prg) checkPortable() {
 		return
 	}
 
-	tags, _, err := repos.ListTags(owner, prg.GetName())
+	tags, _, err := repos.ListTags(owner, p.GetName())
 	if err != nil {
-		fmt.Printf("Error while getting tags from repo VonC/'%v': '%v'\n", prg.GetName(), err)
+		fmt.Printf("Error while getting tags from repo VonC/'%v': '%v'\n", p.GetName(), err)
 		return
 	}
 
@@ -987,7 +987,7 @@ func (prg *Prg) checkPortable() {
 	}
 
 	if !tagFound {
-		fmt.Printf("Must create tag '%v' for commit '%v', repo VonC/'%v'.\n", "v"+folder, sha, prg.GetName())
+		fmt.Printf("Must create tag '%v' for commit '%v', repo VonC/'%v'.\n", "v"+folder, sha, p.GetName())
 
 		input := &github.DataTag{
 			Tag:     github.String("v" + folder),
@@ -999,26 +999,26 @@ func (prg *Prg) checkPortable() {
 				Email: github.String(email),
 			},
 		}
-		tag, _, err := repos.CreateTag(owner, prg.GetName(), input)
+		tag, _, err := repos.CreateTag(owner, p.GetName(), input)
 		if err != nil {
-			fmt.Printf("Error while creating tag '%v'-'%v' from repo VonC/'%v': '%v'\n", *input.Tag, *input.Object, prg.GetName(), err)
+			fmt.Printf("Error while creating tag '%v'-'%v' from repo VonC/'%v': '%v'\n", *input.Tag, *input.Object, p.GetName(), err)
 			return
 		}
-		ref, _, err := client.Git.CreateRef(owner, prg.GetName(), &github.Reference{
+		ref, _, err := client.Git.CreateRef(owner, p.GetName(), &github.Reference{
 			Ref: github.String("tags/" + "v" + folder),
 			Object: &github.GitObject{
 				SHA: github.String(*tag.SHA),
 			},
 		})
 		if err != nil {
-			fmt.Printf("Error while creating reference to tag '%v'-'%v' from repo VonC/'%v': '%v'\n", *tag.Tag, *tag.SHA, prg.GetName(), err)
+			fmt.Printf("Error while creating reference to tag '%v'-'%v' from repo VonC/'%v': '%v'\n", *tag.Tag, *tag.SHA, p.GetName(), err)
 			return
 		}
 		fmt.Printf("Ref created: '%v'\n", ref)
 	}
-	releases, _, err := repos.ListReleases(owner, prg.GetName())
+	releases, _, err := repos.ListReleases(owner, p.GetName())
 	if err != nil {
-		fmt.Printf("Error while getting releasesfrom repo VonC/'%v': '%v'\n", prg.GetName(), err)
+		fmt.Printf("Error while getting releasesfrom repo VonC/'%v': '%v'\n", p.GetName(), err)
 		return
 	}
 
@@ -1033,7 +1033,7 @@ func (prg *Prg) checkPortable() {
 	}
 
 	if !relFound {
-		fmt.Printf("Must create release '%v' for repo VonC/'%v'.\n", folder, prg.GetName())
+		fmt.Printf("Must create release '%v' for repo VonC/'%v'.\n", folder, p.GetName())
 
 		reprel := &github.RepositoryRelease{
 			TagName:         github.String("v" + folder),
@@ -1041,9 +1041,9 @@ func (prg *Prg) checkPortable() {
 			Name:            github.String(folder),
 			Body:            github.String("Portable version of " + folder),
 		}
-		reprel, _, err = repos.CreateRelease(owner, prg.GetName(), reprel)
+		reprel, _, err = repos.CreateRelease(owner, p.GetName(), reprel)
 		if err != nil {
-			fmt.Printf("Error while creating repo release '%v'-'%v' for repo VonC/'%v': '%v'\n", folder, "v"+folder, prg.GetName(), err)
+			fmt.Printf("Error while creating repo release '%v'-'%v' for repo VonC/'%v': '%v'\n", folder, "v"+folder, p.GetName(), err)
 			return
 		}
 		rid = *reprel.ID
@@ -1052,7 +1052,7 @@ func (prg *Prg) checkPortable() {
 		rid = *rel.ID
 	}
 
-	assets, _, err := repos.ListReleaseAssets(owner, prg.GetName(), rid)
+	assets, _, err := repos.ListReleaseAssets(owner, p.GetName(), rid)
 	if err != nil {
 		fmt.Printf("Error while getting assets from release'%v'(%v): '%v'\n", *rel.Name, rid, err)
 		return
@@ -1070,11 +1070,11 @@ func (prg *Prg) checkPortable() {
 		fmt.Printf("Must upload asset to release '%v'\n", *rel.Name)
 		file, err := os.Open(folderMain + portableArchive)
 		if err != nil {
-			fmt.Printf("Error while opening release asset file '%v'(%v): '%v'\n", folderMain+portableArchive, prg.GetName(), err)
+			fmt.Printf("Error while opening release asset file '%v'(%v): '%v'\n", folderMain+portableArchive, p.GetName(), err)
 			return
 		}
 		// no need to close, or "Invalid argument"
-		rela, _, err := repos.UploadReleaseAsset(owner, prg.GetName(), rid, &github.UploadOptions{Name: portableArchive}, file)
+		rela, _, err := repos.UploadReleaseAsset(owner, p.GetName(), rid, &github.UploadOptions{Name: portableArchive}, file)
 		if err != nil {
 			fmt.Printf("Error while uploading release asset '%v'(%v): '%v'\n", *rel.Name, rid, err)
 			return
@@ -1086,42 +1086,42 @@ func (prg *Prg) checkPortable() {
 
 }
 
-func (prg *Prg) GetFolder() string {
-	if prg.exts != nil {
-		prg.folder = get(prg.folder, prg.exts.extractFolder, true)
+func (p *Prg) GetFolder() string {
+	if p.exts != nil {
+		p.folder = get(p.folder, p.exts.extractFolder, true)
 	}
-	return prg.folder
+	return p.folder
 }
-func (prg *Prg) GetArchive() string {
-	if prg.exts != nil {
-		prg.archive = get(prg.archive, prg.exts.extractArchive, false)
+func (p *Prg) GetArchive() string {
+	if p.exts != nil {
+		p.archive = get(p.archive, p.exts.extractArchive, false)
 	}
-	return prg.archive
+	return p.archive
 }
-func (prg *Prg) GetUrl() string {
-	if prg.exts != nil {
-		prg.url = get(prg.url, prg.exts.extractUrl, false)
+func (p *Prg) GetUrl() string {
+	if p.exts != nil {
+		p.url = get(p.url, p.exts.extractUrl, false)
 	}
-	return prg.url
+	return p.url
 }
 
-func (prg *Prg) GetPortableFolder() string {
-	if prg.portableExt != nil {
-		prg.portableFolder = get(prg.portableFolder, prg.portableExt.extractFolder, true)
+func (p *Prg) GetPortableFolder() string {
+	if p.portableExt != nil {
+		p.portableFolder = get(p.portableFolder, p.portableExt.extractFolder, true)
 	}
-	return prg.portableFolder
+	return p.portableFolder
 }
-func (prg *Prg) GetPortableArchive() string {
-	if prg.portableExt != nil {
-		prg.portableArchive = get(prg.portableArchive, prg.portableExt.extractArchive, false)
+func (p *Prg) GetPortableArchive() string {
+	if p.portableExt != nil {
+		p.portableArchive = get(p.portableArchive, p.portableExt.extractArchive, false)
 	}
-	return prg.portableArchive
+	return p.portableArchive
 }
-func (prg *Prg) GetPortableUrl() string {
-	if prg.portableExt != nil {
-		prg.portableUrl = get(prg.portableUrl, prg.portableExt.extractUrl, false)
+func (p *Prg) GetPortableUrl() string {
+	if p.portableExt != nil {
+		p.portableUrl = get(p.portableUrl, p.portableExt.extractUrl, false)
 	}
-	return prg.portableUrl
+	return p.portableUrl
 }
 
 func get(iniValue string, ext Extractor, underscore bool) string {
