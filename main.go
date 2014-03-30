@@ -56,22 +56,26 @@ func (p *Prg) String() string {
 	return res
 }
 
+// PrgData is a Program as seen by an Extractable
+// (since Program has Extractors which has interface Extractor)
 type PrgData interface {
+	// Name of the program to be installed, used for folder
 	GetName() string
+	// If not nil, returns patterns for win32 or win64
 	GetArch() *Arch
-	GetCache() Cache
 }
 
+// GetName returns the name of the program to be installed, used for folder
 func (p *Prg) GetName() string {
 	return p.name
 }
-func (p *Prg) GetCache() Cache {
-	return p.cache
-}
+
+// GetArch returns, if not nil, patterns for win32 or win64
 func (p *Prg) GetArch() *Arch {
 	return p.arch
 }
 
+// Extractors for folder, archive name and url extractions
 type Extractors struct {
 	extractFolder  Extractor
 	extractArchive Extractor
@@ -367,27 +371,31 @@ func download(url string, filename string, returnBody bool) string {
 	return res
 }
 
+// NewExtractorGet builds ExtractorGet for downloading an uri
 func NewExtractorGet(uri string, p PrgData) *ExtractorGet {
 	res := &ExtractorGet{Extractable{data: uri, p: p}}
 	res.self = res
 	return res
 }
 
+// ExtractorMatch extracts data from a regexp
 type ExtractorMatch struct {
 	Extractable
 	regexp *regexp.Regexp
 }
 
+// NewExtractorMatch builds ExtractorMatch for applying a regexp to a data
 func NewExtractorMatch(rx string, p PrgData) *ExtractorMatch {
 	res := &ExtractorMatch{Extractable{data: rx, p: p}, nil}
 	res.self = res
 	return res
 }
 
+// ExtractFrom returns matched content from a regexp
 func (em *ExtractorMatch) ExtractFrom(content string) string {
 	rx := em.Regexp()
 	if content == em.data {
-		content = em.p.GetCache().Last()
+		content = cache.Last()
 	}
 	fmt.Printf("Rx for '%v' (%v): '%v'\n", em.p.GetName(), len(content), rx)
 	matches := rx.FindAllStringSubmatchIndex(content, -1)
@@ -476,12 +484,13 @@ var defaultConfig = `
   name.rx        /download/v.*?/(Gow-.*?.exe)
   invoke         @FILE@ /S /D=@DEST@
 `
+var cache = &CacheDisk{CacheData: &CacheData{id: "main"}, root: "test/_cache/"}
 
+// ReadConfig reads config an build programs and extractors and caches
 func ReadConfig() []*Prg {
 
 	res := []*Prg{}
 
-	cache := &CacheDisk{CacheData: &CacheData{id: "main"}, root: "test/_cache/"}
 	if isdir, err := exists("test/_cache/"); !isdir && err == nil {
 		err := os.MkdirAll(cache.root, 0755)
 		if err != nil {
