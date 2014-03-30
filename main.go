@@ -33,6 +33,7 @@ func main() {
 	}
 }
 
+// Prg is a Program to be installed
 type Prg struct {
 	name            string
 	folder          string
@@ -87,11 +88,13 @@ func (es *Extractors) String() string {
 	return res
 }
 
+// Arch includes win32 and win64 patterns
 type Arch struct {
 	win32 string
 	win64 string
 }
 
+// Arch returns the appropriate pattern, depending on the current architecture
 func (a *Arch) Arch() string {
 	// http://stackoverflow.com/questions/601089/detect-whether-current-windows-version-is-32-bit-or-64-bit
 	if isdir, err := exists("C:\\Program Files (x86)"); isdir && err == nil {
@@ -105,6 +108,7 @@ func (a *Arch) Arch() string {
 
 type fextract func(str string) string
 
+// Extractor knows how to extract, and can be linked
 type Extractor interface {
 	ExtractFrom(str string) string
 	Extract() string
@@ -113,6 +117,7 @@ type Extractor interface {
 	Nb() int
 }
 
+// Cache gets or update a resource, can be linked, can retrieve last value cached
 type Cache interface {
 	Get(resource string, name string, isArchive bool) string
 	Update(resource string, name string, isArchive bool, content string)
@@ -122,6 +127,7 @@ type Cache interface {
 	Add(cache Cache)
 }
 
+// CacheData has common data between different types od cache
 type CacheData struct {
 	id   string
 	next Cache
@@ -133,6 +139,7 @@ func (c *CacheData) String() string {
 	return res
 }
 
+// Add cache to the last cache in the chain
 func (c *CacheData) Add(cache Cache) {
 	/*if cache.(*CacheData).id == "" {
 		return
@@ -144,16 +151,19 @@ func (c *CacheData) Add(cache Cache) {
 	}
 }
 
+// CacheDisk gets from or download data to the disk
 type CacheDisk struct {
 	*CacheData
 	root string
 }
 
+// CacheGitHub gets or download zip archives only from GitHub
 type CacheGitHub struct {
 	CacheData
 	owner string
 }
 
+// Get gets or download zip archives only from GitHub
 func (c *CacheGitHub) Get(resource string, name string, isArchive bool) string {
 	fmt.Printf("Get '%v' (%v) for '%v' from '%v'\n", resource, isArchive, name, c.String())
 	if !isArchive || !strings.HasSuffix(resource, ".zip") {
@@ -280,10 +290,12 @@ func (c *CacheDisk) String() string {
 	return res
 }
 
+// Last value cached
 func (c *CacheData) Last() string {
 	return c.last
 }
 
+// Nb returns number of linked cache (self counts for 1)
 func (c *CacheData) Nb() int {
 	if c.next == nil {
 		return 1
@@ -291,13 +303,17 @@ func (c *CacheData) Nb() int {
 	return 1 + c.next.Nb()
 }
 
+// Next gets the next linked cache
 func (c *CacheData) Next() Cache {
 	return c.next
 }
+
+// Folder returns the full path of the folder where all versions of the program are installed
 func (c *CacheDisk) Folder(name string) string {
 	return c.root + name + "/"
 }
 
+// Extractable is an Extractor with data and a program
 type Extractable struct {
 	data string
 	self Extractor
@@ -305,6 +321,7 @@ type Extractable struct {
 	p    PrgData
 }
 
+// SetNext sets the next Extractor
 func (e *Extractable) SetNext(next Extractor) {
 	e.next = next
 }
@@ -314,6 +331,7 @@ func (e *Extractable) String() string {
 	return res
 }
 
+// Nb returns the number of linked Extractors (self counts for one)
 func (e *Extractable) Nb() int {
 	res := 1
 	for n := e.next; n != nil; {
@@ -323,10 +341,12 @@ func (e *Extractable) Nb() int {
 	return res
 }
 
+// Next returns the next linked Extractor
 func (e *Extractable) Next() Extractor {
 	return e.next
 }
 
+// Extract extracts from its data
 func (e *Extractable) Extract() string {
 	res := e.self.ExtractFrom(e.data)
 	if e.Next() != nil {
@@ -415,6 +435,7 @@ func (em *ExtractorMatch) ExtractFrom(content string) string {
 	return res
 }
 
+// Regexp returns the compiled regexp from the Extractor data
 func (em *ExtractorMatch) Regexp() *regexp.Regexp {
 	if em.regexp == nil {
 		rx := em.data
@@ -431,16 +452,19 @@ func (em *ExtractorMatch) Regexp() *regexp.Regexp {
 	return em.regexp
 }
 
+// ExtractorPrepend is an Extractor which prepends data to content
 type ExtractorPrepend struct {
 	Extractable
 }
 
+// NewExtractorPrepend build an ExtractorPrepend to prepend data
 func NewExtractorPrepend(rx string, p PrgData) *ExtractorPrepend {
 	res := &ExtractorPrepend{Extractable{data: rx, p: p}}
 	res.self = res
 	return res
 }
 
+// ExtractFrom prepends data to content
 func (ep *ExtractorPrepend) ExtractFrom(content string) string {
 	return ep.data + content
 }
@@ -1101,18 +1125,23 @@ func (p *Prg) checkPortable() {
 
 }
 
+// GetFolder returns full folder path ofr a program
 func (p *Prg) GetFolder() string {
 	if p.exts != nil {
 		p.folder = get(p.folder, p.exts.extractFolder, true)
 	}
 	return p.folder
 }
+
+// GetArchive returns archive name
 func (p *Prg) GetArchive() string {
 	if p.exts != nil {
 		p.archive = get(p.archive, p.exts.extractArchive, false)
 	}
 	return p.archive
 }
+
+// GetURL returns url of the program
 func (p *Prg) GetURL() string {
 	if p.exts != nil {
 		p.url = get(p.url, p.exts.extractURL, false)
@@ -1120,18 +1149,23 @@ func (p *Prg) GetURL() string {
 	return p.url
 }
 
+// GetPortableFolder TOBEREMOVED
 func (p *Prg) GetPortableFolder() string {
 	if p.portableExt != nil {
 		p.portableFolder = get(p.portableFolder, p.portableExt.extractFolder, true)
 	}
 	return p.portableFolder
 }
+
+// GetPortableArchive TOBEREMOVED
 func (p *Prg) GetPortableArchive() string {
 	if p.portableExt != nil {
 		p.portableArchive = get(p.portableArchive, p.portableExt.extractArchive, false)
 	}
 	return p.portableArchive
 }
+
+// GetPortableURL TOBEREMOVED
 func (p *Prg) GetPortableURL() string {
 	if p.portableExt != nil {
 		p.portableURL = get(p.portableURL, p.portableExt.extractURL, false)
