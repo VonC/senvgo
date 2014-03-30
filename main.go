@@ -169,38 +169,55 @@ func (c *CacheGitHub) Get(resource string, name string, isArchive bool) string {
 	return c.last
 }
 
+// Update make sure the zip archive is uploaded on GitHub as a release
 func (c *CacheGitHub) Update(resource string, name string, isArchive bool, content string) {
 	fmt.Printf("UPD '%v' (%v) for '%v' from '%v'\n", resource, isArchive, name, c.String())
 	if !isArchive || !strings.HasSuffix(resource, ".zip") {
 		return
 	}
+	/*
+		c.last = c.getFile(resource, name, isArchive)
+		if c.last == "" {
+			c.last = content
+			// TODO calls uploadAsset
+		}*/
+	if c.next != nil {
+		c.Next().Update(resource, name, isArchive, content)
+	}
 }
 
+// Update updates c.last and all next caches c.last with content.
 func (c *CacheDisk) Update(resource string, name string, isArchive bool, content string) {
 	fmt.Printf("UPD '%v' (%v) for '%v' from '%v'\n", resource, isArchive, name, c.String())
 	c.last = c.getFile(resource, name, isArchive)
 	if c.last == "" {
 		c.last = content
-		c.updateFile(resource, name, isArchive)
 	}
 	if c.next != nil {
 		c.Next().Update(resource, name, isArchive, content)
 	}
 }
 
-func (c *CacheDisk) updateFile(resource string, name string, isArchive bool) {
-}
-
-// resource is either an url or an archive extension (exe, zip, tar.gz, ...)
+// Get will get either an url or an archive extension (exe, zip, tar.gz, ...)
 func (c *CacheDisk) Get(resource string, name string, isArchive bool) string {
 	fmt.Printf("Get '%v' (%v) for '%v' from '%v'\n", resource, isArchive, name, c.String())
 	c.last = c.getFile(resource, name, isArchive)
 	if c.next != nil {
 		if c.last == "" {
 			c.last = c.Next().Get(resource, name, isArchive)
-			c.updateFile(resource, name, isArchive)
 		} else {
 			c.Next().Update(resource, name, isArchive, c.last)
+		}
+	}
+	if c.last == "" {
+		sha := c.getResourceName(resource, name, isArchive)
+		t := time.Now()
+		filename := cache.Folder(name) + name + "_" + sha + "_" + t.Format("20060102") + "_" + t.Format("150405")
+		fmt.Printf("Get '%v' downloads '%v' for '%v'\n", c.id, filename, resource)
+		c.last = download(resource, filename, true)
+		fmt.Printf("Get '%v' has downloaded '%v' bytes in '%v' for '%v'\n", c.id, len(c.last), filename, resource)
+		if c.next != nil {
+			c.next.Update(resource, name, isArchive, c.last)
 		}
 	}
 	return c.last
@@ -318,28 +335,18 @@ func (e *Extractable) Extract() string {
 	return res
 }
 
+// ExtractorGet gets data from an url page
 type ExtractorGet struct {
 	Extractable
 }
 
+// ExtractFrom download an url content
 func (eg *ExtractorGet) ExtractFrom(url string) string {
 	//fmt.Println("ok! " + url)
-	cache := eg.p.GetCache()
 	name := eg.p.GetName()
 	page := cache.Get(url, name, false)
 	if page == "" {
-
-		hasher := sha1.New()
-		hasher.Write([]byte(url))
-		sha := base64.URLEncoding.EncodeToString(hasher.Sum(nil))
-
-		t := time.Now()
-		filename := cache.(*CacheDisk).Folder(name) + name + "_" + sha + "_" + t.Format("20060102") + "_" + t.Format("150405")
-
-		fmt.Println(filename)
-		fmt.Println("empty page for " + url)
-		page = download(url, filename, true)
-		fmt.Printf("downloaded '%v' to cache '%v'\n", len(url), filename)
+		fmt.Printf("Unable to wonlad '%v'\n", url)
 	} else {
 		fmt.Printf("Got '%v' from cache\n", url)
 	}
