@@ -169,14 +169,19 @@ func (c *CacheGitHub) Get(resource string, name string, isArchive bool) string {
 	if !isArchive || !strings.HasSuffix(resource, ".zip") {
 		return ""
 	}
-	c.last = ""
-	if c.Next() != nil {
-		c.last = c.Next().Get(resource, name, isArchive)
-		if c.last != "" {
-			return c.last
+	c.last = c.getFileFromGitHub(resource, name)
+	if c.next != nil {
+		if c.last == "" {
+			c.last = c.Next().Get(resource, name, isArchive)
+		} else {
+			c.Next().Update(resource, name, isArchive, c.last)
 		}
 	}
 	return c.last
+}
+
+func (c *CacheGitHub) getFileFromGitHub(resource string, name string) string {
+	return ""
 }
 
 // Update make sure the zip archive is uploaded on GitHub as a release
