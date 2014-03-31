@@ -181,7 +181,23 @@ func (c *CacheGitHub) Get(resource string, name string, isArchive bool) string {
 }
 
 func (c *CacheGitHub) getFileFromGitHub(resource string, name string) string {
+	client := github.NewClient(nil)
+	repo := c.getRepo(name, client)
+	if repo == nil {
+		return ""
+	}
 	return ""
+}
+
+func (c *CacheGitHub) getRepo(name string, client *github.Client) *github.Repository {
+	repos := client.Repositories
+	repo, _, err := repos.Get(c.owner, name)
+	if err != nil {
+		fmt.Printf("Error while getting repo VonC/'%v': '%v'\n", name, err)
+		return nil
+	}
+	fmt.Printf("repo='%v', err='%v'\n", *repo.Name, err)
+	return repo
 }
 
 // Update make sure the zip archive is uploaded on GitHub as a release
