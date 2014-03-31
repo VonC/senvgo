@@ -733,8 +733,16 @@ func (p *Prg) install() {
 		fmt.Printf("[install] ERR: no archive on '%v'\n", p.GetName())
 		return
 	}
-	archiveFullPath := cache.Get(archive, p.GetName(), true)
-	fmt.Printf("folderFull (%v): '%v'\n", p.name, folderFull)
+	archiveFullPath := ""
+	if strings.HasSuffix(archive, ".exe") {
+		portableArchive := strings.Replace(archive, ".exe", ".zip", -1)
+		archiveFullPath = cache.Get(portableArchive, p.GetName(), true)
+	}
+	if archiveFullPath == "" {
+		archiveFullPath = cache.Get(archive, p.GetName(), true)
+	}
+	fmt.Printf("folderFull (%v): '%v'\narchiveFullPath '%v'\n", p.name, folderFull, archiveFullPath)
+	return
 	alreadyInstalled := false
 	if hasFolder, err := exists(folderFull); !hasFolder && err == nil {
 		fmt.Printf("Need to install %v in '%v'\n", p.name, folderFull)
