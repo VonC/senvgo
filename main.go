@@ -518,7 +518,7 @@ var defaultConfig = `
 [cache id secondary]
   root test/_secondary
 [cache id githubvonc]
-  owner "VonC"
+  owner VonC
 [gow]
   folder.get     https://github.com/bmatzelle/gow/releases
   folder.rx      /download/v.*?/(Gow-.*?).exe
