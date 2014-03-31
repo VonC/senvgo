@@ -222,10 +222,13 @@ func (c *CacheDisk) Get(resource string, name string, isArchive bool) string {
 		}
 	}
 	if c.last == "" || wasNotFound {
-		sha := c.getResourceName(resource, name, isArchive)
-		t := time.Now()
-		filename := c.Folder(name) + name + "_" + sha + "_" + t.Format("20060102") + "_" + t.Format("150405")
-		fmt.Printf("Get '%v' downloads '%v' for '%v'\n", c.id, filename, resource)
+		filename := name
+		if !isArchive {
+			sha := c.getResourceName(resource, name, isArchive)
+			t := time.Now()
+			filename = c.Folder(name) + name + "_" + sha + "_" + t.Format("20060102") + "_" + t.Format("150405")
+			fmt.Printf("Get '%v' downloads '%v' for '%v'\n", c.id, filename, resource)
+		}
 		c.last = download(resource, filename, true)
 		if c.last != "" {
 			fmt.Printf("Get '%v' has downloaded '%v' bytes in '%v' for '%v'\n", c.id, len(c.last), filename, resource)
