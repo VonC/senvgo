@@ -198,6 +198,22 @@ func (c *CacheGitHub) getFileFromGitHub(resource string, name string) string {
 		return ""
 	}
 	fmt.Printf("Asset found: '%+v'\n", asset)
+	// https://github.com/VonC/gow/releases/download/vGow-0.8.0/Gow-0.8.0.zip
+	url := "https://github.com/" + c.owner + "/" + name + "/releases/download/v" + releaseName + "/" + resource
+	fmt.Printf("Downloading from GitHub: '%+v'\n", url)
+	response, err := http.Get(url)
+	if err != nil {
+		fmt.Println("Error while downloading", url, "-", err)
+		return ""
+	}
+	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		fmt.Println("Error while reading downloaded", url, "-", err)
+		return ""
+	}
+	fmt.Printf("Downloaded from GitHub: '%+v'\n", len(body))
+	return string(body)
+}
 
 func (c *CacheGitHub) getAsset(repos *github.RepositoriesService, releaseID int, releaseName string, repoName string, name string) *github.ReleaseAsset {
 	assets, _, err := repos.ListReleaseAssets(c.owner, repoName, releaseID)
