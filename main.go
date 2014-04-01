@@ -188,7 +188,7 @@ func (c *CacheGitHub) getFileFromGitHub(resource string, name string) string {
 	}
 	repos := client.Repositories
 	releaseName := resource[:len(resource)-len(".zip")]
-	release := c.getRelease(repos, repo, releaseName)
+	release := c.getRelease(repos, *repo.Name, releaseName)
 	if release == nil {
 		return ""
 	}
@@ -196,10 +196,10 @@ func (c *CacheGitHub) getFileFromGitHub(resource string, name string) string {
 	return ""
 }
 
-func (c *CacheGitHub) getRelease(repos *github.RepositoriesService, repo *github.Repository, name string) *github.RepositoryRelease {
-	releases, _, err := repos.ListReleases(c.owner, *repo.Name)
+func (c *CacheGitHub) getRelease(repos *github.RepositoriesService, repoName string, name string) *github.RepositoryRelease {
+	releases, _, err := repos.ListReleases(c.owner, repoName)
 	if err != nil {
-		fmt.Printf("Error while getting releasesfrom repo %v/'%v': '%v'\n", c.owner, *repo.Name, err)
+		fmt.Printf("Error while getting releasesfrom repo %v/'%v': '%v'\n", c.owner, repoName, err)
 		return nil
 	}
 	var rel github.RepositoryRelease
