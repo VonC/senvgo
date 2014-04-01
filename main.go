@@ -193,7 +193,31 @@ func (c *CacheGitHub) getFileFromGitHub(resource string, name string) string {
 		return ""
 	}
 	fmt.Printf("Release found: '%+v'\n", release)
-	return ""
+	asset := c.getAsset(repos, *release.ID, *release.Name, *repo.Name, resource)
+	if asset == nil {
+		return ""
+	}
+	fmt.Printf("Asset found: '%+v'\n", asset)
+
+func (c *CacheGitHub) getAsset(repos *github.RepositoriesService, releaseID int, releaseName string, repoName string, name string) *github.ReleaseAsset {
+	assets, _, err := repos.ListReleaseAssets(c.owner, repoName, releaseID)
+	if err != nil {
+		fmt.Printf("Error while getting assets from release '%v'(%v): '%v'\n", releaseName, releaseID, err)
+		return nil
+	}
+
+	var rela github.ReleaseAsset
+	relaFound := false
+	for _, rela = range assets {
+		if *rela.Name == name {
+			relaFound = true
+			break
+		}
+	}
+	if relaFound {
+		return &rela
+	}
+	return nil
 }
 
 func (c *CacheGitHub) getRelease(repos *github.RepositoriesService, repoName string, name string) *github.RepositoryRelease {
