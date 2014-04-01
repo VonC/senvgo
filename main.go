@@ -317,7 +317,11 @@ func (c *CacheDisk) Get(resource string, name string, isArchive bool) string {
 			filename = c.Folder(name) + name + "_" + sha + "_" + t.Format("20060102") + "_" + t.Format("150405")
 			fmt.Printf("Get '%v' downloads '%v' for '%v'\n", c.id, filename, resource)
 		}
-		c.last = download(resource, filename, true)
+		if c.last == "" {
+			c.last = download(resource, filename, true)
+		} else {
+			ioutil.WriteFile(c.Folder(name)+resource, []byte(c.last), 0644)
+		}
 		if c.last != "" {
 			fmt.Printf("Get '%v' has downloaded '%v' bytes in '%v' for '%v'\n", c.id, len(c.last), filename, resource)
 		}
@@ -826,6 +830,10 @@ func (p *Prg) install() {
 		portableArchive := strings.Replace(archive, ".exe", ".zip", -1)
 		archiveFullPath = cache.Get(portableArchive, p.GetName(), true)
 	}
+
+	// TODO archiveFullContent. And don't download anything at this point:
+	// this was taken care of by CacheDisk and CacheGitHub.
+
 	if archiveFullPath == "" {
 		archiveFullPath = cache.Get(archive, p.GetName(), true)
 	}
