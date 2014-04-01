@@ -269,7 +269,7 @@ func (c *CacheGitHub) getRepo(name string, client *github.Client) *github.Reposi
 
 // Update make sure the zip archive is uploaded on GitHub as a release
 func (c *CacheGitHub) Update(resource string, name string, isArchive bool, content string) {
-	fmt.Printf("UPD '%v' (%v) for '%v' from '%v'\n", resource, isArchive, name, c.String())
+	fmt.Printf("UPD Github '%v' (%v) for '%v' from '%v'\n", resource, isArchive, name, c.String())
 	if !isArchive || !strings.HasSuffix(resource, ".zip") {
 		return
 	}
@@ -286,7 +286,7 @@ func (c *CacheGitHub) Update(resource string, name string, isArchive bool, conte
 
 // Update updates c.last and all next caches c.last with content.
 func (c *CacheDisk) Update(resource string, name string, isArchive bool, content string) {
-	fmt.Printf("UPD '%v' (%v) for '%v' from '%v'\n", resource, isArchive, name, c.String())
+	fmt.Printf("UPD Disk '%v' (%v) for '%v' from '%v'\n", resource, isArchive, name, c.String())
 	c.last = c.getFile(resource, name, isArchive)
 	if c.last == "" {
 		c.last = content
@@ -380,12 +380,12 @@ func (c *CacheDisk) getFile(resource string, name string, isArchive bool) string
 }
 
 func (c *CacheGitHub) String() string {
-	res := fmt.Sprintf("CacheGitHub '%v'[%v] '%v' %v", c.id, c.Nb(), c.owner, c.CacheData)
+	res := fmt.Sprintf("CacheGitHub '%v'[%v] '%v' %v", c.id, c.Nb(), c.owner, c.CacheData.String())
 	return res
 }
 
 func (c *CacheDisk) String() string {
-	res := fmt.Sprintf("CacheDisk '%v'[%v] '%v' %v", c.id, c.Nb(), c.root, c.CacheData)
+	res := fmt.Sprintf("CacheDisk '%v'[%v] '%v' %v", c.id, c.Nb(), c.root, c.CacheData.String())
 	return res
 }
 
