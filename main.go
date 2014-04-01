@@ -186,7 +186,34 @@ func (c *CacheGitHub) getFileFromGitHub(resource string, name string) string {
 	if repo == nil {
 		return ""
 	}
+	repos := client.Repositories
+	releaseName := resource[:len(resource)-len(".zip")]
+	release := c.getRelease(repos, repo, releaseName)
+	if release == nil {
+		return ""
+	}
+	fmt.Printf("Release found: '%+v'\n", release)
 	return ""
+}
+
+func (c *CacheGitHub) getRelease(repos *github.RepositoriesService, repo *github.Repository, name string) *github.RepositoryRelease {
+	releases, _, err := repos.ListReleases(c.owner, *repo.Name)
+	if err != nil {
+		fmt.Printf("Error while getting releasesfrom repo %v/'%v': '%v'\n", c.owner, *repo.Name, err)
+		return nil
+	}
+	var rel github.RepositoryRelease
+	relFound := false
+	for _, rel = range releases {
+		if *rel.Name == name {
+			relFound = true
+			break
+		}
+	}
+	if relFound {
+		return &rel
+	}
+	return nil
 }
 
 func (c *CacheGitHub) getRepo(name string, client *github.Client) *github.Repository {
