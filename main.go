@@ -9,6 +9,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -27,6 +28,7 @@ import (
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	prgs := ReadConfig()
+	os.Exit(0)
 	for _, p := range prgs {
 		p.install()
 		fmt.Printf("INSTALLED '%v'\n", p)
@@ -110,28 +112,37 @@ type fextract func(str string) string
 
 // Extractor knows how to extract, and can be linked
 type Extractor interface {
-	ExtractFrom(str string) string
+	ExtractFrom(url *url.URL) string
 	Extract() string
 	Next() Extractor
 	SetNext(e Extractor)
 	Nb() int
 }
 
+type Path string
+
+func (p *Path) String() string {
+	return fmt.Sprintf("%v", p)
+}
+
 // Cache gets or update a resource, can be linked, can retrieve last value cached
 type Cache interface {
-	Get(resource string, name string, isArchive bool) string
-	Update(resource string, name string, isArchive bool, content string)
+	GetPage(url *url.URL, name string) Path
+	GetArchive(p Path, name string) Path
+	UpdateArchive(p Path, name string)
+	UpdatePage(p Path, name string)
 	Next() Cache
-	Last() string
+	Last() Path
 	Nb() int
 	Add(cache Cache)
+	IsGitHub() bool
 }
 
 // CacheData has common data between different types od cache
 type CacheData struct {
 	id   string
 	next Cache
-	last string
+	last Path
 }
 
 func (c *CacheData) String() string {
@@ -160,46 +171,73 @@ type CacheDisk struct {
 // CacheGitHub gets or download zip archives only from GitHub
 type CacheGitHub struct {
 	CacheData
-	owner string
+	owner      string
+	client     *github.Client
+	downloaded bool
+}
+
+func (c *CacheGitHub) IsGitHub() bool {
+	return true
 }
 
 // Get gets or download zip archives only from GitHub
-func (c *CacheGitHub) Get(resource string, name string, isArchive bool) string {
-	fmt.Printf("Get '%v' (%v) for '%v' from '%v'\n", resource, isArchive, name, c.String())
-	if !isArchive || !strings.HasSuffix(resource, ".zip") {
+func (c *CacheGitHub) GetArchive(p Path, name string) Path {
+	fmt.Printf("GetArchive '%v' for '%v' from '%v'\n", p, name, c.String())
+	if !p.isZip() {
+		fmt.Printf("GetArchive '%v' is not a .zip\n", p)
 		return ""
 	}
-	c.last = c.getFileFromGitHub(resource, name)
+	c.last = c.getFileFromGitHub(p, name)
 	if c.next != nil {
 		if c.last == "" {
-			c.last = c.Next().Get(resource, name, isArchive)
+			c.last = c.Next().GetArchive(p, name)
 		} else {
-			c.Next().Update(resource, name, isArchive, c.last)
+			c.Next().UpdateArchive(p, name)
 		}
 	}
 	return c.last
 }
 
-func (c *CacheGitHub) getFileFromGitHub(resource string, name string) string {
-	client := github.NewClient(nil)
-	repo := c.getRepo(name, client)
+func (c *CacheGitHub) getClient() *github.Client {
+	if c.client == nil {
+		c.client = github.NewClient(nil)
+	}
+	return c.client
+}
+
+func (p *Path) isZip() bool {
+	return strings.HasSuffix(p.String(), ".zip")
+}
+
+func (p *Path) releaseName() string {
+	_, f := filepath.Split(p.String())
+	releaseName := f[:len(f)-len(".zip")]
+	return releaseName
+}
+
+func (p *Path) release() string {
+	_, f := filepath.Split(p.String())
+	return f
+}
+
+func (c *CacheGitHub) getFileFromGitHub(p Path, name string) Path {
+	repo := c.getRepo(name)
 	if repo == nil {
 		return ""
 	}
-	repos := client.Repositories
-	releaseName := resource[:len(resource)-len(".zip")]
-	release := c.getRelease(repos, *repo.Name, releaseName)
+	releaseName := p.releaseName()
+	release := c.getRelease(repo, releaseName)
 	if release == nil {
 		return ""
 	}
 	fmt.Printf("Release found: '%+v'\n", release)
-	asset := c.getAsset(repos, *release.ID, *release.Name, *repo.Name, resource)
+	asset := c.getAsset(release, repo, p.release())
 	if asset == nil {
 		return ""
 	}
 	fmt.Printf("Asset found: '%+v'\n", asset)
 	// https://github.com/VonC/gow/releases/download/vGow-0.8.0/Gow-0.8.0.zip
-	url := "https://github.com/" + c.owner + "/" + name + "/releases/download/v" + releaseName + "/" + resource
+	url := "https://github.com/" + c.owner + "/" + name + "/releases/download/v" + releaseName + "/" + releaseName + ".zip"
 	fmt.Printf("Downloading from GitHub: '%+v'\n", url)
 	response, err := http.Get(url)
 	if err != nil {
@@ -212,10 +250,21 @@ func (c *CacheGitHub) getFileFromGitHub(resource string, name string) string {
 		return ""
 	}
 	fmt.Printf("Downloaded from GitHub: '%+v'\n", len(body))
-	return string(body)
+	err = ioutil.WriteFile(p.String(), body, 0644)
+	if err != nil {
+		fmt.Println("Error while writing downloaded", url, " to ", p, ": ", err)
+		return ""
+	}
+	c.downloaded = true
+	return p
 }
 
-func (c *CacheGitHub) getAsset(repos *github.RepositoriesService, releaseID int, releaseName string, repoName string, name string) *github.ReleaseAsset {
+func (c *CacheGitHub) getAsset(release *github.RepositoryRelease, repo *github.Repository, name string) *github.ReleaseAsset {
+	client := c.getClient()
+	repos := client.Repositories
+	repoName := *repo.Name
+	releaseID := *release.ID
+	releaseName := *release.Name
 	assets, _, err := repos.ListReleaseAssets(c.owner, repoName, releaseID)
 	if err != nil {
 		fmt.Printf("Error while getting assets from release '%v'(%v): '%v'\n", releaseName, releaseID, err)
@@ -236,7 +285,10 @@ func (c *CacheGitHub) getAsset(repos *github.RepositoriesService, releaseID int,
 	return nil
 }
 
-func (c *CacheGitHub) getRelease(repos *github.RepositoriesService, repoName string, name string) *github.RepositoryRelease {
+func (c *CacheGitHub) getRelease(repo *github.Repository, name string) *github.RepositoryRelease {
+	client := c.getClient()
+	repos := client.Repositories
+	repoName := *repo.Name
 	releases, _, err := repos.ListReleases(c.owner, repoName)
 	if err != nil {
 		fmt.Printf("Error while getting releasesfrom repo %v/'%v': '%v'\n", c.owner, repoName, err)
@@ -256,7 +308,8 @@ func (c *CacheGitHub) getRelease(repos *github.RepositoriesService, repoName str
 	return nil
 }
 
-func (c *CacheGitHub) getRepo(name string, client *github.Client) *github.Repository {
+func (c *CacheGitHub) getRepo(name string) *github.Repository {
+	client := c.getClient()
 	repos := client.Repositories
 	repo, _, err := repos.Get(c.owner, name)
 	if err != nil {
@@ -268,9 +321,9 @@ func (c *CacheGitHub) getRepo(name string, client *github.Client) *github.Reposi
 }
 
 // Update make sure the zip archive is uploaded on GitHub as a release
-func (c *CacheGitHub) Update(resource string, name string, isArchive bool, content string) {
-	fmt.Printf("UPD Github '%v' (%v) for '%v' from '%v'\n", resource, isArchive, name, c.String())
-	if !isArchive || !strings.HasSuffix(resource, ".zip") {
+func (c *CacheGitHub) UpdateArchive(p Path, name string) {
+	fmt.Printf("UPDARC Github '%v' for '%v' from '%v'\n", p, name, c.String())
+	if !p.isZip() {
 		return
 	}
 	/*
@@ -280,83 +333,149 @@ func (c *CacheGitHub) Update(resource string, name string, isArchive bool, conte
 			// TODO calls uploadAsset
 		}*/
 	if c.next != nil {
-		c.Next().Update(resource, name, isArchive, content)
+		c.Next().UpdateArchive(p, name)
 	}
+}
+
+func (c *CacheDisk) IsGitHub() bool {
+	return false
 }
 
 // Update updates c.last and all next caches c.last with content.
-func (c *CacheDisk) Update(resource string, name string, isArchive bool, content string) {
-	fmt.Printf("UPD Disk '%v' (%v) for '%v' from '%v'\n", resource, isArchive, name, c.String())
-	c.last = c.getFile(resource, name, isArchive)
-	if c.last == "" {
-		c.last = content
+func (c *CacheDisk) UpdateArchive(p Path, name string) {
+	fmt.Printf("UPDARC Disk '%v' for '%v' from '%v'\n", p, name, c.String())
+	filepath := c.root + p.release()
+	if e, err := exists(filepath); e {
+		c.last = Path(filepath)
+	} else if err != nil {
+		fmt.Printf("UPDARC Disk error tryinh to check '%v' for '%v' from '%v'\nerr='%v'\n", filepath, name, c.String(), err)
+		return
 	}
-	if c.next != nil {
-		c.Next().Update(resource, name, isArchive, content)
+	if c.last == "" {
+		// TODO copy file
+		c.last = ""
+	}
+	if c.last != "" && c.next != nil {
+		c.Next().UpdateArchive(p, name)
 	}
 }
 
+func (c *CacheGitHub) UpdatePage(p Path, name string) {
+
+}
+
+func (c *CacheDisk) UpdatePage(p Path, name string) {
+
+}
+
 // Get will get either an url or an archive extension (exe, zip, tar.gz, ...)
-func (c *CacheDisk) Get(resource string, name string, isArchive bool) string {
-	fmt.Printf("Get '%v' (%v) for '%v' from '%v'\n", resource, isArchive, name, c.String())
-	c.last = c.getFile(resource, name, isArchive)
+func (c *CacheDisk) GetArchive(resource Path, name string) Path {
+	fmt.Printf("CacheDisk.GetArchive[%v]: '%v' for '%v' from '%v'\n", c.id, resource, name, c.String())
+	c.last = ""
+	filename := c.Folder(name) + resource.String()
+	if exists, err := exists(filename); exists && err == nil {
+		c.last = Path(filename)
+		c.next.UpdateArchive(c.last, name)
+	} else if err != nil {
+		fmt.Printf("CacheDisk.GetArchive[%v]: Error trying to access '%v': '%v'\n", c.id, filename, err)
+		return ""
+	}
+
+	if c.next != nil {
+		if c.last == "" {
+			c.last = c.Next().GetArchive(Path(filename), name)
+			if !c.Next().IsGitHub() && c.last != "" {
+				copy(filename, c.last.String())
+				c.last = Path(filename)
+			}
+		}
+	}
+	if c.last != "" {
+		return c.last
+	}
+	return ""
+}
+
+func copy(dst string, src string) bool {
+	copied := false
+	// open files r and w
+	r, err := os.Open(src)
+	if err != nil {
+		fmt.Printf("Couldn't open src '%v' for copy: '%v'\n", src, err)
+	}
+	defer r.Close()
+
+	w, err := os.Create(dst)
+	if err != nil {
+		fmt.Printf("Couldn't create dst '%v' for copy: '%v'\n", src, err)
+	}
+	defer w.Close()
+
+	// do the actual work
+	n, err := io.Copy(w, r)
+	if err != nil {
+		fmt.Printf("Error while copying '%v' (%v) to '%v' for copy: '%v'\n", src, n, dst, err)
+	} else {
+		copied = true
+	}
+	return copied
+}
+func (c *CacheGitHub) GetPage(url *url.URL, name string) Path {
+	return Path("")
+}
+
+// Get will get either an url or an archive extension (exe, zip, tar.gz, ...)
+func (c *CacheDisk) GetPage(url *url.URL, name string) Path {
+	fmt.Printf("GetPage '%v' for '%v' from '%v'\n", url, name, c.String())
+	c.last = c.getFile(url, name)
 	wasNotFound := true
 	if c.next != nil {
 		if c.last == "" {
-			c.last = c.Next().Get(resource, name, isArchive)
+			c.last = c.Next().GetPage(url, name)
 		} else {
 			wasNotFound = false
-			c.Next().Update(resource, name, isArchive, c.last)
+			c.Next().UpdatePage(c.last, name)
 		}
 	}
 	if c.last == "" || wasNotFound {
-		filename := name
-		if !isArchive {
-			sha := c.getResourceName(resource, name, isArchive)
-			t := time.Now()
-			filename = c.Folder(name) + name + "_" + sha + "_" + t.Format("20060102") + "_" + t.Format("150405")
-			fmt.Printf("Get '%v' downloads '%v' for '%v'\n", c.id, filename, resource)
-		}
+		sha := c.getResourceName(url, name)
+		t := time.Now()
+		filename := c.Folder(name) + name + "_" + sha + "_" + t.Format("20060102") + "_" + t.Format("150405")
+		fmt.Printf("Get '%v' downloads '%v' for '%v'\n", c.id, filename, url)
 		if c.last == "" {
-			c.last = download(resource, filename, true)
+			c.last = download(url, Path(filename))
 		} else {
-			ioutil.WriteFile(c.Folder(name)+resource, []byte(c.last), 0644)
+			copy(filename, c.last.String())
+			c.last = Path(filename)
 		}
 		if c.last != "" {
-			fmt.Printf("Get '%v' has downloaded '%v' bytes in '%v' for '%v'\n", c.id, len(c.last), filename, resource)
+			fmt.Printf("Get '%v' has downloaded in '%v' for '%v'\n", c.id, filename, url)
 		}
 		if c.next != nil && c.last != "" {
-			c.next.Update(resource, name, isArchive, c.last)
+			c.next.UpdatePage(c.last, name)
 		}
 	}
 	return c.last
 }
 
-func (c *CacheDisk) getResourceName(resource string, name string, isArchive bool) string {
-	res := resource
-	if !isArchive {
-		hasher := sha1.New()
-		hasher.Write([]byte(resource))
-		sha := base64.URLEncoding.EncodeToString(hasher.Sum(nil))
-		res = sha
-	}
+func (c *CacheDisk) getResourceName(url *url.URL, name string) string {
+	hasher := sha1.New()
+	hasher.Write([]byte(url.String()))
+	sha := base64.URLEncoding.EncodeToString(hasher.Sum(nil))
+	res := sha
 	return res
 }
 
-func (c *CacheDisk) getFile(resource string, name string, isArchive bool) string {
+func (c *CacheDisk) getFile(url *url.URL, name string) Path {
 	c.last = ""
 	dir := c.root + name
 	err := os.MkdirAll(dir, 0755)
-	c.last = ""
 	if err != nil {
 		fmt.Printf("Error creating cache folder for name '%v': '%v'\n", dir, err)
 		return ""
 	}
-	rsc := c.getResourceName(resource, name, isArchive)
-	pattern := name + "_archive_.*." + rsc
-	if !isArchive {
-		pattern = name + "_" + rsc + "_.*"
-	}
+	rsc := c.getResourceName(url, name)
+	pattern := name + "_" + rsc + "_.*"
 	filepath := dir + "/" + getLastModifiedFile(dir, pattern)
 	if filepath == dir+"/" {
 		return ""
@@ -367,16 +486,8 @@ func (c *CacheDisk) getFile(resource string, name string, isArchive bool) string
 		return ""
 	}
 	defer f.Close()
-	content := ""
-	reader := bufio.NewReader(f)
-	var contents []byte
-	if contents, err = ioutil.ReadAll(reader); err != nil {
-		fmt.Printf("Error while reading content of '%v': '%v'\n", filepath, err)
-		return ""
-	}
-	content = string(contents)
-	c.last = content
-	return content
+	c.last = Path(filepath)
+	return c.last
 }
 
 func (c *CacheGitHub) String() string {
@@ -390,7 +501,7 @@ func (c *CacheDisk) String() string {
 }
 
 // Last value cached
-func (c *CacheData) Last() string {
+func (c *CacheData) Last() Path {
 	return c.last
 }
 
@@ -447,9 +558,9 @@ func (e *Extractable) Next() Extractor {
 
 // Extract extracts from its data
 func (e *Extractable) Extract() string {
-	res := e.self.ExtractFrom(e.data)
+	res := e.self.ExtractFrom(nil) // TODO e.data)
 	if e.Next() != nil {
-		res = e.Next().ExtractFrom(res)
+		/*res =*/ e.Next().ExtractFrom(nil)
 	}
 	return res
 }
@@ -460,40 +571,39 @@ type ExtractorGet struct {
 }
 
 // ExtractFrom download an url content
-func (eg *ExtractorGet) ExtractFrom(url string) string {
+func (eg *ExtractorGet) ExtractFrom(url *url.URL) string {
 	//fmt.Println("ok! " + url)
 	name := eg.p.GetName()
-	page := cache.Get(url, name, false)
+	page := cache.GetPage(url, name)
 	if page == "" {
-		fmt.Printf("Unable to wonlad '%v'\n", url)
+		fmt.Printf("Unable to download '%v'\n", url)
 	} else {
 		fmt.Printf("Got '%v' from cache\n", url)
 	}
+	// TODO read file
 	fmt.Println(len(page))
-	return page
+	return page.String()
 }
 
-func download(url string, filename string, returnBody bool) string {
-	res := ""
-	response, err := http.Get(url)
+func download(url *url.URL, filename Path) Path {
+	res := Path("")
+	response, err := http.Get(url.String())
 	if err != nil {
 		fmt.Println("Error while downloading", url, "-", err)
 		return ""
 	}
+	defer response.Body.Close()
 	body, err := ioutil.ReadAll(response.Body)
 	if err != nil {
 		fmt.Println("Error while reading downloaded", url, "-", err)
 		return ""
 	}
-	err = ioutil.WriteFile(filename, body, 0666)
+	err = ioutil.WriteFile(filename.String(), body, 0666)
 	if err != nil {
 		fmt.Printf("Error while writing downloaded '%v': '%v'\n", url, err)
 		return ""
 	}
-	defer response.Body.Close()
-	if returnBody {
-		res = string(body)
-	}
+	res = filename
 	return res
 }
 
@@ -518,10 +628,11 @@ func NewExtractorMatch(rx string, p PrgData) *ExtractorMatch {
 }
 
 // ExtractFrom returns matched content from a regexp
-func (em *ExtractorMatch) ExtractFrom(content string) string {
+func (em *ExtractorMatch) ExtractFrom(url *url.URL) string {
+	content := ""
 	rx := em.Regexp()
 	if content == em.data {
-		content = cache.Last()
+		content = "" //cache.Last().String()
 	}
 	fmt.Printf("Rx for '%v' (%v): '%v'\n", em.p.GetName(), len(content), rx)
 	matches := rx.FindAllStringSubmatchIndex(content, -1)
@@ -564,8 +675,8 @@ func NewExtractorPrepend(rx string, p PrgData) *ExtractorPrepend {
 }
 
 // ExtractFrom prepends data to content
-func (ep *ExtractorPrepend) ExtractFrom(content string) string {
-	return ep.data + content
+func (ep *ExtractorPrepend) ExtractFrom(url *url.URL) string {
+	return ep.data + "" // TODO + content
 }
 
 func (p *Prg) updatePortable() {
@@ -825,24 +936,24 @@ func (p *Prg) install() {
 		fmt.Printf("[install] ERR: no archive on '%v'\n", p.GetName())
 		return
 	}
-	archiveFullPath := ""
+	archiveFullPath := Path("")
 	if strings.HasSuffix(archive, ".exe") {
 		portableArchive := strings.Replace(archive, ".exe", ".zip", -1)
-		archiveFullPath = cache.Get(portableArchive, p.GetName(), true)
+		archiveFullPath = cache.GetArchive(Path(portableArchive), p.GetName())
 	}
 
 	// TODO archiveFullContent. And don't download anything at this point:
 	// this was taken care of by CacheDisk and CacheGitHub.
 
 	if archiveFullPath == "" {
-		archiveFullPath = cache.Get(archive, p.GetName(), true)
+		archiveFullPath = cache.GetArchive(Path(archive), p.GetName())
 	}
 	fmt.Printf("folderFull (%v): '%v'\narchiveFullPath '%v'\n", p.name, folderFull, archiveFullPath)
 	return
 	alreadyInstalled := false
 	if hasFolder, err := exists(folderFull); !hasFolder && err == nil {
 		fmt.Printf("Need to install %v in '%v'\n", p.name, folderFull)
-		if hasArchive, err := exists(archiveFullPath); !hasArchive && err == nil {
+		if hasArchive, err := exists(archiveFullPath.String()); !hasArchive && err == nil {
 			fmt.Printf("Need to download %v in '%v'\n", p.name, archiveFullPath)
 			url := p.GetURL()
 			fmt.Printf("Url: '%v'\n", url)
@@ -852,7 +963,8 @@ func (p *Prg) install() {
 			}
 			fmt.Printf("[install] DBG: no download yet on '%v'\n", p.GetName())
 			return
-			download(url, archiveFullPath, false)
+			// TODO url
+			download(nil, archiveFullPath)
 		}
 	} else if err != nil {
 		fmt.Printf("Error while testing installation folder existence '%v': '%v'\n", folder, err)
@@ -899,7 +1011,7 @@ func (p *Prg) install() {
 		fmt.Printf("Unable to get full path for '%v': '%v'\n%v", p.name, folderFull, err)
 		return
 	}
-	cmd = strings.Replace(cmd, "@FILE@", filepath.FromSlash(archiveFullPath), -1)
+	cmd = strings.Replace(cmd, "@FILE@", filepath.FromSlash(archiveFullPath.String()), -1)
 	cmd = strings.Replace(cmd, "@DEST@", dst, -1)
 	fmt.Printf("invoking for '%v': '%v'\n", p.name, cmd)
 	c := exec.Command("cmd", "/C", cmd)
