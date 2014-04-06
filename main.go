@@ -652,11 +652,13 @@ func NewExtractorMatch(rx string, p PrgData) *ExtractorMatch {
 }
 
 // ExtractFrom returns matched content from a regexp
-func (em *ExtractorMatch) ExtractFrom(data string) string {
-	content := ""
+func (em *ExtractorMatch) ExtractFrom(content string) string {
 	rx := em.Regexp()
+	// if content if internal extractor dat (as opposed to actual content)
 	if content == em.data {
-		content = "" //cache.Last().String()
+		// fall back to main cache last data
+		p := cache.Last()
+		content = p.fileContent()
 	}
 	fmt.Printf("Rx for '%v' (%v): '%v'\n", em.p.GetName(), len(content), rx)
 	matches := rx.FindAllStringSubmatchIndex(content, -1)
