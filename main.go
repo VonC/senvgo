@@ -1051,7 +1051,7 @@ func (p *Prg) install() {
 		}
 		return
 	}
-	if strings.HasSuffix(archive, ".zip") {
+	if archiveFullPath.isZip() {
 		p.invokeZip()
 		return
 	}
@@ -1423,6 +1423,14 @@ func (p *Prg) GetFolder() string {
 func (p *Prg) GetArchive() string {
 	if p.exts != nil {
 		p.archive = get(p.archive, p.exts.extractArchive, false)
+	}
+	if strings.HasSuffix(p.archive, ".exe") {
+		parchive := Path(p.archive)
+		pname := Path(parchive.releaseName() + ".zip")
+		portableArchive := cache.GetArchive(pname, p.name)
+		if portableArchive != "" {
+			p.archive = portableArchive.release()
+		}
 	}
 	return p.archive
 }
