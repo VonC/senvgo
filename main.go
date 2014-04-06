@@ -121,7 +121,7 @@ type Extractor interface {
 type Path string
 
 func (p *Path) String() string {
-	return fmt.Sprintf("%v", p)
+	return fmt.Sprintf(string(*p))
 }
 
 // Cache gets or update a resource, can be linked, can retrieve last value cached
@@ -481,7 +481,7 @@ func (c *CacheDisk) getFile(url *url.URL, name string) Path {
 	}
 	var f *os.File
 	if f, err = os.Open(filepath); err != nil {
-		fmt.Printf("Error while reading content of '%v': '%v'\n", filepath, err)
+		fmt.Printf("Error while opening '%v': '%v'\n", filepath, err)
 		return ""
 	}
 	defer f.Close()
