@@ -361,11 +361,29 @@ func (c *CacheDisk) UpdateArchive(p Path, name string) {
 }
 
 func (c *CacheGitHub) UpdatePage(p Path, name string) {
-
+	fmt.Printf("UPDPAG GitHub '%v' for '%v' from '%v'\n", p, name, c.String())
+	if c.next != nil {
+		c.Next().UpdatePage(p, name)
+	}
 }
 
 func (c *CacheDisk) UpdatePage(p Path, name string) {
-
+	fmt.Printf("UPDPAG Disk '%v' for '%v' from '%v'\n", p, name, c.String())
+	filepath := c.root + p.release()
+	if e, err := exists(filepath); e {
+		c.last = Path(filepath)
+	} else if err != nil {
+		fmt.Printf("UPDPAG Disk error tryinh to check '%v' for '%v' from '%v'\nerr='%v'\n", filepath, name, c.String(), err)
+		return
+	}
+	if c.last == "" {
+		if copy(filepath, p.String()) {
+			c.last = Path(filepath)
+		}
+	}
+	if c.last != "" && c.next != nil {
+		c.Next().UpdatePage(p, name)
+	}
 }
 
 // Get will get either an url or an archive extension (exe, zip, tar.gz, ...)
