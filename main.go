@@ -395,6 +395,26 @@ func (c *CacheDisk) GetArchive(resource Path, name string) Path {
 	return ""
 }
 
+func (p *Path) fileContent() string {
+	filepath := string(*p)
+	var f *os.File
+	var err error
+	if f, err = os.Open(filepath); err != nil {
+		fmt.Printf("Error while reading content of '%v': '%v'\n", filepath, err)
+		return ""
+	}
+	defer f.Close()
+	content := ""
+	reader := bufio.NewReader(f)
+	var contents []byte
+	if contents, err = ioutil.ReadAll(reader); err != nil {
+		fmt.Printf("Error while reading content of '%v': '%v'\n", filepath, err)
+		return ""
+	}
+	content = string(contents)
+	return content
+}
+
 func copy(dst string, src string) bool {
 	copied := false
 	// open files r and w
@@ -583,9 +603,9 @@ func (eg *ExtractorGet) ExtractFrom(data string) string {
 	} else {
 		fmt.Printf("Got '%v' from cache\n", url)
 	}
-	// TODO read file
-	fmt.Println(len(page))
-	return page.String()
+	content := page.fileContent()
+	fmt.Println(len(content))
+	return content
 }
 
 func download(url *url.URL, filename Path) Path {
