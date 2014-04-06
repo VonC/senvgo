@@ -323,14 +323,33 @@ func (c *CacheGitHub) getRepo(name string) *github.Repository {
 func (c *CacheGitHub) UpdateArchive(p Path, name string) {
 	fmt.Printf("UPDARC Github '%v' for '%v' from '%v'\n", p, name, c.String())
 	if !p.isZip() {
+		fmt.Printf("UPDARC Github '%v' for '%v' from '%v': no zip\n", p, name, c.String())
 		return
 	}
-	/*
-		c.last = c.getFile(resource, name, isArchive)
-		if c.last == "" {
-			c.last = content
-			// TODO calls uploadAsset
-		}*/
+	if c.last == p {
+		fmt.Printf("UPDARC Github '%v' for '%v' from '%v': already there\n", p, name, c.String())
+	}
+	repo := c.getRepo(name)
+	if repo == nil {
+		fmt.Printf("UPDARC Github '%v' for '%v' from '%v': no repo\n", p, name, c.String())
+		return
+	}
+	releaseName := p.releaseName()
+	release := c.getRelease(repo, releaseName)
+	var asset *github.ReleaseAsset
+	if release != nil {
+		fmt.Printf("Release found: '%+v'\n", release)
+		asset = c.getAsset(release, repo, p.release())
+	}
+	if asset != nil {
+		c.last = p
+		fmt.Printf("UPDARC Github '%v' for '%v' from '%v': nothing to do\n", p, name, c.String())
+		return
+	}
+	if release == nil {
+		// check for last commit, tag, release, asset
+	}
+	// TODO create releaseasset
 	if c.next != nil {
 		c.Next().UpdateArchive(p, name)
 	}
