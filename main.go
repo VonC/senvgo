@@ -181,7 +181,7 @@ func (c *CacheGitHub) IsGitHub() bool {
 
 // Get gets or download zip archives only from GitHub
 func (c *CacheGitHub) GetArchive(p Path, name string) Path {
-	fmt.Printf("GetArchive '%v' for '%v' from '%v'\n", p, name, c.String())
+	fmt.Printf("CacheGitHub.GetArchive '%v' for '%v' from '%v'\n", p, name, c.String())
 	if !p.isZip() {
 		fmt.Printf("GetArchive '%v' is not a .zip\n", p)
 		return ""
@@ -351,8 +351,9 @@ func (c *CacheDisk) UpdateArchive(p Path, name string) {
 		return
 	}
 	if c.last == "" {
-		// TODO copy file
-		c.last = ""
+		if copy(filepath, p.String()) {
+			c.last = Path(filepath)
+		}
 	}
 	if c.last != "" && c.next != nil {
 		c.Next().UpdateArchive(p, name)
@@ -368,10 +369,10 @@ func (c *CacheDisk) UpdatePage(p Path, name string) {
 }
 
 // Get will get either an url or an archive extension (exe, zip, tar.gz, ...)
-func (c *CacheDisk) GetArchive(resource Path, name string) Path {
-	fmt.Printf("CacheDisk.GetArchive[%v]: '%v' for '%v' from '%v'\n", c.id, resource, name, c.String())
+func (c *CacheDisk) GetArchive(p Path, name string) Path {
+	fmt.Printf("CacheDisk.GetArchive[%v]: '%v' for '%v' from '%v'\n", c.id, p, name, c.String())
 	c.last = ""
-	filename := c.Folder(name) + resource.String()
+	filename := c.Folder(name) + p.release()
 	if exists, err := exists(filename); exists && err == nil {
 		c.last = Path(filename)
 		c.next.UpdateArchive(c.last, name)
