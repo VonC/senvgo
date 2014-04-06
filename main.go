@@ -28,7 +28,6 @@ import (
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	prgs := ReadConfig()
-	os.Exit(0)
 	for _, p := range prgs {
 		p.install()
 		fmt.Printf("INSTALLED '%v'\n", p)
@@ -112,7 +111,7 @@ type fextract func(str string) string
 
 // Extractor knows how to extract, and can be linked
 type Extractor interface {
-	ExtractFrom(url *url.URL) string
+	ExtractFrom(data string) string
 	Extract() string
 	Next() Extractor
 	SetNext(e Extractor)
@@ -558,9 +557,9 @@ func (e *Extractable) Next() Extractor {
 
 // Extract extracts from its data
 func (e *Extractable) Extract() string {
-	res := e.self.ExtractFrom(nil) // TODO e.data)
+	res := e.self.ExtractFrom(e.data)
 	if e.Next() != nil {
-		/*res =*/ e.Next().ExtractFrom(nil)
+		res = e.Next().ExtractFrom(res)
 	}
 	return res
 }
@@ -571,7 +570,11 @@ type ExtractorGet struct {
 }
 
 // ExtractFrom download an url content
-func (eg *ExtractorGet) ExtractFrom(url *url.URL) string {
+func (eg *ExtractorGet) ExtractFrom(data string) string {
+	url, err := url.Parse(data)
+	if err != nil {
+		fmt.Printf("ExtractorGet.ExtractFrom() error parsing url '%v': '%v'\n", data, err)
+	}
 	//fmt.Println("ok! " + url)
 	name := eg.p.GetName()
 	page := cache.GetPage(url, name)
@@ -628,7 +631,7 @@ func NewExtractorMatch(rx string, p PrgData) *ExtractorMatch {
 }
 
 // ExtractFrom returns matched content from a regexp
-func (em *ExtractorMatch) ExtractFrom(url *url.URL) string {
+func (em *ExtractorMatch) ExtractFrom(data string) string {
 	content := ""
 	rx := em.Regexp()
 	if content == em.data {
@@ -675,8 +678,8 @@ func NewExtractorPrepend(rx string, p PrgData) *ExtractorPrepend {
 }
 
 // ExtractFrom prepends data to content
-func (ep *ExtractorPrepend) ExtractFrom(url *url.URL) string {
-	return ep.data + "" // TODO + content
+func (ep *ExtractorPrepend) ExtractFrom(data string) string {
+	return ep.data + data
 }
 
 func (p *Prg) updatePortable() {
