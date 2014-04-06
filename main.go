@@ -362,7 +362,7 @@ func (c *CacheDisk) IsGitHub() bool {
 // Update updates c.last and all next caches c.last with content.
 func (c *CacheDisk) UpdateArchive(p Path, name string) {
 	fmt.Printf("UPDARC Disk '%v' for '%v' from '%v'\n", p, name, c.String())
-	filepath := c.root + p.release()
+	filepath := c.Folder(name) + p.release()
 	if e, err := exists(filepath); e {
 		c.last = Path(filepath)
 	} else if err != nil {
@@ -388,7 +388,7 @@ func (c *CacheGitHub) UpdatePage(p Path, name string) {
 
 func (c *CacheDisk) UpdatePage(p Path, name string) {
 	fmt.Printf("UPDPAG Disk '%v' for '%v' from '%v'\n", p, name, c.String())
-	filepath := c.root + p.release()
+	filepath := c.Folder(name) + p.release()
 	if e, err := exists(filepath); e {
 		c.last = Path(filepath)
 	} else if err != nil {
@@ -525,7 +525,7 @@ func (c *CacheDisk) getResourceName(url *url.URL, name string) string {
 
 func (c *CacheDisk) getFile(url *url.URL, name string) Path {
 	c.last = ""
-	dir := c.root + name
+	dir := c.Folder(name)
 	err := os.MkdirAll(dir, 0755)
 	if err != nil {
 		fmt.Printf("Error creating cache folder for name '%v': '%v'\n", dir, err)
