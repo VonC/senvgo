@@ -1000,7 +1000,9 @@ func (p *Prg) install() {
 		return
 	}
 	archiveFullPath := Path("")
+	tozip := false
 	if strings.HasSuffix(archive, ".exe") {
+		tozip = true
 		portableArchive := strings.Replace(archive, ".exe", ".zip", -1)
 		archiveFullPath = cache.GetArchive(Path(portableArchive), p.GetName())
 	}
@@ -1011,8 +1013,12 @@ func (p *Prg) install() {
 	if archiveFullPath == "" {
 		archiveFullPath = cache.GetArchive(Path(archive), p.GetName())
 	}
+	if archiveFullPath == "" {
+		fmt.Printf("[install] ERR: no archiveFullPath from '%v' for '%v'\n", archive, p.GetName(), tozip)
+		return
+	}
 	fmt.Printf("folderFull (%v): '%v'\narchiveFullPath '%v'\n", p.name, folderFull, archiveFullPath)
-	return
+
 	alreadyInstalled := false
 	if hasFolder, err := exists(folderFull); !hasFolder && err == nil {
 		fmt.Printf("Need to install %v in '%v'\n", p.name, folderFull)
