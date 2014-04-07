@@ -364,17 +364,37 @@ func (c *CacheGitHub) UpdateArchive(p Path, name string) {
 		// check for last commit, tag, release, asset
 		authUser := c.getAuthUser()
 		if authUser == nil {
-			fmt.Printf("UPDARC Github '%v' for '%v' from '%v': user '%v' not autheticated to GitHub\n", p, name, c.String(), c.owner)
+			fmt.Printf("UPDARC Github '%v' for '%v' from '%v': user '%v' not authenticated to GitHub\n", p, name, c.String(), c.owner)
 			return
 		}
 		owner := *authUser.Name
 		email := *authUser.Email
 		fmt.Printf("Authenticated user: '%v' (%v)\n", owner, email)
+		repocommit := c.getCommit(owner, repo, "master")
+		if repocommit == nil {
+			fmt.Printf("UPDARC Github '%v' for '%v': unable to find commit on master\n", p, name)
+			return
+		}
 	}
 	// TODO create releaseasset
 	if c.next != nil {
 		c.Next().UpdateArchive(p, name)
 	}
+}
+
+func (c *CacheGitHub) getCommit(owner string, repo *github.Repository, branch string) *github.RepositoryCommit {
+	client := c.getClient()
+	repos := client.Repositories
+	commits, _, err := repos.ListCommits(owner, *repo.Name, &github.CommitsListOptions{SHA: branch})
+	if err != nil {
+		fmt.Printf("Error while getting commits on '%v' of %v/'%v': '%v'\n", branch, owner, repo.Name, err)
+		return nil
+	}
+
+	repocommit := commits[0]
+	sha := *repocommit.SHA
+	fmt.Printf("Commit on '%v': %v' => '%v'\n", branch, sha, repocommit.Commit.Tree)
+	return &repocommit
 }
 
 func (c *CacheGitHub) getAuthUser() *github.User {
