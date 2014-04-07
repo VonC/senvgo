@@ -375,11 +375,45 @@ func (c *CacheGitHub) UpdateArchive(p Path, name string) {
 			fmt.Printf("UPDARC Github '%v' for '%v': unable to find commit on master\n", p, name)
 			return
 		}
+		portableArchive := p.release()
+		if *repocommit.Commit.Message != "version for portable "+portableArchive {
+			fmt.Println("Must create commit")
+			commit := c.createCommit(repocommit, authUser, portableArchive, repo, "master")
+			if commit == nil {
+				fmt.Printf("UPDARC Github '%v' for '%v': unable to create commit on master\n", p, name)
+				return
+			}
+		}
+
 	}
 	// TODO create releaseasset
 	if c.next != nil {
 		c.Next().UpdateArchive(p, name)
 	}
+}
+
+func (c *CacheGitHub) createCommit(rc *github.RepositoryCommit, authUser *github.User, portableArchive string, repo *github.Repository, branch string) *github.Commit {
+	client := c.getClient()
+	owner := *authUser.Name
+	cr := &github.CommitRequest{Message: github.String("version for portable " + portableArchive), Tree: rc.Commit.Tree.SHA, Parents: []string{*rc.SHA}}
+	cr.Committer = &github.CommitAuthor{Name: authUser.Name, Email: authUser.Email}
+	// fmt.Println(c)
+	commit, _, err := client.Git.CreateCommit(owner, *repo.Name, cr)
+	if err != nil {
+		fmt.Printf("Error while creating commit for repo %v/'%v': '%v'\n", owner, *repo.Name, err)
+		return nil
+	}
+	fmt.Printf("COMMIT CREATED: '%v'\n", commit)
+
+	refc := &github.Reference{Ref: github.String("heads/" + branch), Object: &github.GitObject{SHA: github.String(*commit.SHA)}}
+	ref, _, err := client.Git.UpdateRef(owner, *repo.Name, refc, false)
+	if err != nil {
+		fmt.Printf("Error while updating ref '%v' for commit '%v' for repo %v/'%v': '%v'\n", refc, commit, owner, *repo.Name, err)
+		return nil
+	}
+	fmt.Printf("REF UPDATED: '%v'\n", ref)
+
+	return commit
 }
 
 func (c *CacheGitHub) getCommit(owner string, repo *github.Repository, branch string) *github.RepositoryCommit {
