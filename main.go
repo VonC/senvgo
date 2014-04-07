@@ -788,22 +788,27 @@ var defaultConfig = `
   name.rx        /download/v.*?/(Gow-.*?.exe)
   invoke         @FILE@ /S /D=@DEST@
 `
-var cache = &CacheDisk{CacheData: &CacheData{id: "main"}, root: "test/_cache/"}
+
+func NewCacheDisk(id string, root string) *CacheDisk {
+	cache := &CacheDisk{CacheData: &CacheData{id: id}, root: root}
+	if e, err := exists(root); !e && err == nil {
+		if err = os.MkdirAll(root, 0755); err != nil {
+			fmt.Printf("Error creating cache '%v' with root folder'%v': '%v'\n", id, root, err)
+			return nil
+		}
+	} else if err != nil {
+		fmt.Printf("Unable to check root '%v' for new CacheDisk '%v': '%v'\n", root, id, err)
+		return nil
+	}
+	return cache
+}
+
+var cache = NewCacheDisk("main", "test/_cache/")
 
 // ReadConfig reads config an build programs and extractors and caches
 func ReadConfig() []*Prg {
 
 	res := []*Prg{}
-
-	if isdir, err := exists("test/_cache/"); !isdir && err == nil {
-		err := os.MkdirAll(cache.root, 0755)
-		if err != nil {
-			fmt.Printf("Error creating cache root folder: '%v'\n", err)
-		}
-	} else if err != nil {
-		fmt.Printf("Error while checking existence of cache root folder: '%v'\n", err)
-		return res
-	}
 
 	config := strings.NewReader(defaultConfig)
 	scanner := bufio.NewScanner(config)
@@ -852,7 +857,7 @@ func ReadConfig() []*Prg {
 			if !strings.HasSuffix(line, string(filepath.Separator)) {
 				line = line + string(filepath.Separator)
 			}
-			currentCache = &CacheDisk{CacheData: &CacheData{id: currentCacheName}, root: line}
+			currentCache = NewCacheDisk(currentCacheName, line)
 			continue
 		}
 		if strings.HasPrefix(line, "owner") && currentCacheName != "" {
