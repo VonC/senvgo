@@ -370,6 +370,16 @@ func (c *CacheDisk) UpdateArchive(p Path, name string) {
 		return
 	}
 	if c.last == "" {
+		if hasFolder, err := exists(c.Folder(name)); !hasFolder && err == nil {
+			err := os.MkdirAll(c.Folder(name), 0755)
+			if err != nil {
+				fmt.Printf("UPDARC CacheDisk %v Error creating folder '%v' for name '%v': '%v'\n", c.id, c.Folder(name), name, err)
+				return
+			}
+		} else if err != nil {
+			fmt.Printf("UPDARC CacheDisk %v Error whilte testing for existence of folder '%v' for name '%v': '%v'\n", c.id, c.Folder(name), name, err)
+			return
+		}
 		if copy(filepath, p.String()) {
 			c.last = Path(filepath)
 		}
@@ -396,6 +406,16 @@ func (c *CacheDisk) UpdatePage(p Path, name string) {
 		return
 	}
 	if c.last == "" {
+		if hasFolder, err := exists(c.Folder(name)); !hasFolder && err == nil {
+			err := os.MkdirAll(c.Folder(name), 0755)
+			if err != nil {
+				fmt.Printf("UPDPAG CacheDisk %v Error creating folder '%v' for name '%v': '%v'\n", c.id, c.Folder(name), name, err)
+				return
+			}
+		} else if err != nil {
+			fmt.Printf("UPDPAG CacheDisk %v Error whilte testing for existence of folder '%v' for name '%v': '%v'\n", c.id, c.Folder(name), name, err)
+			return
+		}
 		if copy(filepath, p.String()) {
 			c.last = Path(filepath)
 		}
