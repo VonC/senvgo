@@ -970,7 +970,7 @@ func (p *Prg) checkLatest() {
 
 func junction(link, dst, name string) {
 	cmd := "mklink /J " + link + " " + dst
-	fmt.Printf("invoking for '%v': '%v'\n", name, cmd)
+	fmt.Printf("junction: invoking for '%v': '%v'\n", name, cmd)
 	c := exec.Command("cmd", "/C", cmd)
 	if out, err := c.Output(); err != nil {
 		fmt.Printf("Error invoking '%v'\n''%v': %v'\n", cmd, string(out), err)
@@ -981,7 +981,7 @@ var junctionRx, _ = regexp.Compile(`N>\s+latest\s+\[([^\]]*?)\]`)
 
 func readJunction(link, folder, name string) string {
 	cmd := "dir /A:L " + folder
-	fmt.Printf("invoking for '%v': '%v'\n", name, cmd)
+	fmt.Printf("readJunction: invoking for '%v': '%v'\n", name, cmd)
 	c := exec.Command("cmd", "/C", cmd)
 	out, err := c.Output()
 	sout := string(out)
