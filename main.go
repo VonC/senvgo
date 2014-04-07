@@ -362,11 +362,29 @@ func (c *CacheGitHub) UpdateArchive(p Path, name string) {
 	}
 	if release == nil {
 		// check for last commit, tag, release, asset
+		authUser := c.getAuthUser()
+		if authUser == nil {
+			fmt.Printf("UPDARC Github '%v' for '%v' from '%v': user '%v' not autheticated to GitHub\n", p, name, c.String(), c.owner)
+			return
+		}
+		owner := *authUser.Name
+		email := *authUser.Email
+		fmt.Printf("Authenticated user: '%v' (%v)\n", owner, email)
 	}
 	// TODO create releaseasset
 	if c.next != nil {
 		c.Next().UpdateArchive(p, name)
 	}
+}
+
+func (c *CacheGitHub) getAuthUser() *github.User {
+	client := c.getClient()
+	authUser, _, err := client.Users.Get("")
+	if err != nil {
+		fmt.Printf("Error while getting authenticated user\n")
+		return nil
+	}
+	return authUser
 }
 
 func (c *CacheDisk) IsGitHub() bool {
