@@ -199,7 +199,21 @@ func (c *CacheGitHub) GetArchive(p Path, name string) Path {
 
 func (c *CacheGitHub) getClient() *github.Client {
 	if c.client == nil {
-		c.client = github.NewClient(nil)
+		var cl *http.Client
+		contents, err := ioutil.ReadFile("../gh." + c.owner)
+		if err != nil {
+			fmt.Printf("Unable to access to GitHub authentication => anoymous access only\n'%v'\n", err)
+		} else if len(contents) < 20 {
+			fmt.Printf("Invalid content for GitHub authentication PAT ../gh.%s\n", c.owner)
+		} else {
+			pat := strings.TrimSpace(string(contents))
+			fmt.Printf("GitHub authentication PAT '%v' for '%v'\n", pat, c.owner)
+			t := &oauth.Transport{
+				Token: &oauth.Token{AccessToken: pat},
+			}
+			cl = t.Client()
+		}
+		c.client = github.NewClient(cl)
 	}
 	return c.client
 }
