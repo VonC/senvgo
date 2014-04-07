@@ -1082,7 +1082,7 @@ func (p *Prg) install() {
 		fmt.Printf("Error while testing tmp folder existence '%v': '%v'\n", folderTmp, err)
 		return
 	} else if alreadyInstalled {
-		p.checkPortable()
+		//p.checkPortable()
 		err := deleteFolderContent(folderTmp)
 		if err != nil {
 			fmt.Printf("Error removing tmp folder for name '%v': '%v'\n", folderTmp, err)
@@ -1112,7 +1112,7 @@ func (p *Prg) install() {
 	if out, err := c.Output(); err != nil {
 		fmt.Printf("Error invoking '%v'\n''%v': %v'\n", cmd, string(out), err)
 	}
-	p.checkPortable()
+	//p.checkPortable()
 	p.checkLatest()
 }
 
