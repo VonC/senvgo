@@ -375,6 +375,7 @@ func (c *CacheGitHub) UpdateArchive(p Path, name string) {
 			fmt.Printf("UPDARC Github '%v' for '%v': unable to find commit on master\n", p, name)
 			return
 		}
+		sha := *repocommit.SHA
 		portableArchive := p.release()
 		if *repocommit.Commit.Message != "version for portable "+portableArchive {
 			fmt.Println("Must create commit")
@@ -383,13 +384,88 @@ func (c *CacheGitHub) UpdateArchive(p Path, name string) {
 				fmt.Printf("UPDARC Github '%v' for '%v': unable to create commit on master\n", p, name)
 				return
 			}
+			sha = *commit.SHA
 		}
 
+		tagFound := false
+		tagName := "v" + releaseName
+		tagShort := c.getTag(tagName, authUser, repo)
+		if tagShort != nil {
+			tagFound = true
+		}
+
+		if tagFound && *tagShort.CommitTag.SHA != sha {
+			fmt.Printf("UPDARC Github Must delete tag (actually ref) found '%v'", tagShort)
+			tagFound = false
+			return
+		}
+		if !tagFound {
+			fmt.Printf("Must create tag '%v' for commit '%v', repo VonC/'%v'.\n", tagName, sha, *repo.Name)
+			tag := c.createTag(tagName, authUser, repo, releaseName, sha)
+			fmt.Printf("UPDARC Github Created tag (and ref) '%v'", tag)
+		}
 	}
 	// TODO create releaseasset
 	if c.next != nil {
 		c.Next().UpdateArchive(p, name)
 	}
+}
+
+func (c *CacheGitHub) getTag(tagName string, authUser *github.User, repo *github.Repository) *github.RepositoryTagShort {
+	client := c.getClient()
+	repos := client.Repositories
+	owner := *authUser.Name
+	tags, _, err := repos.ListTags(owner, *repo.Name)
+	if err != nil {
+		fmt.Printf("Error while getting tags from repo VonC/'%v': '%v'\n", *repo.Name, err)
+		return nil
+	}
+
+	var tagShort github.RepositoryTagShort
+	for _, tagShort = range tags {
+		fmt.Printf("Tags '%v' => %v\n", *tagShort.Name, *tagShort.CommitTag.SHA)
+		if *tagShort.Name == tagName {
+			fmt.Printf("Tag '%v' found: '%v-%v-%v'\n", tagName, *tagShort.Name, *tagShort.CommitTag.SHA, *tagShort.CommitTag.URL)
+			break
+		}
+	}
+	return &tagShort
+}
+
+func (c *CacheGitHub) createTag(tagName string, authUser *github.User, repo *github.Repository, releaseName string, sha string) *github.RepositoryTag {
+
+	client := c.getClient()
+	repos := client.Repositories
+
+	owner := *authUser.Name
+	email := *authUser.Email
+	input := &github.DataTag{
+		Tag:     github.String(tagName),
+		Message: github.String("tag for version portable " + releaseName),
+		Object:  github.String(sha),
+		Type:    github.String("commit"),
+		Tagger: &github.Tagger{
+			Name:  github.String(owner),
+			Email: github.String(email),
+		},
+	}
+	tag, _, err := repos.CreateTag(owner, releaseName, input)
+	if err != nil {
+		fmt.Printf("Error while creating tag '%v'-'%v' from repo VonC/'%v': '%v'\n", *input.Tag, *input.Object, releaseName, err)
+		return nil
+	}
+	ref, _, err := client.Git.CreateRef(owner, releaseName, &github.Reference{
+		Ref: github.String("tags/" + tagName),
+		Object: &github.GitObject{
+			SHA: github.String(*tag.SHA),
+		},
+	})
+	if err != nil {
+		fmt.Printf("Error while creating reference to tag '%v'-'%v' from repo VonC/'%v': '%v'\n", *tag.Tag, *tag.SHA, releaseName, err)
+		return nil
+	}
+	fmt.Printf("Ref created: '%v'\n", ref)
+	return tag
 }
 
 func (c *CacheGitHub) createCommit(rc *github.RepositoryCommit, authUser *github.User, portableArchive string, repo *github.Repository, branch string) *github.Commit {
