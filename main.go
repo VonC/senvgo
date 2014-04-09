@@ -360,6 +360,7 @@ func (c *CacheGitHub) UpdateArchive(p Path, name string) {
 		fmt.Printf("UPDARC Github '%v' for '%v' from '%v': nothing to do\n", p, name, c.String())
 		return
 	}
+	var rid int
 	if release == nil {
 		// check for last commit, tag, release, asset
 		authUser := c.getAuthUser()
@@ -404,11 +405,36 @@ func (c *CacheGitHub) UpdateArchive(p Path, name string) {
 			tag := c.createTag(tagName, authUser, repo, releaseName, sha)
 			fmt.Printf("UPDARC Github Created tag (and ref) '%v'", tag)
 		}
+		release = c.createRelease(repo, authUser, name, sha, releaseName)
+		if release == nil {
+			fmt.Printf("UPDARC Github ERROR unable to create release '%v' for '%v'\n", releaseName, name)
+			return
+		}
 	}
+	rid = *release.ID
+	fmt.Printf("UPDARC Github release '%v' ID '%v'\n", releaseName, rid)
 	// TODO create releaseasset
 	if c.next != nil {
 		c.Next().UpdateArchive(p, name)
 	}
+}
+
+func (c *CacheGitHub) createRelease(repo *github.Repository, authUser *github.User, name string, sha string, releaseName string) *github.RepositoryRelease {
+	client := c.getClient()
+	repos := client.Repositories
+	owner := *authUser.Name
+	reprel := &github.RepositoryRelease{
+		TagName:         github.String(name),
+		TargetCommitish: github.String(sha),
+		Name:            github.String(releaseName),
+		Body:            github.String("Portable version of " + releaseName),
+	}
+	reprel, _, err := repos.CreateRelease(owner, releaseName, reprel)
+	if err != nil {
+		fmt.Printf("Error while creating repo release '%v'-'%v' for repo %v/'%v': '%v'\n", releaseName, "v"+releaseName, owner, *repo.Name, err)
+		return nil
+	}
+	return reprel
 }
 
 func (c *CacheGitHub) getTag(tagName string, authUser *github.User, repo *github.Repository) *github.RepositoryTagShort {
