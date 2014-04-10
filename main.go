@@ -361,13 +361,13 @@ func (c *CacheGitHub) UpdateArchive(p Path, name string) {
 		return
 	}
 	var rid int
+	authUser := c.getAuthUser()
+	if authUser == nil {
+		fmt.Printf("UPDARC Github '%v' for '%v' from '%v': user '%v' not authenticated to GitHub\n", p, name, c.String(), c.owner)
+		return
+	}
 	if release == nil {
 		// check for last commit, tag, release, asset
-		authUser := c.getAuthUser()
-		if authUser == nil {
-			fmt.Printf("UPDARC Github '%v' for '%v' from '%v': user '%v' not authenticated to GitHub\n", p, name, c.String(), c.owner)
-			return
-		}
 		owner := *authUser.Name
 		email := *authUser.Email
 		fmt.Printf("Authenticated user: '%v' (%v)\n", owner, email)
@@ -413,10 +413,32 @@ func (c *CacheGitHub) UpdateArchive(p Path, name string) {
 	}
 	rid = *release.ID
 	fmt.Printf("UPDARC Github release '%v' ID '%v'\n", releaseName, rid)
-	// TODO create releaseasset
+	rela := c.uploadAsset(authUser, rid, p, name)
+	if rela != nil {
+		fmt.Printf("UPDARC Github uploaded asset '%v' ID '%v'\n", *rela.Name, rid)
+	}
 	if c.next != nil {
 		c.Next().UpdateArchive(p, name)
 	}
+}
+
+func (c *CacheGitHub) uploadAsset(authUser *github.User, rid int, p Path, name string) *github.ReleaseAsset {
+	fmt.Printf("Upload asset to release '%v'\n", p.releaseName())
+	file, err := os.Open(p.String())
+	if err != nil {
+		fmt.Printf("Error while opening release asset file '%v'(%v): '%v'\n", p.String(), p.releaseName(), err)
+		return nil
+	}
+	// no need to close, or "Invalid argument"
+	owner := *authUser.Name
+	client := c.getClient()
+	repos := client.Repositories
+	rela, _, err := repos.UploadReleaseAsset(owner, p.releaseName(), rid, &github.UploadOptions{Name: p.releaseName() + ".zip"}, file)
+	if err != nil {
+		fmt.Printf("Error while uploading release asset '%v'(%v): '%v'\n", p.releaseName(), rid, err)
+		return nil
+	}
+	return rela
 }
 
 func (c *CacheGitHub) createRelease(repo *github.Repository, authUser *github.User, name string, sha string, releaseName string) *github.RepositoryRelease {
