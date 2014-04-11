@@ -101,7 +101,7 @@ func (a *Arch) Arch() string {
 	if isdir, err := exists("C:\\Program Files (x86)"); isdir && err == nil {
 		return a.win64
 	} else if err != nil {
-		fmt.Printf("Error checking C:\\Program Files (x86): '%v'", err)
+		fmt.Printf("Error checking C:\\Program Files (x86): '%v'\n", err)
 		return ""
 	}
 	return a.win32
@@ -396,14 +396,14 @@ func (c *CacheGitHub) UpdateArchive(p Path, name string) {
 		}
 
 		if tagFound && *tagShort.CommitTag.SHA != sha {
-			fmt.Printf("UPDARC Github Must delete tag (actually ref) found '%v'", tagShort)
+			fmt.Printf("UPDARC Github Must delete tag (actually ref) found '%v'\n", tagShort)
 			tagFound = false
 			return
 		}
 		if !tagFound {
 			fmt.Printf("Must create tag '%v' for commit '%v', repo VonC/'%v'.\n", tagName, sha, *repo.Name)
 			tag := c.createTag(tagName, authUser, repo, releaseName, sha)
-			fmt.Printf("UPDARC Github Created tag (and ref) '%v'", tag)
+			fmt.Printf("UPDARC Github Created tag (and ref) '%v'\n", tag)
 		}
 		release = c.createRelease(repo, authUser, name, sha, releaseName)
 		if release == nil {
@@ -949,7 +949,7 @@ func (em *ExtractorMatch) Regexp() *regexp.Regexp {
 		var err error
 		if em.regexp, err = regexp.Compile(rx); err != nil {
 			em.regexp = nil
-			fmt.Printf("Error compiling Regexp for '%v': '%v' => err '%v'", em.p.GetName(), rx, err)
+			fmt.Printf("Error compiling Regexp for '%v': '%v' => err '%v'\n", em.p.GetName(), rx, err)
 		}
 	}
 	return em.regexp
