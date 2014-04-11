@@ -846,6 +846,7 @@ func (e *Extractable) Next() Extractor {
 // Extract extracts from its data
 func (e *Extractable) Extract() string {
 	res := e.self.ExtractFrom(e.data)
+	fmt.Printf("Extractable Extract Next? '%v' => %v'\n", e.String(), e.Next())
 	if e.Next() != nil {
 		res = e.Next().ExtractFrom(res)
 	}
@@ -859,6 +860,7 @@ type ExtractorGet struct {
 
 // ExtractFrom download an url content
 func (eg *ExtractorGet) ExtractFrom(data string) string {
+	fmt.Printf("=====> ExtractorGet.ExtractFrom '%v'\n", data)
 	url, err := url.Parse(data)
 	if err != nil {
 		fmt.Printf("ExtractorGet.ExtractFrom() error parsing url '%v': '%v'\n", data, err)
@@ -920,6 +922,10 @@ func NewExtractorMatch(rx string, p PrgData) *ExtractorMatch {
 
 // ExtractFrom returns matched content from a regexp
 func (em *ExtractorMatch) ExtractFrom(content string) string {
+	fmt.Printf("=====> ExtractorMatch.ExtractFrom '%v'\n", len(content))
+	if len(content) < 200 {
+		fmt.Printf("   ==> ExtractorMatch.ExtractFrom '%v'\n", content)
+	}
 	rx := em.Regexp()
 	// if content if internal extractor dat (as opposed to actual content)
 	if content == em.data {
@@ -969,6 +975,7 @@ func NewExtractorPrepend(rx string, p PrgData) *ExtractorPrepend {
 
 // ExtractFrom prepends data to content
 func (ep *ExtractorPrepend) ExtractFrom(data string) string {
+	fmt.Printf("=====> ExtractorPrepend.ExtractFrom '%v'\n", data)
 	return ep.data + data
 }
 
