@@ -1004,12 +1004,7 @@ var cfgRx, _ = regexp.Compile(`^([^\.]+)\.([^\.\s]+)\s+(.*?)$`)
   folder.rx      /(peazip_portable-.*?\._$arch_).zip/download
   url.rx         (http.*portable-.*?\._$arch_\.zip/download)
   name.rx        /(peazip_portable-.*?\._$arch_.zip)/download
-*/
-var defaultConfig = `
-[cache id secondary]
-  root test/_secondary
-[cache id githubvonc]
-  owner VonC
+
 [gow]
   folder.get     https://github.com/bmatzelle/gow/releases
   folder.rx      /download/v.*?/(Gow-.*?).exe
@@ -1017,6 +1012,19 @@ var defaultConfig = `
   url.prepend    https://github.com
   name.rx        /download/v.*?/(Gow-.*?.exe)
   invoke         @FILE@ /S /D=@DEST@
+*/
+var defaultConfig = `
+[cache id secondary]
+  root test/_secondary
+[cache id githubvonc]
+  owner VonC
+[jdk8]
+	arch			i586,x64
+	folder.get		http://www.oracle.com/technetwork/java/javase/downloads/index.html?ssSourceSiteId=otnjp
+	folder.rx		>(Java SE 8[^<]*?)<
+	name.rx			href="(/technetwork/java/javase/downloads/jdk8-downloads-\d+.html")
+	name.prepend    http://www.oracle.com
+	name.get		a
 `
 
 func NewCacheDisk(id string, root string) *CacheDisk {
