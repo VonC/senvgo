@@ -1500,16 +1500,21 @@ func (p *Prg) GetFolder() string {
 }
 
 // GetArchive returns archive name
-func (p *Prg) GetArchive() string {
-	if p.exts != nil {
-		p.archive = get(p.archive, p.exts.extractArchive, false)
+func (p *Prg) GetArchive() Path {
+	if p.archive != "" {
+		return p.archive
 	}
-	if strings.HasSuffix(p.archive, ".exe") {
-		parchive := Path(p.archive)
-		pname := Path(parchive.releaseName() + ".zip")
-		portableArchive := cache.GetArchive(pname, p.name)
+	if p.exts != nil {
+		fmt.Printf("Get archive for %v", p.GetName())
+		archiveName := get(p.archive.String(), p.exts.extractArchive, false)
+		url := p.GetURL()
+		p.archive = cache.GetArchive(Path(archiveName), url, p.name)
+	}
+	if strings.HasSuffix(p.archive.String(), ".exe") {
+		pname := Path(p.archive.releaseName() + ".zip")
+		portableArchive := cache.GetArchive(pname, nil, p.name)
 		if portableArchive != "" {
-			p.archive = portableArchive.release()
+			p.archive = portableArchive
 		}
 	}
 	return p.archive
