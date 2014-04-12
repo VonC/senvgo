@@ -643,6 +643,18 @@ func (c *CacheDisk) UpdatePage(p Path, name string) {
 		c.Next().UpdatePage(p, name)
 	}
 }
+func (c *CacheDisk) HasCacheDiskInNexts() bool {
+	acache := c.next
+	res := false
+	for acache != nil {
+		if !acache.IsGitHub() {
+			res = true
+			break
+		}
+		acache = acache.Next()
+	}
+	return res
+}
 
 // Get will get either an url or an archive extension (exe, zip, tar.gz, ...)
 func (c *CacheDisk) GetArchive(p Path, url *url.URL, name string) Path {
@@ -665,6 +677,10 @@ func (c *CacheDisk) GetArchive(p Path, url *url.URL, name string) Path {
 	}
 	if c.last != "" {
 		return c.last
+	}
+	if c.HasCacheDiskInNexts() {
+		fmt.Printf("CacheDisk.GetArchive[%v]: no download for '%v': already done by secondary cache.\n", c.id, filename)
+		return ""
 	}
 	if url == nil || url.String() == "" {
 		fmt.Printf("CacheDisk.GetArchive[%v]: NO URL '%v': '%v'\n", c.id, filename, err)
