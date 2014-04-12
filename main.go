@@ -1155,8 +1155,10 @@ func ReadConfig() []*Prg {
 		}
 		if e != nil {
 			if currentVariable != "" && variable == currentVariable {
+				fmt.Printf("Add '%v' to Next of '%v'\n", e, currentExtractor)
 				currentExtractor.SetNext(e)
 			} else {
+				fmt.Printf("New currentExtractor '%v'\n", e)
 				switch variable {
 				case "folder":
 					exts.extractFolder = e
@@ -1467,7 +1469,9 @@ func (p *Prg) invokeZip() {
 // GetFolder returns full folder path ofr a program
 func (p *Prg) GetFolder() string {
 	if p.exts != nil {
+		fmt.Printf("Get folder for %v", p.GetName())
 		p.folder = get(p.folder, p.exts.extractFolder, true)
+		fmt.Printf("DONE Get folder for %v", p.String())
 	}
 	return p.folder
 }
@@ -1497,6 +1501,11 @@ func (p *Prg) GetURL() string {
 }
 
 func get(iniValue string, ext Extractor, underscore bool) string {
+	fmt.Println(" ")
+	fmt.Println(" ")
+	fmt.Println(" ")
+	fmt.Println("-----")
+	fmt.Println(" ")
 	if iniValue != "" {
 		return iniValue
 	}
