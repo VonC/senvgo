@@ -1072,10 +1072,12 @@ var defaultConfig = `
 [jdk8]
 	arch			i586,x64
 	folder.get		http://www.oracle.com/technetwork/java/javase/downloads/index.html?ssSourceSiteId=otnjp
-	folder.rx		>(Java SE 8[^<]*?)<
-	name.rx			href="(/technetwork/java/javase/downloads/jdk8-downloads-\d+.html")
+	folder.rx		>(Java SE 8(?:u\d*)?)<
+	name.rx			href="(/technetwork/java/javase/downloads/jdk8-downloads-\d+.html)"
 	name.prepend    http://www.oracle.com
-	name.get		a
+	name.get		_
+	name.rx			(jdk-\d(?:u\d+)?-windows-_$arch_.exe)
+	url.rx			(http://download.oracle.com/[^"]+jdk-\d(?:u\d+)?-windows-_$arch_.exe)
 `
 
 func NewCacheDisk(id string, root string) *CacheDisk {
