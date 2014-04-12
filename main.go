@@ -132,7 +132,7 @@ func (p *Path) String() string {
 // Cache gets or update a resource, can be linked, can retrieve last value cached
 type Cache interface {
 	GetPage(url *url.URL, name string) Path
-	GetArchive(p Path, name string) Path
+	GetArchive(p Path, url *url.URL, name string) Path
 	UpdateArchive(p Path, name string)
 	UpdatePage(p Path, name string)
 	Next() Cache
@@ -185,7 +185,7 @@ func (c *CacheGitHub) IsGitHub() bool {
 }
 
 // Get gets or download zip archives only from GitHub
-func (c *CacheGitHub) GetArchive(p Path, name string) Path {
+func (c *CacheGitHub) GetArchive(p Path, url *url.URL, name string) Path {
 	fmt.Printf("CacheGitHub.GetArchive '%v' for '%v' from '%v'\n", p, name, c.String())
 	if !p.isZip() {
 		fmt.Printf("GetArchive '%v' is not a .zip\n", p)
@@ -194,7 +194,7 @@ func (c *CacheGitHub) GetArchive(p Path, name string) Path {
 	c.last = c.getFileFromGitHub(p, name)
 	if c.next != nil {
 		if c.last == "" {
-			c.last = c.Next().GetArchive(p, name)
+			c.last = c.Next().GetArchive(p, url, name)
 		} else {
 			c.Next().UpdateArchive(p, name)
 		}
@@ -644,21 +644,18 @@ func (c *CacheDisk) UpdatePage(p Path, name string) {
 }
 
 // Get will get either an url or an archive extension (exe, zip, tar.gz, ...)
-func (c *CacheDisk) GetArchive(p Path, name string) Path {
+func (c *CacheDisk) GetArchive(p Path, url *url.URL, name string) Path {
 	fmt.Printf("CacheDisk.GetArchive[%v]: '%v' for '%v' from '%v'\n", c.id, p, name, c.String())
 	c.last = ""
 	filename := c.Folder(name) + p.release()
-	if exists, err := exists(filename); exists && err == nil {
-		c.last = Path(filename)
-		c.next.UpdateArchive(c.last, name)
-	} else if err != nil {
-		fmt.Printf("CacheDisk.GetArchive[%v]: Error trying to access '%v': '%v'\n", c.id, filename, err)
-		return ""
+	err := c.checkArchive(filename, name)
+	if err == nil && c.last != "" {
+		return c.last
 	}
 
 	if c.next != nil {
 		if c.last == "" {
-			c.last = c.Next().GetArchive(Path(filename), name)
+			c.last = c.Next().GetArchive(Path(filename), url, name)
 			if !c.Next().IsGitHub() && c.last != "" {
 				copy(filename, c.last.String())
 				c.last = Path(filename)
@@ -668,7 +665,29 @@ func (c *CacheDisk) GetArchive(p Path, name string) Path {
 	if c.last != "" {
 		return c.last
 	}
+	if url == nil || url.String() == "" {
+		fmt.Printf("CacheDisk.GetArchive[%v]: NO URL '%v': '%v'\n", c.id, filename, err)
+		return ""
+	}
+	fmt.Printf("CacheDisk.GetArchive[%v]: ... MUST download '%v' for '%v'\n", c.id, url, filename)
+	download(url, Path(filename))
+	fmt.Printf("CacheDisk.GetArchive[%v]: ... DONE download '%v' for '%v'\n", c.id, url, filename)
+	c.checkArchive(filename, name)
+	if err == nil && c.last != "" {
+		return c.last
+	}
 	return ""
+}
+
+func (c *CacheDisk) checkArchive(filename string, name string) error {
+	if exists, err := exists(filename); exists && err == nil {
+		c.last = Path(filename)
+		c.next.UpdateArchive(c.last, name)
+	} else if err != nil {
+		fmt.Printf("CacheDisk.GetArchive[%v]: Error trying to access '%v': '%v'\n", c.id, filename, err)
+		return err
+	}
+	return nil
 }
 
 func (p *Path) fileContent() string {
