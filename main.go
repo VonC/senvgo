@@ -38,8 +38,8 @@ func main() {
 type Prg struct {
 	name            string
 	folder          string
-	archive         string
-	url             string
+	archive         Path
+	url             *url.URL
 	portableFolder  string
 	portableArchive string
 	portableURL     string
@@ -1295,25 +1295,12 @@ func (p *Prg) install() {
 		fmt.Printf("[install] ERR: no archive on '%v'\n", p.GetName())
 		return
 	}
-	archiveFullPath := Path("")
 	tozip := false
-	if strings.HasSuffix(archive, ".exe") {
+	if archive.isExe() {
 		tozip = true
-		portableArchive := strings.Replace(archive, ".exe", ".zip", -1)
-		archiveFullPath = cache.GetArchive(Path(portableArchive), p.GetName())
 	}
 
-	// TODO archiveFullContent. And don't download anything at this point:
-	// this was taken care of by CacheDisk and CacheGitHub.
-
-	if archiveFullPath == "" {
-		archiveFullPath = cache.GetArchive(Path(archive), p.GetName())
-	}
-	if archiveFullPath == "" {
-		fmt.Printf("[install] ERR: no archiveFullPath from '%v' for '%v'\n", archive, p.GetName(), tozip)
-		return
-	}
-	fmt.Printf("folderFull (%v): '%v'\narchiveFullPath '%v'\n", p.name, folderFull, archiveFullPath)
+	fmt.Printf("folderFull (%v): '%v'\narchive '%v'\n", p.name, folderFull, archive)
 
 	alreadyInstalled := false
 	if hasFolder, err := exists(folderFull); !hasFolder && err == nil {
@@ -1339,7 +1326,9 @@ func (p *Prg) install() {
 		fmt.Printf("Error while testing tmp folder existence '%v': '%v'\n", folderTmp, err)
 		return
 	} else if alreadyInstalled {
-		//p.checkPortable()
+		if tozip {
+			p.checkPortable()
+		}
 		err := deleteFolderContent(folderTmp)
 		if err != nil {
 			fmt.Printf("Error removing tmp folder for name '%v': '%v'\n", folderTmp, err)
@@ -1347,7 +1336,7 @@ func (p *Prg) install() {
 		}
 		return
 	}
-	if archiveFullPath.isZip() {
+	if archive.isZip() {
 		p.invokeZip()
 		return
 	}
@@ -1362,15 +1351,30 @@ func (p *Prg) install() {
 		fmt.Printf("Unable to get full path for '%v': '%v'\n%v", p.name, folderFull, err)
 		return
 	}
-	cmd = strings.Replace(cmd, "@FILE@", filepath.FromSlash(archiveFullPath.String()), -1)
+	cmd = strings.Replace(cmd, "@FILE@", archive.String(), -1)
 	cmd = strings.Replace(cmd, "@DEST@", dst, -1)
 	fmt.Printf("invoking for '%v': '%v'\n", p.name, cmd)
 	c := exec.Command("cmd", "/C", cmd)
 	if out, err := c.Output(); err != nil {
 		fmt.Printf("Error invoking '%v'\n''%v': %v'\n", cmd, string(out), err)
 	}
-	//p.checkPortable()
+	if tozip {
+		p.checkPortable()
+	}
 	p.checkLatest()
+}
+
+func (p *Prg) checkPortable() {
+	archive := p.GetArchive()
+	if !archive.isExe() {
+		return
+	}
+	portableArchive := Path(strings.Replace(archive.String(), ".exe", ".zip", -1))
+
+	folder := p.GetFolder()
+	folderMain := "test/" + p.name + "/"
+	folderFull := folderMain + folder
+	compress7z(portableArchive, folderFull, "", fmt.Sprintf("Compress '%v' for '%v'", portableArchive, p.GetName()))
 }
 
 var fcmd = ""
@@ -1427,9 +1431,9 @@ func ucompress7z(archive string, folder string, file string, msg string, extract
 	fmt.Printf("%v'%v'%v => 7zU... DONE\n", msg, archive, argFile)
 }
 
-func compress7z(archive string, folder string, file string, msg string) {
+func compress7z(archive Path, folder string, file string, msg string) {
 
-	farchive, err := filepath.Abs(filepath.FromSlash(archive))
+	farchive, err := filepath.Abs(filepath.FromSlash(archive.String()))
 	if err != nil {
 		fmt.Printf("7z: Unable to get full path for compress to archive: '%v'\n%v\n", archive, err)
 		return
@@ -1469,7 +1473,7 @@ func (p *Prg) invokeZip() {
 	t := getLastModifiedFile(folderTmp, ".*")
 	if t == "" {
 		fmt.Printf("Need to uncompress '%v' in '%v'\n", archive, folderTmp)
-		unzip(folderMain+archive, folderTmp)
+		unzip(archive.String(), folderTmp)
 	}
 	folderToMove := folderTmp + "/" + folder
 	if hasFolder, err := exists(folderToMove); hasFolder && err == nil {
