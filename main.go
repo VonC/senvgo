@@ -226,6 +226,9 @@ func (c *CacheGitHub) getClient() *github.Client {
 func (p *Path) isZip() bool {
 	return strings.HasSuffix(p.String(), ".zip")
 }
+func (p *Path) isExe() bool {
+	return strings.HasSuffix(p.String(), ".exe")
+}
 
 func (p *Path) releaseName() string {
 	_, f := filepath.Split(p.String())
