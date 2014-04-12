@@ -115,6 +115,7 @@ type Extractor interface {
 	Extract() string
 	Next() Extractor
 	SetNext(e Extractor)
+	Self() Extractor
 	Nb() int
 }
 
@@ -823,8 +824,16 @@ func (e *Extractable) SetNext(next Extractor) {
 	e.next = next
 }
 
+func (e *Extractable) Self() Extractor {
+	return e.self
+}
+
 func (e *Extractable) String() string {
-	res := fmt.Sprintf("data='%v' (%v)", len(e.data), e.Nb())
+	typ := reflect.TypeOf(e.self)
+	res := fmt.Sprintf("[%v] data='%v' (%v)", typ, e.data, e.Nb())
+	if e.Next() != nil {
+		res = res + fmt.Sprintf(" [%v]", reflect.TypeOf(e.Next().Self()))
+	}
 	return res
 }
 
