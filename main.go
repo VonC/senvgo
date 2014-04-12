@@ -18,6 +18,7 @@ import (
 	"runtime"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/VonC/go-github/github"
@@ -920,9 +921,87 @@ func (eg *ExtractorGet) ExtractFrom(data string) string {
 	return content
 }
 
+// Just enough correctness for our redirect tests. Uses the URL.Host as the
+// scope of all cookies.
+type repoJar struct {
+	m       sync.Mutex
+	cookies []*http.Cookie
+}
+
+func (j *repoJar) SetCookies(u *url.URL, cookies []*http.Cookie) {
+	j.m.Lock()
+	defer j.m.Unlock()
+	if j.cookies == nil || len(j.cookies) == 0 {
+		j.cookies = cookies
+		return
+	}
+	for _, cookie := range cookies {
+		set := false
+		for _, jcookie := range j.cookies {
+			if jcookie.Name == cookie.Name {
+				jcookie.Value = cookie.Value
+				if cookie.Domain != "" {
+					jcookie.Domain = cookie.Domain
+				}
+				jcookie.Expires = cookie.Expires
+				jcookie.HttpOnly = cookie.HttpOnly
+				jcookie.MaxAge = cookie.MaxAge
+				if cookie.Path != "" {
+					jcookie.Path = cookie.Path
+				}
+				jcookie.Secure = cookie.Secure
+				jcookie.Raw = cookie.Raw
+				jcookie.RawExpires = cookie.RawExpires
+				set = true
+				break
+			}
+		}
+		if !set {
+			j.cookies = append(j.cookies, cookie)
+		}
+	}
+}
+
+var mainRepoJar = &repoJar{}
+var mainHttpClient = &http.Client{}
+
+func do(req *http.Request) (*http.Response, error) {
+	//debug.PrintStack()
+	fmt.Printf("(do %v) \nvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv\n", len(mainRepoJar.cookies))
+	for _, c := range mainRepoJar.cookies {
+		req.AddCookie(c)
+	}
+
+	fmt.Printf("(do) Sent URL: '%v:%v'\n", req.Method, req.URL)
+	fmt.Printf("(do) Sent URL: '%v:%v'\n", req.Method, req.URL)
+	fmt.Printf("~~~~")
+	fmt.Printf("(do) Cookies set: '[%v]: %v'\n", len(req.Cookies()), req.Cookies())
+	fmt.Printf("(do) Sent header: '%v'\n", req.Header)
+	fmt.Printf("(do) Sent body: '%v'\n", req.Body)
+	fmt.Printf("(do) -------\n")
+
+	resp, err := mainHttpClient.Do(req)
+	if err != nil {
+		fmt.Printf("Error : %s\n", err)
+	}
+	mainRepoJar.SetCookies(nil, resp.Cookies())
+	fmt.Printf("(do) Status received: '%v'\n", resp.Status)
+	fmt.Printf("(do) cookies received (%v) '%v'\n", len(resp.Cookies()), resp.Cookies())
+	fmt.Printf("(do) Header received: '%v'\n", resp.Header)
+	fmt.Printf("(do) Lenght received: '%v'\n", resp.ContentLength)
+	fmt.Printf("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n")
+	return resp, err
+}
+
 func download(url *url.URL, filename Path, minLength int64) Path {
 	res := Path("")
-	response, err := http.Get(url.String())
+	req, err := http.NewRequest("GET", url.String(), nil)
+	if err != nil {
+		fmt.Printf("Error NewRequest: %v\n", err)
+		return ""
+	}
+
+	response, err := do(req) // http.Get(url.String())
 	if err != nil {
 		fmt.Println("Error while downloading", url, "-", err)
 		return ""
