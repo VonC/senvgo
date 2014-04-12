@@ -1521,9 +1521,18 @@ func (p *Prg) GetArchive() Path {
 }
 
 // GetURL returns url of the program
-func (p *Prg) GetURL() string {
+func (p *Prg) GetURL() *url.URL {
+	if p.url != nil {
+		return p.url
+	}
 	if p.exts != nil {
-		p.url = get(p.url, p.exts.extractURL, false)
+		fmt.Printf("Get url for %v", p.GetName())
+		rawurl := get("", p.exts.extractURL, false)
+		if anurl, err := url.ParseRequestURI(rawurl); err == nil {
+			p.url = anurl
+		} else {
+			fmt.Printf("Unable to parse url '%v' because '%v'", rawurl, err)
+		}
 	}
 	return p.url
 }
