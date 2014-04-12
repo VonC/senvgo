@@ -861,11 +861,18 @@ func (e *Extractable) Next() Extractor {
 
 // Extract extracts from its data
 func (e *Extractable) Extract() string {
-	res := e.self.ExtractFrom(e.data)
-	fmt.Printf("Extractable Extract Next? '%v' => %v'\n", e.String(), e.Next())
-	if e.Next() != nil {
-		res = e.Next().ExtractFrom(res)
+	ext := e.self
+	res := e.data
+	for ext != nil {
+		fmt.Printf("### Calling ExtractFrom on %v\n", ext)
+		res = ext.ExtractFrom(res)
+		if ext.Next() != nil {
+			ext = ext.Next()
+		} else {
+			ext = nil
+		}
 	}
+	fmt.Printf("### RETURN ExtractFrom on %v\n", e)
 	return res
 }
 
@@ -944,12 +951,14 @@ func (em *ExtractorMatch) ExtractFrom(content string) string {
 	}
 	rx := em.Regexp()
 	// if content if internal extractor dat (as opposed to actual content)
+	pp := ""
 	if content == em.data {
 		// fall back to main cache last data
 		p := cache.Last()
 		content = p.fileContent()
+		pp = p.String()
 	}
-	fmt.Printf("Rx for '%v' (%v): '%v'\n", em.p.GetName(), len(content), rx)
+	fmt.Printf("Rx for '%v' (%v from %v): '%v'\n", em.p.GetName(), len(content), pp, rx)
 	matches := rx.FindAllStringSubmatchIndex(content, -1)
 	fmt.Printf("matches: '%v'\n", matches)
 	res := ""
