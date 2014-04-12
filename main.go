@@ -150,7 +150,7 @@ type CacheData struct {
 }
 
 func (c *CacheData) String() string {
-	res := fmt.Sprintf("(%v)", len(c.last))
+	res := fmt.Sprintf("(%v)", c.last)
 	return res
 }
 
