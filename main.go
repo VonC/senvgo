@@ -122,7 +122,11 @@ type Extractor interface {
 type Path string
 
 func (p *Path) String() string {
-	return fmt.Sprintf(string(*p))
+	res := fmt.Sprintf(string(*p))
+	if len(res) > 200 {
+		res = res[:20] + fmt.Sprintf(" (%v)", len(res))
+	}
+	return res
 }
 
 // Cache gets or update a resource, can be linked, can retrieve last value cached
