@@ -670,7 +670,7 @@ func (c *CacheDisk) GetArchive(p Path, url *url.URL, name string) Path {
 		return ""
 	}
 	fmt.Printf("CacheDisk.GetArchive[%v]: ... MUST download '%v' for '%v'\n", c.id, url, filename)
-	download(url, Path(filename))
+	download(url, Path(filename), 100000)
 	fmt.Printf("CacheDisk.GetArchive[%v]: ... DONE download '%v' for '%v'\n", c.id, url, filename)
 	c.checkArchive(filename, name)
 	if err == nil && c.last != "" {
@@ -757,7 +757,7 @@ func (c *CacheDisk) GetPage(url *url.URL, name string) Path {
 		filename := c.Folder(name) + name + "_" + sha + "_" + t.Format("20060102") + "_" + t.Format("150405")
 		fmt.Printf("Get '%v' downloads '%v' for '%v'\n", c.id, filename, url)
 		if c.last == "" {
-			c.last = download(url, Path(filename))
+			c.last = download(url, Path(filename), 0)
 		} else {
 			copy(filename, c.last.String())
 			c.last = Path(filename)
@@ -920,7 +920,7 @@ func (eg *ExtractorGet) ExtractFrom(data string) string {
 	return content
 }
 
-func download(url *url.URL, filename Path) Path {
+func download(url *url.URL, filename Path, minLength int64) Path {
 	res := Path("")
 	response, err := http.Get(url.String())
 	if err != nil {
@@ -928,6 +928,11 @@ func download(url *url.URL, filename Path) Path {
 		return ""
 	}
 	defer response.Body.Close()
+	fmt.Printf("---> %+v\n", response)
+	if minLength > 0 && response.ContentLength < minLength {
+		fmt.Printf("download ERROR too small: '%v' when downloading '%v' in '%v'\n", response.ContentLength, url, filename)
+		return ""
+	}
 	body, err := ioutil.ReadAll(response.Body)
 	if err != nil {
 		fmt.Println("Error while reading downloaded", url, "-", err)
