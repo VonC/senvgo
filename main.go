@@ -1019,7 +1019,7 @@ func redirectPolicy(req *http.Request, via []*http.Request) error {
 
 func download(url *url.URL, filename Path, minLength int64) Path {
 	res := Path("")
-	url, _ = url.Parse("http://download.oracle.com/otn-pub/java/jdk/7u51-b13/jdk-7u51-windows-x64.exe")
+	url, _ = url.Parse("https://edelivery.oracle.com/otn-pub/java/jdk/8-b132/jdk-8-windows-x64.exe")
 	// http://stackoverflow.com/questions/18414212/golang-how-to-follow-location-with-cookie
 	// http://stackoverflow.com/questions/10268583/how-to-automate-download-and-installation-of-java-jdk-on-linux
 	// https://ivan-site.com/2012/05/download-oracle-java-jre-jdk-using-a-script/
@@ -1031,7 +1031,7 @@ func download(url *url.URL, filename Path, minLength int64) Path {
 		log.Fatal(err)
 	}
 	mainHttpClient.Jar = jar
-	req, err := http.NewRequest("GET", url.String(), nil)
+	req, err := http.NewRequest("GET", url.String(), strings.NewReader(""))
 	if err != nil {
 		fmt.Printf("Error NewRequest: %v\n", err)
 		return ""
@@ -1062,10 +1062,9 @@ func download(url *url.URL, filename Path, minLength int64) Path {
 			cookies = append(cookies, &http.Cookie{Name: "s_nr", Value: fmt.Sprintf("%v", t.Unix()*1000)})
 			cookies = append(cookies, &http.Cookie{Name: "s_sq", Value: "%5B%5BB%5D%5D"})
 			cookies = append(cookies, &http.Cookie{Name: "ARU_LANG", Value: "US"})
-			req.Header.Add("Host", "download.oracle.com")
-			req.Header.Add("Referer", "http://www.oracle.com/technetwork/java/
-			javase/downloads/jdk8-downloads-2133151.html")
 		*/
+		req.Header.Add("Host", "edelivery.oracle.com")
+		req.Header.Add("Referer", "http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html")
 		mainRepoJar.SetCookies(cookies)
 		mainHttpClient.Jar.SetCookies(url, cookies)
 	}
