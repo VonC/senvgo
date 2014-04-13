@@ -992,17 +992,18 @@ func do(req *http.Request) (*http.Response, error) {
 	}
 
 	fmt.Printf("(do) Sent URL: '%v:%v'\n", req.Method, req.URL)
-	fmt.Printf("~~~~")
+	fmt.Printf("~~~~\n")
 	fmt.Printf("(do) Cookies set: '[%v]: %v'\n", len(req.Cookies()), req.Cookies())
 	fmt.Printf("(do) Sent header: '%v'\n", req.Header)
 	fmt.Printf("(do) Sent body: '%v'\n", req.Body)
 	fmt.Printf("(do) -------\n")
 
+	//resp, err := mainHttpClient.Get(req.URL.String())
 	resp, err := mainHttpClient.Do(req)
 	if err != nil {
 		fmt.Printf("Error : %s\n", err)
 	}
-	// mainRepoJar.SetCookies(resp.Cookies())
+	mainRepoJar.SetCookies(resp.Cookies())
 	fmt.Printf("(do) Status received: '%v'\n", resp.Status)
 	fmt.Printf("(do) cookies received (%v) '%v'\n", len(resp.Cookies()), resp.Cookies())
 	fmt.Printf("(do) Header received: '%v'\n", resp.Header)
