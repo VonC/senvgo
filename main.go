@@ -1049,8 +1049,9 @@ func getClient() *http.Client {
 // the results from individual calls to it.
 type PassThru struct {
 	io.Reader
-	total  int64 // Total # of bytes transferred
-	length int64 // Expected length
+	total    int64 // Total # of bytes transferred
+	length   int64 // Expected length
+	progress float64
 }
 
 // Read 'overrides' the underlying io.Reader's Read method.
@@ -1061,8 +1062,15 @@ func (pt *PassThru) Read(p []byte) (int, error) {
 	if err == nil {
 		pt.total += int64(n)
 		percentage := float64(pt.total) / float64(pt.length) * float64(100)
-		//fmt.Println("Read", n, "bytes for a total of", pt.total, ", ", percentage)
-		fmt.Printf("%.2f...\n", percentage)
+		if percentage-pt.progress > 2 {
+			fmt.Fprintf(os.Stderr, "x")
+			pt.progress = percentage
+		}
+		/*
+			f := bufio.NewWriter(os.Stdout)
+			defer f.Flush()
+			f.Write([]byte(pct))
+			f.Flush()*/
 	}
 
 	return n, err
@@ -1120,6 +1128,7 @@ func download(url *url.URL, filename Path, minLength int64) Path {
 	}
 	readerpt := &PassThru{Reader: response.Body, length: response.ContentLength}
 	body, err := ioutil.ReadAll(readerpt)
+	fmt.Println(".")
 	if err != nil {
 		fmt.Println("Error while reading downloaded", url, "-", err)
 		return ""
