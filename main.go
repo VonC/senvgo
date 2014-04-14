@@ -1040,6 +1040,31 @@ func getClient() *http.Client {
 	return mainHttpClient
 }
 
+// http://play.golang.org/p/1LAEuOS-09
+// http://stackoverflow.com/questions/22421375/how-to-print-the-bytes-while-the-file-is-being-downloaded-golang
+
+// PassThru wraps an existing io.Reader.
+//
+// It simply forwards the Read() call, while displaying
+// the results from individual calls to it.
+type PassThru struct {
+	io.Reader
+	total int64 // Total # of bytes transferred
+}
+
+// Read 'overrides' the underlying io.Reader's Read method.
+// This is the one that will be called by io.Copy(). We simply
+// use it to keep track of byte counts and then forward the call.
+func (pt *PassThru) Read(p []byte) (int, error) {
+	n, err := pt.Reader.Read(p)
+	if err == nil {
+		pt.total += int64(n)
+		fmt.Println("Read", n, "bytes for a total of", pt.total)
+	}
+
+	return n, err
+}
+
 func download(url *url.URL, filename Path, minLength int64) Path {
 	res := Path("")
 	// http://stackoverflow.com/questions/18414212/golang-how-to-follow-location-with-cookie
@@ -1053,7 +1078,12 @@ func download(url *url.URL, filename Path, minLength int64) Path {
 		log.Fatal(err)
 	}
 	getClient().Jar = jar
-	req, err := http.NewRequest("GET", url.String(), strings.NewReader(""))
+
+	reader := strings.NewReader("")
+	readerpt := &PassThru{Reader: reader}
+
+	req, err := http.NewRequest("GET", url.String(), readerpt)
+
 	if err != nil {
 		fmt.Printf("Error NewRequest: %v\n", err)
 		return ""
@@ -1063,7 +1093,7 @@ func download(url *url.URL, filename Path, minLength int64) Path {
 		// url, _ = url.Parse("https://edelivery.oracle.com/otn-pub/java/jdk/8-b132/jdk-8-windows-x64.exe")
 		nurl := strings.Replace(url.String(), "http://download", "https://edelivery", -1)
 		url, _ = url.Parse(nurl)
-		req, err = http.NewRequest("GET", url.String(), strings.NewReader(""))
+		req, err = http.NewRequest("GET", url.String(), readerpt)
 		if err != nil {
 			fmt.Printf("Error NewRequest: %v\n", err)
 			return ""
