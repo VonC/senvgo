@@ -1049,7 +1049,8 @@ func getClient() *http.Client {
 // the results from individual calls to it.
 type PassThru struct {
 	io.Reader
-	total int64 // Total # of bytes transferred
+	total  int64 // Total # of bytes transferred
+	length int64 // Expected length
 }
 
 // Read 'overrides' the underlying io.Reader's Read method.
@@ -1059,7 +1060,9 @@ func (pt *PassThru) Read(p []byte) (int, error) {
 	n, err := pt.Reader.Read(p)
 	if err == nil {
 		pt.total += int64(n)
-		fmt.Println("Read", n, "bytes for a total of", pt.total)
+		percentage := float64(pt.total) / float64(pt.length) * float64(100)
+		//fmt.Println("Read", n, "bytes for a total of", pt.total, ", ", percentage)
+		fmt.Printf("%.2f...\n", percentage)
 	}
 
 	return n, err
@@ -1079,21 +1082,18 @@ func download(url *url.URL, filename Path, minLength int64) Path {
 	}
 	getClient().Jar = jar
 
-	reader := strings.NewReader("")
-	readerpt := &PassThru{Reader: reader}
-
-	req, err := http.NewRequest("GET", url.String(), readerpt)
-
+	req, err := http.NewRequest("GET", url.String(), nil)
 	if err != nil {
 		fmt.Printf("Error NewRequest: %v\n", err)
 		return ""
 	}
+
 	if strings.Contains(url.String(), "otn-pub") {
 		// gfind test -name "jdk*.exe" -exec rm -f {} ;
 		// url, _ = url.Parse("https://edelivery.oracle.com/otn-pub/java/jdk/8-b132/jdk-8-windows-x64.exe")
 		nurl := strings.Replace(url.String(), "http://download", "https://edelivery", -1)
 		url, _ = url.Parse(nurl)
-		req, err = http.NewRequest("GET", url.String(), readerpt)
+		req, err = http.NewRequest("GET", url.String(), nil)
 		if err != nil {
 			fmt.Printf("Error NewRequest: %v\n", err)
 			return ""
@@ -1118,7 +1118,8 @@ func download(url *url.URL, filename Path, minLength int64) Path {
 		fmt.Printf("download ERROR too small: '%v' when downloading '%v' in '%v'\n", response.ContentLength, url, filename)
 		return ""
 	}
-	body, err := ioutil.ReadAll(response.Body)
+	readerpt := &PassThru{Reader: response.Body, length: response.ContentLength}
+	body, err := ioutil.ReadAll(readerpt)
 	if err != nil {
 		fmt.Println("Error while reading downloaded", url, "-", err)
 		return ""
