@@ -982,7 +982,7 @@ func (j *repoJar) SetCookies(cookies []*http.Cookie) {
 }
 
 var mainRepoJar = &repoJar{}
-var mainHttpClient = &http.Client{CheckRedirect: redirectPolicy} //http.redirectPolicyFunc}
+var mainHttpClient *http.Client
 
 func do(req *http.Request) (*http.Response, error) {
 	//debug.PrintStack()
@@ -995,11 +995,11 @@ func do(req *http.Request) (*http.Response, error) {
 	fmt.Printf("~~~~\n")
 	fmt.Printf("(do) Cookies set: '[%v]: %v'\n", len(req.Cookies()), req.Cookies())
 	fmt.Printf("(do) Sent header: '%v'\n", req.Header)
-	fmt.Printf("(do) Sent body: '%v'\n", req.Body)
+	fmt.Printf("(do) Sent body: '%+v'\n", req.Body)
 	fmt.Printf("(do) -------\n")
 
 	//resp, err := mainHttpClient.Get(req.URL.String())
-	resp, err := mainHttpClient.Do(req)
+	resp, err := getClient().Do(req)
 	if err != nil {
 		fmt.Printf("Error : %s\n", err)
 	}
@@ -1017,9 +1017,31 @@ func redirectPolicy(req *http.Request, via []*http.Request) error {
 	return nil
 }
 
+func getClient() *http.Client {
+	if mainHttpClient == nil {
+		tr := &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}
+		proxy := os.Getenv("HTTP_PROXY")
+		if proxy != "" {
+			proxyurl, err := url.Parse(proxy)
+			if err != nil {
+				fmt.Printf("Unabe to parse HTTP_PROXY url '%v': '%v'", proxy, err)
+				return nil
+			}
+			// http://stackoverflow.com/questions/14661511/setting-up-proxy-for-http-client
+			tr.Proxy = http.ProxyURL(proxyurl)
+		}
+		mainHttpClient = &http.Client{
+			CheckRedirect: redirectPolicy, //http.redirectPolicyFunc}
+			Transport:     tr,
+		}
+	}
+	return mainHttpClient
+}
+
 func download(url *url.URL, filename Path, minLength int64) Path {
 	res := Path("")
-	url, _ = url.Parse("https://edelivery.oracle.com/otn-pub/java/jdk/8-b132/jdk-8-windows-x64.exe")
 	// http://stackoverflow.com/questions/18414212/golang-how-to-follow-location-with-cookie
 	// http://stackoverflow.com/questions/10268583/how-to-automate-download-and-installation-of-java-jdk-on-linux
 	// https://ivan-site.com/2012/05/download-oracle-java-jre-jdk-using-a-script/
@@ -1030,43 +1052,29 @@ func download(url *url.URL, filename Path, minLength int64) Path {
 	if err != nil {
 		log.Fatal(err)
 	}
-	mainHttpClient.Jar = jar
+	getClient().Jar = jar
 	req, err := http.NewRequest("GET", url.String(), strings.NewReader(""))
 	if err != nil {
 		fmt.Printf("Error NewRequest: %v\n", err)
 		return ""
 	}
-	if strings.Contains(url.String(), "jdk") {
-		//nurl := strings.Replace(url.String(), "download", "edelivery", -1)
+	if strings.Contains(url.String(), "otn-pub") {
+		// gfind test -name "jdk*.exe" -exec rm -f {} ;
+		// url, _ = url.Parse("https://edelivery.oracle.com/otn-pub/java/jdk/8-b132/jdk-8-windows-x64.exe")
+		nurl := strings.Replace(url.String(), "http://download", "https://edelivery", -1)
+		url, _ = url.Parse(nurl)
+		req, err = http.NewRequest("GET", url.String(), strings.NewReader(""))
+		if err != nil {
+			fmt.Printf("Error NewRequest: %v\n", err)
+			return ""
+		}
 		//req, _ = http.NewRequest("GET", nurl, nil)
 		cookies := []*http.Cookie{}
-		/*
-			c1 := &http.Cookie{Name: "testSessionCookie", Value: "Enabled", Path: "/technetwork/java/javase/downloads", Domain: ".www.oracle.com"}
-			cookies = append(cookies, c1)
-			c2 := &http.Cookie{Name: "oraclelicensejdk-6u31-oth-JPR", Value: "accept-securebackup-cookie", Path: "/", Domain: ".www.oracle.com"}
-			cookies = append(cookies, c2)
-			c3 := &http.Cookie{Name: "gpw_e24", Value: "http%3A%2F%2Fwww.oracle.com%2Ftechnetwork%2Fjava%2Fjavase%2Fdownloads%2Fjdk.html", Path: "/", Domain: ".oracle.com"}
-			c3.Expires = time.Now().Add(time.Minute)
-			cookies = append(cookies, c3)
-		*/
-		tr := &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		}
-		mainHttpClient.Transport = tr
 		cookies = append(cookies, &http.Cookie{Name: "oraclelicense", Value: "accept-securebackup-cookie"})
-		/*
-			cookies = append(cookies, &http.Cookie{Name: "gpw_e24", Value: "http%3A%2F%2Fwww.oracle.com%2Ftechnetwork%2Fjava%2Fjavase%2Fdownloads%2Fjdk8-downloads-2133151.html"})
-			cookies = append(cookies, &http.Cookie{Name: "notice_preferences", Value: "2:cb8350a2759273dccf1e483791e6f8fd"})
-			cookies = append(cookies, &http.Cookie{Name: "s_cc", Value: "true"})
-			t := time.Now().Add(time.Minute)
-			cookies = append(cookies, &http.Cookie{Name: "s_nr", Value: fmt.Sprintf("%v", t.Unix()*1000)})
-			cookies = append(cookies, &http.Cookie{Name: "s_sq", Value: "%5B%5BB%5D%5D"})
-			cookies = append(cookies, &http.Cookie{Name: "ARU_LANG", Value: "US"})
-		*/
 		req.Header.Add("Host", "edelivery.oracle.com")
 		req.Header.Add("Referer", "http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html")
 		mainRepoJar.SetCookies(cookies)
-		mainHttpClient.Jar.SetCookies(url, cookies)
+		getClient().Jar.SetCookies(url, cookies)
 	}
 
 	response, err := do(req) // http.Get(url.String())
