@@ -1071,8 +1071,8 @@ func download(url *url.URL, filename Path, minLength int64) Path {
 		//req, _ = http.NewRequest("GET", nurl, nil)
 		cookies := []*http.Cookie{}
 		cookies = append(cookies, &http.Cookie{Name: "oraclelicense", Value: "accept-securebackup-cookie"})
-		req.Header.Add("Host", "edelivery.oracle.com")
-		req.Header.Add("Referer", "http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html")
+		//req.Header.Add("Host", "edelivery.oracle.com")
+		//req.Header.Add("Referer", "http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html")
 		mainRepoJar.SetCookies(cookies)
 		getClient().Jar.SetCookies(url, cookies)
 	}
