@@ -1118,6 +1118,7 @@ func download(url *url.URL, filename Path, minLength int64, cookies []*http.Cook
 	res := Path("")
 	// http://stackoverflow.com/questions/18414212/golang-how-to-follow-location-with-cookie
 	// http://stackoverflow.com/questions/10268583/how-to-automate-download-and-installation-of-java-jdk-on-linux
+	// wget --no-check-certificate --no-cookies - --header "Cookie: oraclelicense=accept-securebackup-cookie" http://download.oracle.com/otn-pub/java/jdk/7u51-b13/jdk-7u51-linux-x64.tar.gz
 	// https://ivan-site.com/2012/05/download-oracle-java-jre-jdk-using-a-script/
 	options := cookiejar.Options{
 		PublicSuffixList: nil,
@@ -1636,6 +1637,34 @@ func installJDK(folder string, archive Path) {
 	}
 	if licenseExists, _ := exists(folder + "/LICENSE"); !licenseExists {
 		uncompress7z(folder+"/tools.zip", folder, "", "Extract tools.zip in JDK", false)
+	}
+
+	unpack := filepath.FromSlash(folder + "/bin/unpack200.exe")
+	if unpackExists, _ := exists(unpack); !unpackExists {
+		fmt.Printf("Error bin/unpack200.exe not found in '%v'\n", folder)
+		return
+	}
+	files := []string{}
+	err := filepath.Walk(folder, func(path string, f os.FileInfo, _ error) error {
+		if strings.HasSuffix(f.Name(), ".pack") {
+			files = append(files, path)
+		}
+		return nil
+	})
+	if err != nil {
+		fmt.Printf("[installJDK] ERR during walk for pack: '%v'\n", err)
+	}
+	fmt.Printf("files '%+v'\n", files)
+	for _, file := range files {
+		nopack := file[:len(file)-len(".pack")] + ".jar"
+		if nopackExists, _ := exists(nopack); !nopackExists {
+			cmd := fmt.Sprintf("%v %v %v", unpack, file, nopack)
+			fmt.Printf("%v '%v' => '%v'...\n", unpack, file, nopack)
+			c := exec.Command("cmd", "/C", cmd)
+			if _, err := c.Output(); err != nil {
+				fmt.Printf("Error invoking '%v' on '%v'\n'%v'\n", unpack, file, err)
+			}
+		}
 	}
 	os.Exit(0)
 }
