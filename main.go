@@ -69,6 +69,7 @@ var defaultConfig = `
 	name.rx			(jdk-\d(?:u\d+)?-windows-_$arch_.exe)
 	url.rx			(http://download.oracle.com/[^"]+jdk-\d(?:u\d+)?-windows-_$arch_.exe)
 	url.replace		^http://download with http://edelivery
+	cookie			oraclelicense;accept-securebackup-cookie
 `
 
 // Prg is a Program to be installed
@@ -85,6 +86,7 @@ type Prg struct {
 	portableExt     *Extractors
 	cache           Cache
 	arch            *Arch
+	cookies         []*http.Cookie
 }
 
 func (p *Prg) String() string {
@@ -1366,6 +1368,23 @@ func ReadConfig() []*Prg {
 			currentPrg.arch = arch
 			continue
 		}
+		if strings.HasPrefix(line, "cookie") && currentPrg != nil {
+			line = strings.TrimSpace(line[len("cookie"):])
+			elts := strings.Split(line, ";")
+			if len(elts) == 0 {
+				fmt.Printf("ERR: Invalid cookie '%v': '%v'\n", line)
+			}
+			// fmt.Printf("Cookies ELTS '%+v'\n", elts)
+			cookie := &http.Cookie{}
+			cookie.Name = elts[0]
+			if len(elts) > 1 {
+				cookie.Value = elts[1]
+			}
+			currentPrg.cookies = append(currentPrg.cookies, cookie)
+			// fmt.Printf("Cookies '%+v'\n", currentPrg.cookies)
+			// os.Exit(0)
+			continue
+		}
 		if strings.HasPrefix(line, "invoke") && currentPrg != nil {
 			line = strings.TrimSpace(line[len("invoke"):])
 			currentPrg.invoke = line
@@ -1410,7 +1429,7 @@ func ReadConfig() []*Prg {
 			datarx := datas[0]
 			datargx, err := regexp.Compile(datarx)
 			if err != nil {
-				fmt.Printf("ERR: Invalideregexp in replace wtih '%v': '%v'\n", datarx, err)
+				fmt.Printf("ERR: Invalid regexp in replace with '%v': '%v'\n", datarx, err)
 			}
 			e = NewExtractorReplace(data, datargx, currentPrg)
 		}
