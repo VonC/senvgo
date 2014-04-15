@@ -1584,6 +1584,9 @@ func (p *Prg) install() {
 		p.invokeZip()
 		return
 	}
+	if strings.Contains(folder, "Java_SE") {
+		installJDK(folderFull, archive)
+	}
 	if p.invoke == "" {
 		fmt.Printf("Unknown command for installing '%v'\n", archive)
 		return
@@ -1606,6 +1609,13 @@ func (p *Prg) install() {
 		p.checkPortable()
 	}
 	p.checkLatest()
+}
+
+func installJDK(folder string, archive Path) {
+	fmt.Printf("folder='%v'\n", folder)
+	fmt.Printf("archive='%v'\n", archive)
+	uncompress7z(archive.String(), folder, "tools.zip", "Extract tools.zip", true)
+	os.Exit(0)
 }
 
 func (p *Prg) checkPortable() {
@@ -1638,7 +1648,7 @@ func cmd7z() string {
 	return cmd
 }
 
-func ucompress7z(archive string, folder string, file string, msg string, extract bool) {
+func uncompress7z(archive string, folder string, file string, msg string, extract bool) {
 
 	farchive, err := filepath.Abs(filepath.FromSlash(archive))
 	if err != nil {
@@ -1666,7 +1676,7 @@ func ucompress7z(archive string, folder string, file string, msg string, extract
 	if extract {
 		extractCmd = "e"
 	}
-	cmd = fmt.Sprintf("%v %v -aos -o`%v` -pdefault -sccUTF-8 `%v`%v", cmd, extractCmd, ffolder, farchive, argFile)
+	cmd = fmt.Sprintf("%v %v -aos -o%v -pdefault -sccUTF-8 %v%v", cmd, extractCmd, ffolder, farchive, argFile)
 	fmt.Printf("%v'%v'%v => 7zU...\n", msg, archive, argFile)
 	c := exec.Command("cmd", "/C", cmd)
 	if out, err := c.Output(); err != nil {
