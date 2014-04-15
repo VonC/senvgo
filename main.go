@@ -1062,8 +1062,10 @@ func (pt *PassThru) Read(p []byte) (int, error) {
 	if err == nil {
 		pt.total += int64(n)
 		percentage := float64(pt.total) / float64(pt.length) * float64(100)
+		i := int(percentage / float64(10))
+		is := fmt.Sprintf("%v", i)
 		if percentage-pt.progress > 2 {
-			fmt.Fprintf(os.Stderr, "x")
+			fmt.Fprintf(os.Stderr, is)
 			pt.progress = percentage
 		}
 		/*
@@ -1128,11 +1130,11 @@ func download(url *url.URL, filename Path, minLength int64) Path {
 	}
 	readerpt := &PassThru{Reader: response.Body, length: response.ContentLength}
 	body, err := ioutil.ReadAll(readerpt)
-	fmt.Println(".")
 	if err != nil {
 		fmt.Println("Error while reading downloaded", url, "-", err)
 		return ""
 	}
+	fmt.Fprintf(os.Stderr, "\nCopying\n")
 	err = ioutil.WriteFile(filename.String(), body, 0666)
 	if err != nil {
 		fmt.Printf("Error while writing downloaded '%v': '%v'\n", url, err)
