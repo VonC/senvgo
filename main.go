@@ -725,7 +725,7 @@ func (c *CacheDisk) GetArchive(p Path, url *url.URL, name string, cookies []*htt
 		return ""
 	}
 	fmt.Printf("CacheDisk.GetArchive[%v]: ... MUST download '%v' for '%v'\n", c.id, url, filename)
-	download(url, Path(filename), 100000)
+	download(url, Path(filename), 100000, cookies)
 	fmt.Printf("CacheDisk.GetArchive[%v]: ... DONE download '%v' for '%v'\n", c.id, url, filename)
 	c.checkArchive(filename, name)
 	if err == nil && c.last != "" {
@@ -812,7 +812,7 @@ func (c *CacheDisk) GetPage(url *url.URL, name string) Path {
 		filename := c.Folder(name) + name + "_" + sha + "_" + t.Format("20060102") + "_" + t.Format("150405")
 		fmt.Printf("Get '%v' downloads '%v' for '%v'\n", c.id, filename, url)
 		if c.last == "" {
-			c.last = download(url, Path(filename), 0)
+			c.last = download(url, Path(filename), 0, nil)
 		} else {
 			copy(filename, c.last.String())
 			c.last = Path(filename)
@@ -1113,7 +1113,7 @@ func (pt *PassThru) Read(p []byte) (int, error) {
 	return n, err
 }
 
-func download(url *url.URL, filename Path, minLength int64) Path {
+func download(url *url.URL, filename Path, minLength int64, cookies []*http.Cookie) Path {
 	res := Path("")
 	// http://stackoverflow.com/questions/18414212/golang-how-to-follow-location-with-cookie
 	// http://stackoverflow.com/questions/10268583/how-to-automate-download-and-installation-of-java-jdk-on-linux
@@ -1132,6 +1132,8 @@ func download(url *url.URL, filename Path, minLength int64) Path {
 		fmt.Printf("Error NewRequest: %v\n", err)
 		return ""
 	}
+	mainRepoJar.SetCookies(cookies)
+	getClient().Jar.SetCookies(url, cookies)
 	/*
 		if strings.Contains(url.String(), "otn-pub") {
 			// gfind test -name "jdk*.exe" -exec rm -f {} ;
@@ -1163,7 +1165,7 @@ func download(url *url.URL, filename Path, minLength int64) Path {
 		fmt.Printf("download ERROR too small: '%v' when downloading '%v' in '%v'\n", response.ContentLength, url, filename)
 		return ""
 	}
-	os.Exit(0)
+	//os.Exit(0)
 	readerpt := &PassThru{Reader: response.Body, length: response.ContentLength}
 	body, err := ioutil.ReadAll(readerpt)
 	if err != nil {
