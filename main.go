@@ -1097,26 +1097,26 @@ func download(url *url.URL, filename Path, minLength int64) Path {
 		fmt.Printf("Error NewRequest: %v\n", err)
 		return ""
 	}
-
-	if strings.Contains(url.String(), "otn-pub") {
-		// gfind test -name "jdk*.exe" -exec rm -f {} ;
-		// url, _ = url.Parse("https://edelivery.oracle.com/otn-pub/java/jdk/8-b132/jdk-8-windows-x64.exe")
-		nurl := strings.Replace(url.String(), "http://download", "https://edelivery", -1)
-		url, _ = url.Parse(nurl)
-		req, err = http.NewRequest("GET", url.String(), nil)
-		if err != nil {
-			fmt.Printf("Error NewRequest: %v\n", err)
-			return ""
+	/*
+		if strings.Contains(url.String(), "otn-pub") {
+			// gfind test -name "jdk*.exe" -exec rm -f {} ;
+			// url, _ = url.Parse("https://edelivery.oracle.com/otn-pub/java/jdk/8-b132/jdk-8-windows-x64.exe")
+			nurl := strings.Replace(url.String(), "http://download", "https://edelivery", -1)
+			url, _ = url.Parse(nurl)
+			req, err = http.NewRequest("GET", url.String(), nil)
+			if err != nil {
+				fmt.Printf("Error NewRequest: %v\n", err)
+				return ""
+			}
+			//req, _ = http.NewRequest("GET", nurl, nil)
+			cookies := []*http.Cookie{}
+			cookies = append(cookies, &http.Cookie{Name: "oraclelicense", Value: "accept-securebackup-cookie"})
+			//req.Header.Add("Host", "edelivery.oracle.com")
+			//req.Header.Add("Referer", "http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html")
+			mainRepoJar.SetCookies(cookies)
+			getClient().Jar.SetCookies(url, cookies)
 		}
-		//req, _ = http.NewRequest("GET", nurl, nil)
-		cookies := []*http.Cookie{}
-		cookies = append(cookies, &http.Cookie{Name: "oraclelicense", Value: "accept-securebackup-cookie"})
-		//req.Header.Add("Host", "edelivery.oracle.com")
-		//req.Header.Add("Referer", "http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html")
-		mainRepoJar.SetCookies(cookies)
-		getClient().Jar.SetCookies(url, cookies)
-	}
-
+	*/
 	response, err := do(req) // http.Get(url.String())
 	if err != nil {
 		fmt.Println("Error while downloading", url, "-", err)
@@ -1128,6 +1128,7 @@ func download(url *url.URL, filename Path, minLength int64) Path {
 		fmt.Printf("download ERROR too small: '%v' when downloading '%v' in '%v'\n", response.ContentLength, url, filename)
 		return ""
 	}
+	os.Exit(0)
 	readerpt := &PassThru{Reader: response.Body, length: response.ContentLength}
 	body, err := ioutil.ReadAll(readerpt)
 	if err != nil {
