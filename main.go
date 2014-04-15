@@ -68,6 +68,7 @@ var defaultConfig = `
 	name.get		_
 	name.rx			(jdk-\d(?:u\d+)?-windows-_$arch_.exe)
 	url.rx			(http://download.oracle.com/[^"]+jdk-\d(?:u\d+)?-windows-_$arch_.exe)
+	url.replace		^http://download with http://edelivery
 `
 
 // Prg is a Program to be installed
@@ -1218,7 +1219,7 @@ func (em *ExtractorMatch) ExtractFrom(content string) string {
 	res := ""
 	if len(matches) >= 1 && len(matches[0]) >= 4 {
 		res = content[matches[0][2]:matches[0][3]]
-		fmt.Printf("RES='%v'\n", res)
+		fmt.Printf("[ExtractorMatch] RES='%v'\n", res)
 	}
 	return res
 }
@@ -1255,7 +1256,31 @@ func NewExtractorPrepend(rx string, p PrgData) *ExtractorPrepend {
 // ExtractFrom prepends data to content
 func (ep *ExtractorPrepend) ExtractFrom(data string) string {
 	fmt.Printf("=====> ExtractorPrepend.ExtractFrom '%v'\n", data)
-	return ep.data + data
+	res := ep.data + data
+	fmt.Printf("[ExtractorPrepend] RES='%v'\n", res)
+	return res
+}
+
+// ExtractorReplace is an Extractor which replace data to content
+type ExtractorReplace struct {
+	Extractable
+	regexp *regexp.Regexp
+}
+
+// NewExtractorPrepend build an ExtractorPrepend to prepend data
+func NewExtractorReplace(data string, rx *regexp.Regexp, p PrgData) *ExtractorReplace {
+	res := &ExtractorReplace{Extractable{data: data, p: p}, nil}
+	res.regexp = rx
+	res.self = res
+	return res
+}
+
+// ExtractFrom prepends data to content
+func (er *ExtractorReplace) ExtractFrom(data string) string {
+	fmt.Printf("=====> ExtractorPrepend.ExtractFrom '%v'\n", data)
+	res := string(er.regexp.ReplaceAll([]byte(data), []byte(er.data)))
+	fmt.Printf("[ExtractorReplace] RES='%v'\n", res)
+	return res
 }
 
 func (p *Prg) updatePortable() {
@@ -1376,6 +1401,18 @@ func ReadConfig() []*Prg {
 			e = NewExtractorMatch(data, currentPrg)
 		case "prepend":
 			e = NewExtractorPrepend(data, currentPrg)
+		case "replace":
+			datas := strings.Split(data, " with ")
+			if len(datas) != 2 {
+				fmt.Printf("ERR: Invalide replace with '%v'\n", data)
+			}
+			data := datas[1]
+			datarx := datas[0]
+			datargx, err := regexp.Compile(datarx)
+			if err != nil {
+				fmt.Printf("ERR: Invalideregexp in replace wtih '%v': '%v'\n", datarx, err)
+			}
+			e = NewExtractorReplace(data, datargx, currentPrg)
 		}
 		if e != nil {
 			if currentVariable != "" && variable == currentVariable {
