@@ -45,7 +45,6 @@ func main() {
   folder.rx      /(peazip_portable-.*?\._$arch_).zip/download
   url.rx         (http.*portable-.*?\._$arch_\.zip/download)
   name.rx        /(peazip_portable-.*?\._$arch_.zip)/download
-
 [gow]
   folder.get     https://github.com/bmatzelle/gow/releases
   folder.rx      /download/v.*?/(Gow-.*?).exe
@@ -61,6 +60,7 @@ var defaultConfig = `
   owner VonC
 [jdk8]
 	arch			i586,x64
+	test			xxx
 	folder.get		http://www.oracle.com/technetwork/java/javase/downloads/index.html?ssSourceSiteId=otnjp
 	folder.rx		>(Java SE 8(?:u\d*)?)<
 	name.rx			href="(/technetwork/java/javase/downloads/jdk8-downloads-\d+.html)"
@@ -87,6 +87,7 @@ type Prg struct {
 	cache           Cache
 	arch            *Arch
 	cookies         []*http.Cookie
+	test            string
 }
 
 func (p *Prg) String() string {
@@ -1351,6 +1352,11 @@ func ReadConfig() []*Prg {
 			currentPrg.arch = arch
 			continue
 		}
+		if strings.HasPrefix(line, "test") && currentPrg != nil {
+			test := strings.TrimSpace(line[len("test"):])
+			currentPrg.test = test
+			continue
+		}
 		if strings.HasPrefix(line, "cookie") && currentPrg != nil {
 			line = strings.TrimSpace(line[len("cookie"):])
 			elts := strings.Split(line, ";")
@@ -1546,16 +1552,27 @@ func (p *Prg) install() {
 
 	fmt.Printf("folderFull (%v): '%v'\narchive '%v'\n", p.name, folderFull, archive)
 
+	test := false
+	if test, err := exists(p.test); p.test != "" && err == nil && test {
+		fmt.Printf("Need to install %v in '%v' per test '%v'\n", p.name, folderFull, test)
+	} else if p.test != "" && err != nil {
+		fmt.Printf("Error while testing test existence '%v': '%v'\n", test, err)
+		return
+	}
+	fmt.Printf("TEST.... '%v' (for '%v')\n", test, p.test)
+
 	alreadyInstalled := false
 	if hasFolder, err := exists(folderFull); !hasFolder && err == nil {
 		fmt.Printf("Need to install %v in '%v'\n", p.name, folderFull)
 	} else if err != nil {
 		fmt.Printf("Error while testing installation folder existence '%v': '%v'\n", folder, err)
 		return
-	} else {
+	} else if test {
 		fmt.Printf("'%v' already installed in '%v'\n", p.name, folderFull)
 		alreadyInstalled = true
 		p.checkLatest()
+	} else {
+		alreadyInstalled = false
 	}
 
 	folderTmp := folderMain + "tmp"
@@ -1614,7 +1631,9 @@ func (p *Prg) install() {
 func installJDK(folder string, archive Path) {
 	fmt.Printf("folder='%v'\n", folder)
 	fmt.Printf("archive='%v'\n", archive)
-	uncompress7z(archive.String(), folder, "tools.zip", "Extract tools.zip", true)
+	if toolsExists, _ := exists(folder + "/tools.zip"); !toolsExists {
+		uncompress7z(archive.String(), folder, "tools.zip", "Extract tools.zip", true)
+	}
 	os.Exit(0)
 }
 
