@@ -1634,6 +1634,9 @@ func installJDK(folder string, archive Path) {
 	if toolsExists, _ := exists(folder + "/tools.zip"); !toolsExists {
 		uncompress7z(archive.String(), folder, "tools.zip", "Extract tools.zip", true)
 	}
+	if licenseExists, _ := exists(folder + "/LICENSE"); !licenseExists {
+		uncompress7z(folder+"/tools.zip", folder, "", "Extract tools.zip in JDK", false)
+	}
 	os.Exit(0)
 }
 
