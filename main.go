@@ -38,6 +38,38 @@ func main() {
 	}
 }
 
+/*
+[peazip]
+  arch           WINDOWS,WIN64
+  folder.get     http://peazip.sourceforge.net/peazip-portable.html
+  folder.rx      /(peazip_portable-.*?\._$arch_).zip/download
+  url.rx         (http.*portable-.*?\._$arch_\.zip/download)
+  name.rx        /(peazip_portable-.*?\._$arch_.zip)/download
+
+[gow]
+  folder.get     https://github.com/bmatzelle/gow/releases
+  folder.rx      /download/v.*?/(Gow-.*?).exe
+  url.rx         (/bmatzelle/gow/releases/download/v.*?/Gow-.*?.exe)
+  url.prepend    https://github.com
+  name.rx        /download/v.*?/(Gow-.*?.exe)
+  invoke         @FILE@ /S /D=@DEST@
+*/
+var defaultConfig = `
+[cache id secondary]
+  root test/_secondary
+[cache id githubvonc]
+  owner VonC
+[jdk8]
+	arch			i586,x64
+	folder.get		http://www.oracle.com/technetwork/java/javase/downloads/index.html?ssSourceSiteId=otnjp
+	folder.rx		>(Java SE 8(?:u\d*)?)<
+	name.rx			href="(/technetwork/java/javase/downloads/jdk8-downloads-\d+.html)"
+	name.prepend    http://www.oracle.com
+	name.get		_
+	name.rx			(jdk-\d(?:u\d+)?-windows-_$arch_.exe)
+	url.rx			(http://download.oracle.com/[^"]+jdk-\d(?:u\d+)?-windows-_$arch_.exe)
+`
+
 // Prg is a Program to be installed
 type Prg struct {
 	name            string
@@ -1250,38 +1282,6 @@ func (p *Prg) updatePortable() {
 }
 
 var cfgRx, _ = regexp.Compile(`^([^\.]+)\.([^\.\s]+)\s+(.*?)$`)
-
-/*
-[peazip]
-  arch           WINDOWS,WIN64
-  folder.get     http://peazip.sourceforge.net/peazip-portable.html
-  folder.rx      /(peazip_portable-.*?\._$arch_).zip/download
-  url.rx         (http.*portable-.*?\._$arch_\.zip/download)
-  name.rx        /(peazip_portable-.*?\._$arch_.zip)/download
-
-[gow]
-  folder.get     https://github.com/bmatzelle/gow/releases
-  folder.rx      /download/v.*?/(Gow-.*?).exe
-  url.rx         (/bmatzelle/gow/releases/download/v.*?/Gow-.*?.exe)
-  url.prepend    https://github.com
-  name.rx        /download/v.*?/(Gow-.*?.exe)
-  invoke         @FILE@ /S /D=@DEST@
-*/
-var defaultConfig = `
-[cache id secondary]
-  root test/_secondary
-[cache id githubvonc]
-  owner VonC
-[jdk8]
-	arch			i586,x64
-	folder.get		http://www.oracle.com/technetwork/java/javase/downloads/index.html?ssSourceSiteId=otnjp
-	folder.rx		>(Java SE 8(?:u\d*)?)<
-	name.rx			href="(/technetwork/java/javase/downloads/jdk8-downloads-\d+.html)"
-	name.prepend    http://www.oracle.com
-	name.get		_
-	name.rx			(jdk-\d(?:u\d+)?-windows-_$arch_.exe)
-	url.rx			(http://download.oracle.com/[^"]+jdk-\d(?:u\d+)?-windows-_$arch_.exe)
-`
 
 func NewCacheDisk(id string, root string) *CacheDisk {
 	cache := &CacheDisk{CacheData: &CacheData{id: id}, root: root}
