@@ -171,7 +171,7 @@ func (p *Path) String() string {
 // Cache gets or update a resource, can be linked, can retrieve last value cached
 type Cache interface {
 	GetPage(url *url.URL, name string) Path
-	GetArchive(p Path, url *url.URL, name string) Path
+	GetArchive(p Path, url *url.URL, name string, cookies []*http.Cookie) Path
 	UpdateArchive(p Path, name string)
 	UpdatePage(p Path, name string)
 	Next() Cache
@@ -224,7 +224,7 @@ func (c *CacheGitHub) IsGitHub() bool {
 }
 
 // Get gets or download zip archives only from GitHub
-func (c *CacheGitHub) GetArchive(p Path, url *url.URL, name string) Path {
+func (c *CacheGitHub) GetArchive(p Path, url *url.URL, name string, cookies []*http.Cookie) Path {
 	fmt.Printf("CacheGitHub.GetArchive '%v' for '%v' from '%v'\n", p, name, c.String())
 	if !p.isZip() {
 		fmt.Printf("GetArchive '%v' is not a .zip\n", p)
@@ -233,7 +233,7 @@ func (c *CacheGitHub) GetArchive(p Path, url *url.URL, name string) Path {
 	c.last = c.getFileFromGitHub(p, name)
 	if c.next != nil {
 		if c.last == "" {
-			c.last = c.Next().GetArchive(p, url, name)
+			c.last = c.Next().GetArchive(p, url, name, cookies)
 		} else {
 			c.Next().UpdateArchive(p, name)
 		}
@@ -695,7 +695,7 @@ func (c *CacheDisk) HasCacheDiskInNexts() bool {
 }
 
 // Get will get either an url or an archive extension (exe, zip, tar.gz, ...)
-func (c *CacheDisk) GetArchive(p Path, url *url.URL, name string) Path {
+func (c *CacheDisk) GetArchive(p Path, url *url.URL, name string, cookies []*http.Cookie) Path {
 	fmt.Printf("CacheDisk.GetArchive[%v]: '%v' for '%v' from '%v'\n", c.id, p, name, c.String())
 	c.last = ""
 	filename := c.Folder(name) + p.release()
@@ -706,7 +706,7 @@ func (c *CacheDisk) GetArchive(p Path, url *url.URL, name string) Path {
 
 	if c.next != nil {
 		if c.last == "" {
-			c.last = c.Next().GetArchive(Path(filename), url, name)
+			c.last = c.Next().GetArchive(Path(filename), url, name, cookies)
 			if !c.Next().IsGitHub() && c.last != "" {
 				copy(filename, c.last.String())
 				c.last = Path(filename)
@@ -1769,11 +1769,11 @@ func (p *Prg) GetArchive() Path {
 		fmt.Printf("Get archive for %v", p.GetName())
 		archiveName := get(p.archive.String(), p.exts.extractArchive, false)
 		url := p.GetURL()
-		p.archive = cache.GetArchive(Path(archiveName), url, p.name)
+		p.archive = cache.GetArchive(Path(archiveName), url, p.name, p.cookies)
 	}
 	if strings.HasSuffix(p.archive.String(), ".exe") {
 		pname := Path(p.archive.releaseName() + ".zip")
-		portableArchive := cache.GetArchive(pname, nil, p.name)
+		portableArchive := cache.GetArchive(pname, nil, p.name, p.cookies)
 		if portableArchive != "" {
 			p.archive = portableArchive
 		}
