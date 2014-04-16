@@ -1959,6 +1959,7 @@ func get(iniValue string, ext Extractor, underscore bool) string {
 // exists returns whether the given file or directory exists or not
 // http://stackoverflow.com/questions/10510691/how-to-check-whether-a-file-or-directory-denoted-by-a-path-exists-in-golang
 func exists(path string) (bool, error) {
+	path = filepath.FromSlash(path)
 	_, err := os.Stat(path)
 	if err == nil {
 		return true, nil
