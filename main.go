@@ -75,7 +75,7 @@ var defaultConfig = `
 	invoke			go: InstallJDKsrc
 [jdk8]
 	arch			i586,x64
-	test			xxx
+	test			lib\tools.jar
 	folder.get		http://www.oracle.com/technetwork/java/javase/downloads/index.html?ssSourceSiteId=otnjp
 	folder.rx		>(Java SE 8(?:u\d*)?)<
 	name.rx			href="(/technetwork/java/javase/downloads/jdk8-downloads-\d+.html)"
