@@ -1667,6 +1667,8 @@ func (p *Prg) install() {
 func (p *Prg) callFunc(structName, methodName string) {
 	fmt.Printf("structName '%v'\n", structName)
 	fmt.Printf("methodName '%v'\n", methodName)
+	// http://groups.google.com/forum/#!topic/golang-nuts/-J17cxJnmss
+
 }
 
 func installJDK(folder string, archive Path) {
