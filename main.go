@@ -1619,7 +1619,7 @@ func (p *Prg) install() {
 		}
 		return
 	}
-	if archive.isZip() {
+	if archive.isZip() && p.invoke == "" {
 		p.invokeZip()
 		return
 	}
