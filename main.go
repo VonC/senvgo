@@ -74,20 +74,17 @@ var defaultConfig = `
 
 // Prg is a Program to be installed
 type Prg struct {
-	name            string
-	folder          string
-	archive         Path
-	url             *url.URL
-	portableFolder  string
-	portableArchive string
-	portableURL     string
-	invoke          string
-	exts            *Extractors
-	portableExt     *Extractors
-	cache           Cache
-	arch            *Arch
-	cookies         []*http.Cookie
-	test            string
+	name        string
+	folder      string
+	archive     Path
+	url         *url.URL
+	invoke      string
+	exts        *Extractors
+	portableExt *Extractors
+	cache       Cache
+	arch        *Arch
+	cookies     []*http.Cookie
+	test        string
 }
 
 func (p *Prg) String() string {
