@@ -1679,9 +1679,24 @@ func (p *Prg) callFunc(methodName, folder string, archive Path) {
 func (i Invoke) InstallJDKsrc(folder string, archive Path) {
 	fmt.Printf("[installJDKsrc] folder='%v'\n", folder)
 	fmt.Printf("[installJDKsrc] archive='%v'\n", archive)
+	archive2 := strings.Replace(archive.String(), ".gz", "", -1)
+	archive2f := filepath.Base(archive2)
+	archive2folder := filepath.Dir(archive2)
+
+	if archive2Exists, _ := exists(archive2); !archive2Exists {
+		uncompress7z(archive.String(), archive2folder, archive2f, "Extract src tar", true)
+	}
+	l := list7z(archive2, "src.zip")
+	rx, _ := regexp.Compile(`(?m).*\s(\S+\\src.zip).*$`)
+
+	matches := rx.FindAllStringSubmatchIndex(l, -1)
+	fmt.Printf("matches: '%v'\n", matches)
+	f := l[matches[0][2]:matches[0][3]]
+
+	uncompress7z(archive2, folder, f, "Extract src.zip", true)
 }
 
-func InstallJDK(folder string, archive Path) {
+func (i Invoke) InstallJDK(folder string, archive Path) {
 	fmt.Printf("folder='%v'\n", folder)
 	fmt.Printf("archive='%v'\n", archive)
 	if toolsExists, _ := exists(folder + "/tools.zip"); !toolsExists {
