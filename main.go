@@ -58,6 +58,19 @@ var defaultConfig = `
   root test/_secondary
 [cache id githubvonc]
   owner VonC
+[jdk8src]
+	dir 			jdk8
+	arch			i586,x64
+	test			src.zip
+	folder.get		http://www.oracle.com/technetwork/java/javase/downloads/index.html?ssSourceSiteId=otnjp
+	folder.rx		>(Java SE 8(?:u\d*)?)<
+	name.rx			href="(/technetwork/java/javase/downloads/jdk8-downloads-\d+.html)"
+	name.prepend    http://www.oracle.com
+	name.get		_
+	name.rx			(jdk-\d(?:u\d+)?-windows-_$arch_.exe)
+	url.rx			(http://download.oracle.com/[^"]+jdk-\d(?:u\d+)?-linux-_$arch_.tar.gz)
+	url.replace		^http://download with http://edelivery
+	cookie			oraclelicense;accept-securebackup-cookie
 [jdk8]
 	arch			i586,x64
 	test			xxx
