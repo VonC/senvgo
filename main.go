@@ -72,7 +72,7 @@ var defaultConfig = `
 	url.rx			(http://download.oracle.com/[^"]+jdk-\d(?:u\d+)?-linux-_$arch_.tar.gz)
 	url.replace		^http://download with http://edelivery
 	cookie			oraclelicense;accept-securebackup-cookie
-	invoke			go: a#b
+	invoke			go: InstallJDKsrc
 [jdk8]
 	arch			i586,x64
 	test			xxx
@@ -85,6 +85,7 @@ var defaultConfig = `
 	url.rx			(http://download.oracle.com/[^"]+jdk-\d(?:u\d+)?-windows-_$arch_.exe)
 	url.replace		^http://download with http://edelivery
 	cookie			oraclelicense;accept-securebackup-cookie
+	invoke			go: InstallJDK
 `
 
 // Prg is a Program to be installed
@@ -1633,18 +1634,21 @@ func (p *Prg) install() {
 		return
 	}
 
-	if strings.HasPrefix(p.invoke, "go:") {
-		methodName := strings.TrimSpace(p.invoke[len("go:"):])
-		p.callFunc(methodName)
-		os.Exit(0)
-	}
-
-	cmd := p.invoke
 	dst, err := filepath.Abs(filepath.FromSlash(folderFull))
 	if err != nil {
 		fmt.Printf("Unable to get full path for '%v': '%v'\n%v", p.GetName(), folderFull, err)
 		return
 	}
+
+	fmt.Printf("============ '%v'\n", p.invoke)
+
+	if strings.HasPrefix(p.invoke, "go:") {
+		methodName := strings.TrimSpace(p.invoke[len("go:"):])
+		p.callFunc(methodName, dst, archive)
+		os.Exit(0)
+	}
+
+	cmd := p.invoke
 	cmd = strings.Replace(cmd, "@FILE@", archive.String(), -1)
 	cmd = strings.Replace(cmd, "@DEST@", dst, -1)
 	fmt.Printf("invoking for '%v': '%v'\n", p.GetName(), cmd)
@@ -1658,13 +1662,25 @@ func (p *Prg) install() {
 	p.checkLatest()
 }
 
-func (p *Prg) callFunc(methodName string) {
-	fmt.Printf("methodName '%v'\n", methodName)
-	// http://groups.google.com/forum/#!topic/golang-nuts/-J17cxJnmss
-
+type Invoke struct {
 }
 
-func installJDK(folder string, archive Path) {
+func (p *Prg) callFunc(methodName, folder string, archive Path) {
+	fmt.Printf("methodName '%v'\n", methodName)
+	// http://groups.google.com/forum/#!topic/golang-nuts/-J17cxJnmss
+	// http://stackoverflow.com/questions/8103617/call-a-struct-and-its-method-by-name-in-go
+	inputs := make([]reflect.Value, 2)
+	inputs[0] = reflect.ValueOf(folder)
+	inputs[1] = reflect.ValueOf(archive)
+	reflect.ValueOf(Invoke{}).MethodByName(methodName).Call(inputs)
+}
+
+func (i Invoke) InstallJDKsrc(folder string, archive Path) {
+	fmt.Printf("[installJDKsrc] folder='%v'\n", folder)
+	fmt.Printf("[installJDKsrc] archive='%v'\n", archive)
+}
+
+func InstallJDK(folder string, archive Path) {
 	fmt.Printf("folder='%v'\n", folder)
 	fmt.Printf("archive='%v'\n", archive)
 	if toolsExists, _ := exists(folder + "/tools.zip"); !toolsExists {
