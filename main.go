@@ -72,6 +72,7 @@ var defaultConfig = `
 	url.rx			(http://download.oracle.com/[^"]+jdk-\d(?:u\d+)?-linux-_$arch_.tar.gz)
 	url.replace		^http://download with http://edelivery
 	cookie			oraclelicense;accept-securebackup-cookie
+	invoke			go: a#b
 [jdk8]
 	arch			i586,x64
 	test			xxx
@@ -1632,6 +1633,18 @@ func (p *Prg) install() {
 		return
 	}
 
+	if strings.HasPrefix(p.invoke, "go:") {
+		line := strings.TrimSpace(p.invoke[len("go:"):])
+		elts := strings.Split(line, "#")
+		if len(elts) != 2 {
+			fmt.Printf("[install] Err: invoke needs class and function from '%v'\n", line)
+		}
+		structName := elts[0]
+		methodName := elts[1]
+		p.callFunc(structName, methodName)
+		os.Exit(0)
+	}
+
 	cmd := p.invoke
 	dst, err := filepath.Abs(filepath.FromSlash(folderFull))
 	if err != nil {
@@ -1649,6 +1662,11 @@ func (p *Prg) install() {
 		p.checkPortable()
 	}
 	p.checkLatest()
+}
+
+func (p *Prg) callFunc(structName, methodName string) {
+	fmt.Printf("structName '%v'\n", structName)
+	fmt.Printf("methodName '%v'\n", methodName)
 }
 
 func installJDK(folder string, archive Path) {
