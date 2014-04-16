@@ -1576,13 +1576,15 @@ func (p *Prg) install() {
 	fmt.Printf("folderFull (%v): '%v'\narchive '%v'\n", p.GetName(), folderFull, archive)
 
 	test := false
-	if test, err := exists(p.test); p.test != "" && err == nil && test {
-		fmt.Printf("Need to install %v in '%v' per test '%v'\n", p.GetName(), folderFull, test)
+	if test, err := exists(folderFull + "/" + p.test); p.test != "" && err == nil && test {
+		fmt.Printf("No Need to install %v in '%v' per test '%v'\n", p.GetName(), folderFull, test)
+		// TODO checks
+		return
 	} else if p.test != "" && err != nil {
 		fmt.Printf("Error while testing test existence '%v': '%v'\n", test, err)
 		return
 	}
-	fmt.Printf("TEST.... '%v' (for '%v')\n", test, p.test)
+	fmt.Printf("TEST.... '%v' (for '%v')\n", test, folderFull+"/"+p.test)
 
 	alreadyInstalled := false
 	if hasFolder, err := exists(folderFull); !hasFolder && err == nil {
