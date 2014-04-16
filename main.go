@@ -1766,6 +1766,34 @@ func cmd7z() string {
 	return cmd
 }
 
+func list7z(archive string, file string) string {
+
+	farchive, err := filepath.Abs(filepath.FromSlash(archive))
+	if err != nil {
+		fmt.Printf("7z: Unable to get full path for list archive: '%v'\n%v\n", archive, err)
+		return ""
+	}
+	cmd := cmd7z()
+	if cmd == "" {
+		return ""
+	}
+	argFile := ""
+	if file != "" {
+		argFile = " -- " + file
+	}
+	cmd = fmt.Sprintf("%v l -r %v%v", cmd, farchive, argFile)
+	fmt.Printf("'%v'%v => 7zL...\n%v\n", archive, argFile, cmd)
+	c := exec.Command("cmd", "/C", cmd)
+	res := ""
+	if out, err := c.Output(); err != nil {
+		fmt.Printf("Error invoking 7ZL '%v'\n'%v' %v'\n", cmd, string(out), err)
+	} else {
+		res = string(out)
+	}
+	fmt.Printf("'%v'%v => 7zL... DONE\n'%v'\n", archive, argFile, res)
+	return res
+}
+
 func uncompress7z(archive string, folder string, file string, msg string, extract bool) {
 
 	farchive, err := filepath.Abs(filepath.FromSlash(archive))
