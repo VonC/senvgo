@@ -1823,10 +1823,10 @@ func uncompress7z(archive string, folder string, file string, msg string, extrac
 		extractCmd = "e"
 	}
 	cmd = fmt.Sprintf("%v %v -aos -o%v -pdefault -sccUTF-8 %v%v", cmd, extractCmd, ffolder, farchive, argFile)
-	fmt.Printf("%v'%v'%v => 7zU...\n", msg, archive, argFile)
+	fmt.Printf("%v'%v'%v => 7zU...\n%v\n", msg, archive, argFile, cmd)
 	c := exec.Command("cmd", "/C", cmd)
 	if out, err := c.Output(); err != nil {
-		fmt.Printf("Error invoking 7ZU '%v'\n''%v' %v'\n", cmd, string(out), err)
+		fmt.Printf("Error invoking 7ZU '%v'\n''%v' %v'\n%v\n", cmd, string(out), err, cmd)
 	}
 	fmt.Printf("%v'%v'%v => 7zU... DONE\n", msg, archive, argFile)
 }
