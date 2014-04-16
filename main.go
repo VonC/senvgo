@@ -35,6 +35,7 @@ func main() {
 	for _, p := range prgs {
 		p.install()
 		fmt.Printf("INSTALLED '%v'\n", p)
+		os.Exit(0)
 	}
 }
 
@@ -67,7 +68,7 @@ var defaultConfig = `
 	name.rx			href="(/technetwork/java/javase/downloads/jdk8-downloads-\d+.html)"
 	name.prepend    http://www.oracle.com
 	name.get		_
-	name.rx			(jdk-\d(?:u\d+)?-windows-_$arch_.exe)
+	name.rx			(jdk-\d(?:u\d+)?-linux-_$arch_.tar.gz)
 	url.rx			(http://download.oracle.com/[^"]+jdk-\d(?:u\d+)?-linux-_$arch_.tar.gz)
 	url.replace		^http://download with http://edelivery
 	cookie			oraclelicense;accept-securebackup-cookie
@@ -1622,9 +1623,10 @@ func (p *Prg) install() {
 		p.invokeZip()
 		return
 	}
-	if strings.Contains(folder, "Java_SE") {
-		installJDK(folderFull, archive)
-	}
+	/*
+		if strings.Contains(folder, "Java_SE") {
+			installJDK(folderFull, archive)
+		}*/
 	if p.invoke == "" {
 		fmt.Printf("Unknown command for installing '%v'\n", archive)
 		return
