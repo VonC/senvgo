@@ -75,6 +75,7 @@ var defaultConfig = `
 // Prg is a Program to be installed
 type Prg struct {
 	name        string
+	dir         string
 	folder      string
 	archive     Path
 	url         *url.URL
@@ -106,6 +107,9 @@ type PrgData interface {
 
 // GetName returns the name of the program to be installed, used for folder
 func (p *Prg) GetName() string {
+	if p.dir != "" {
+		return p.dir
+	}
 	return p.name
 }
 
@@ -1355,6 +1359,12 @@ func ReadConfig() []*Prg {
 			currentPrg.test = test
 			continue
 		}
+		if strings.HasPrefix(line, "dir") && currentPrg != nil {
+			dir := strings.TrimSpace(line[len("dir"):])
+			currentPrg.dir = dir
+			continue
+		}
+
 		if strings.HasPrefix(line, "cookie") && currentPrg != nil {
 			line = strings.TrimSpace(line[len("cookie"):])
 			elts := strings.Split(line, ";")
