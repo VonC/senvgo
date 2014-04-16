@@ -35,7 +35,6 @@ func main() {
 	for _, p := range prgs {
 		p.install()
 		fmt.Printf("INSTALLED '%v'\n", p)
-		os.Exit(0)
 	}
 }
 
