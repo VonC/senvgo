@@ -1634,14 +1634,8 @@ func (p *Prg) install() {
 	}
 
 	if strings.HasPrefix(p.invoke, "go:") {
-		line := strings.TrimSpace(p.invoke[len("go:"):])
-		elts := strings.Split(line, "#")
-		if len(elts) != 2 {
-			fmt.Printf("[install] Err: invoke needs class and function from '%v'\n", line)
-		}
-		structName := elts[0]
-		methodName := elts[1]
-		p.callFunc(structName, methodName)
+		methodName := strings.TrimSpace(p.invoke[len("go:"):])
+		p.callFunc(methodName)
 		os.Exit(0)
 	}
 
@@ -1664,8 +1658,7 @@ func (p *Prg) install() {
 	p.checkLatest()
 }
 
-func (p *Prg) callFunc(structName, methodName string) {
-	fmt.Printf("structName '%v'\n", structName)
+func (p *Prg) callFunc(methodName string) {
 	fmt.Printf("methodName '%v'\n", methodName)
 	// http://groups.google.com/forum/#!topic/golang-nuts/-J17cxJnmss
 
