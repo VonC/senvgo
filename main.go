@@ -1571,41 +1571,19 @@ func (p *Prg) install() {
 		fmt.Printf("[install] ERR: no archive on '%v'\n", p.GetName())
 		return
 	}
-	tozip := false
-	if archive.isExe() {
-		tozip = true
-	}
 
 	fmt.Printf("folderFull (%v): '%v'\narchive '%v'\n", p.GetName(), folderFull, archive)
 
-	test := false
 	if test, err := exists(folderFull + "/" + p.test); p.test != "" && err == nil && test {
 		fmt.Printf("No Need to install %v in '%v' per test '%v'\n", p.GetName(), folderFull, test)
-		// TODO checks
 		p.checkLatest()
-		if tozip {
-			p.checkPortable()
-		}
+		p.BuildZip()
 		return
 	} else if p.test != "" && err != nil {
 		fmt.Printf("Error while testing test existence '%v': '%v'\n", test, err)
 		return
 	}
-	fmt.Printf("TEST.... '%v' (for '%v')\n", test, folderFull+"/"+p.test)
-
-	alreadyInstalled := false
-	if hasFolder, err := exists(folderFull); !hasFolder && err == nil {
-		fmt.Printf("Need to install %v in '%v'\n", p.GetName(), folderFull)
-	} else if err != nil {
-		fmt.Printf("Error while testing installation folder existence '%v': '%v'\n", folder, err)
-		return
-	} else if test {
-		fmt.Printf("'%v' already installed in '%v'\n", p.GetName(), folderFull)
-		alreadyInstalled = true
-		p.checkLatest()
-	} else {
-		alreadyInstalled = false
-	}
+	fmt.Printf("TEST.... '%v' (for '%v')\n", false, folderFull+"/"+p.test)
 
 	folderTmp := folderMain + "tmp"
 	if hasFolder, err := exists(folderTmp); !hasFolder && err == nil {
@@ -1618,19 +1596,9 @@ func (p *Prg) install() {
 	} else if err != nil {
 		fmt.Printf("Error while testing tmp folder existence '%v': '%v'\n", folderTmp, err)
 		return
-	} else if alreadyInstalled {
-		if tozip {
-			p.checkPortable()
-		}
-		err := deleteFolderContent(folderTmp)
-		if err != nil {
-			fmt.Printf("Error removing tmp folder for name '%v': '%v'\n", folderTmp, err)
-			return
-		}
-		return
 	}
 	if archive.isZip() && p.invoke == "" {
-		p.invokeZip()
+		p.invokeUnZip()
 		return
 	}
 	/*
@@ -1664,9 +1632,7 @@ func (p *Prg) install() {
 	if out, err := c.Output(); err != nil {
 		fmt.Printf("Error invoking '%v'\n''%v': %v'\n", cmd, string(out), err)
 	}
-	if tozip {
-		p.checkPortable()
-	}
+	p.BuildZip()
 	p.checkLatest()
 }
 
