@@ -1582,6 +1582,10 @@ func (p *Prg) install() {
 	if test, err := exists(folderFull + "/" + p.test); p.test != "" && err == nil && test {
 		fmt.Printf("No Need to install %v in '%v' per test '%v'\n", p.GetName(), folderFull, test)
 		// TODO checks
+		p.checkLatest()
+		if tozip {
+			p.checkPortable()
+		}
 		return
 	} else if p.test != "" && err != nil {
 		fmt.Printf("Error while testing test existence '%v': '%v'\n", test, err)
