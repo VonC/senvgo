@@ -1709,19 +1709,21 @@ func (i Invoke) InstallJDK(folder string, archive Path) {
 	os.Exit(0)
 }
 
-func (p *Prg) checkPortable() {
+func (p *Prg) BuildZip() {
 	archive := p.GetArchive()
 	if !archive.isExe() {
 		return
 	}
 	portableArchive := Path(strings.Replace(archive.String(), ".exe", ".tar", -1))
-
-	folder := p.GetFolder()
-	folderMain := "test/" + p.GetName() + "/"
-	folderFull := folderMain + folder
-	compress7z(portableArchive, folderFull, "", fmt.Sprintf("Compress '%v' for '%v'", portableArchive, p.GetName()), "tar")
 	portableArchive7z := portableArchive + ".7z"
-	compress7z(portableArchive7z, "", portableArchive.String(), fmt.Sprintf("Compress '%v' for '%v'", portableArchive, p.GetName()), "7z")
+	if ex, _ := exists(portableArchive7z.String()); !ex {
+
+		folder := p.GetFolder()
+		folderMain := "test/" + p.GetName() + "/"
+		folderFull := folderMain + folder
+		compress7z(portableArchive, folderFull, "", fmt.Sprintf("Compress '%v' for '%v'", portableArchive, p.GetName()), "tar")
+		compress7z(portableArchive7z, "", portableArchive.String(), fmt.Sprintf("Compress '%v' for '%v'", portableArchive, p.GetName()), "7z")
+	}
 }
 
 var fcmd = ""
