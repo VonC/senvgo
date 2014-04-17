@@ -1845,7 +1845,7 @@ func compress7z(archive Path, folder, file, msg, format string) {
 	fmt.Printf("%v'%v'%v => 7zC... DONE\n", msg, archive, argFile)
 }
 
-func (p *Prg) invokeZip() {
+func (p *Prg) invokeUnZip() {
 	folder := p.GetFolder()
 	archive := p.GetArchive()
 	folderMain := "test/" + p.GetName() + "/"
