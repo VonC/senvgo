@@ -1748,12 +1748,14 @@ func (p *Prg) checkPortable() {
 	if !archive.isExe() {
 		return
 	}
-	portableArchive := Path(strings.Replace(archive.String(), ".exe", ".zip", -1))
+	portableArchive := Path(strings.Replace(archive.String(), ".exe", ".tar", -1))
 
 	folder := p.GetFolder()
 	folderMain := "test/" + p.GetName() + "/"
 	folderFull := folderMain + folder
-	compress7z(portableArchive, folderFull, "", fmt.Sprintf("Compress '%v' for '%v'", portableArchive, p.GetName()))
+	compress7z(portableArchive, folderFull, "", fmt.Sprintf("Compress '%v' for '%v'", portableArchive, p.GetName()), "tar")
+	portableArchive7z := portableArchive + ".7z"
+	compress7z(portableArchive7z, "", portableArchive.String(), fmt.Sprintf("Compress '%v' for '%v'", portableArchive, p.GetName()), "7z")
 }
 
 var fcmd = ""
@@ -1838,7 +1840,7 @@ func uncompress7z(archive string, folder string, file string, msg string, extrac
 	fmt.Printf("%v'%v'%v => 7zU... DONE\n", msg, archive, argFile)
 }
 
-func compress7z(archive Path, folder string, file string, msg string) {
+func compress7z(archive Path, folder, file, msg, format string) {
 
 	farchive, err := filepath.Abs(filepath.FromSlash(archive.String()))
 	if err != nil {
@@ -1849,6 +1851,9 @@ func compress7z(archive Path, folder string, file string, msg string) {
 	if err != nil {
 		fmt.Printf("7z: Unable to get full path for compress to folder: '%v'\n%v\n", archive, err)
 		return
+	}
+	if folder == "" {
+		ffolder = ""
 	}
 	cmd := cmd7z()
 	if cmd == "" {
@@ -1862,8 +1867,9 @@ func compress7z(archive Path, folder string, file string, msg string) {
 	if msg != "" {
 		msg = msg + ": "
 	}
-	cmd = fmt.Sprintf("%v a -tzip -mm=Deflate -mmt=on -mx5 -w %v %v%v", cmd, farchive, ffolder, argFile)
-	fmt.Printf("%v'%v'%v => 7zC...\n", msg, archive, argFile)
+	cmd = fmt.Sprintf("%v a -t%v -mm=Deflate -mmt=on -mx5 -w %v %v%v", cmd, format, farchive, ffolder, argFile)
+	is := fmt.Sprintf("%v'%v'%v => 7zC...\n%v\n", msg, archive, argFile, cmd)
+	fmt.Fprintf(os.Stderr, is)
 	c := exec.Command("cmd", "/C", cmd)
 	if out, err := c.Output(); err != nil {
 		fmt.Printf("Error invoking 7zC '%v'\nout='%v' => err='%v'\n", cmd, string(out), err)
