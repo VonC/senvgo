@@ -640,9 +640,12 @@ func (c *CacheDisk) UpdateArchive(p Path, name string) {
 	if e, err := exists(filepath); e {
 		c.last = Path(filepath)
 	} else if err != nil {
-		fmt.Printf("UPDARC Disk error tryinh to check '%v' for '%v' from '%v'\nerr='%v'\n", filepath, name, c.String(), err)
+		fmt.Printf("UPDARC Disk error trying to check '%v' for '%v' from '%v'\nerr='%v'\n", filepath, name, c.String(), err)
 		return
+	} else {
+		c.last = ""
 	}
+	fmt.Printf("UPDARC Disk 2 '%v' for '%v' from '%v' => c.last '%v'\n", p, name, c.String(), c.last)
 	if c.last == "" {
 		if hasFolder, err := exists(c.Folder(name)); !hasFolder && err == nil {
 			err := os.MkdirAll(c.Folder(name), 0755)
