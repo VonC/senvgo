@@ -705,8 +705,8 @@ func (c *CacheDisk) GetArchive(p Path, url *url.URL, name string, cookies []*htt
 	fmt.Printf("CacheDisk.GetArchive[%v]: '%v' for '%v' from '%v'\n", c.id, p, name, c.String())
 	c.last = ""
 	filename := c.Folder(name) + p.release()
-	err := c.checkArchive(filename, name)
-	if err == nil && c.last != "" {
+	c.checkArchive(filename, name)
+	if c.last != "" {
 		return c.last
 	}
 
