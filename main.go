@@ -1713,15 +1713,13 @@ func (p *Prg) BuildZip() {
 	if !archive.isExe() {
 		return
 	}
-	portableArchive := Path(strings.Replace(archive.String(), ".exe", ".tar", -1))
-	portableArchive7z := portableArchive + ".7z"
-	if ex, _ := exists(portableArchive7z.String()); !ex {
+	portableArchive := Path(strings.Replace(archive.String(), ".exe", ".zip", -1))
+	if ex, _ := exists(portableArchive.String()); !ex {
 
 		folder := p.GetFolder()
 		folderMain := "test/" + p.GetName() + "/"
 		folderFull := folderMain + folder
-		compress7z(portableArchive, folderFull, "", fmt.Sprintf("Compress '%v' for '%v'", portableArchive, p.GetName()), "tar")
-		compress7z(portableArchive7z, "", portableArchive.String(), fmt.Sprintf("Compress '%v' for '%v'", portableArchive, p.GetName()), "7z")
+		compress7z(portableArchive, folderFull, "", fmt.Sprintf("Compress '%v' for '%v'", portableArchive, p.GetName()), "zip")
 	}
 }
 
