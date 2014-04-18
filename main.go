@@ -156,11 +156,8 @@ type Arch struct {
 // Arch returns the appropriate pattern, depending on the current architecture
 func (a *Arch) Arch() string {
 	// http://stackoverflow.com/questions/601089/detect-whether-current-windows-version-is-32-bit-or-64-bit
-	if isdir, err := exists("C:\\Program Files (x86)"); isdir && err == nil {
+	if exists("C:\\Program Files (x86)") {
 		return a.win64
-	} else if err != nil {
-		fmt.Printf("Error checking C:\\Program Files (x86): '%v'\n", err)
-		return ""
 	}
 	return a.win32
 }
@@ -639,25 +636,18 @@ func (c *CacheDisk) IsGitHub() bool {
 func (c *CacheDisk) UpdateArchive(p Path, name string) {
 	fmt.Printf("UPDARC Disk '%v' for '%v' from '%v'\n", p, name, c.String())
 	filepath := c.Folder(name) + p.release()
-	if e, err := exists(filepath); e {
+	if exists(filepath) {
 		c.last = Path(filepath)
-	} else if err != nil {
-		fmt.Printf("UPDARC Disk error trying to check '%v' for '%v' from '%v'\nerr='%v'\n", filepath, name, c.String(), err)
-		return
 	} else {
 		c.last = ""
 	}
 	fmt.Printf("UPDARC Disk 2 '%v' for '%v' from '%v' => c.last '%v'\n", p, name, c.String(), c.last)
 	if c.last == "" {
-		if hasFolder, err := exists(c.Folder(name)); !hasFolder && err == nil {
-			err := os.MkdirAll(c.Folder(name), 0755)
-			if err != nil {
+		if !exists(c.Folder(name)) {
+			if err := os.MkdirAll(c.Folder(name), 0755); err != nil {
 				fmt.Printf("UPDARC CacheDisk %v Error creating folder '%v' for name '%v': '%v'\n", c.id, c.Folder(name), name, err)
 				return
 			}
-		} else if err != nil {
-			fmt.Printf("UPDARC CacheDisk %v Error whilte testing for existence of folder '%v' for name '%v': '%v'\n", c.id, c.Folder(name), name, err)
-			return
 		}
 		if copy(filepath, p.String()) {
 			c.last = Path(filepath)
@@ -678,22 +668,16 @@ func (c *CacheGitHub) UpdatePage(p Path, name string) {
 func (c *CacheDisk) UpdatePage(p Path, name string) {
 	fmt.Printf("UPDPAG Disk '%v' for '%v' from '%v'\n", p, name, c.String())
 	filepath := c.Folder(name) + p.release()
-	if e, err := exists(filepath); e {
+	if exists(filepath) {
 		c.last = Path(filepath)
-	} else if err != nil {
-		fmt.Printf("UPDPAG Disk error tryinh to check '%v' for '%v' from '%v'\nerr='%v'\n", filepath, name, c.String(), err)
-		return
 	}
 	if c.last == "" {
-		if hasFolder, err := exists(c.Folder(name)); !hasFolder && err == nil {
+		if !exists(c.Folder(name)) {
 			err := os.MkdirAll(c.Folder(name), 0755)
 			if err != nil {
 				fmt.Printf("UPDPAG CacheDisk %v Error creating folder '%v' for name '%v': '%v'\n", c.id, c.Folder(name), name, err)
 				return
 			}
-		} else if err != nil {
-			fmt.Printf("UPDPAG CacheDisk %v Error whilte testing for existence of folder '%v' for name '%v': '%v'\n", c.id, c.Folder(name), name, err)
-			return
 		}
 		if copy(filepath, p.String()) {
 			c.last = Path(filepath)
@@ -743,28 +727,24 @@ func (c *CacheDisk) GetArchive(p Path, url *url.URL, name string, cookies []*htt
 		return ""
 	}
 	if url == nil || url.String() == "" {
-		fmt.Printf("CacheDisk.GetArchive[%v]: NO URL '%v': '%v'\n", c.id, filename, err)
+		fmt.Printf("CacheDisk.GetArchive[%v]: NO URL '%v''\n", c.id, filename)
 		return ""
 	}
 	fmt.Printf("CacheDisk.GetArchive[%v]: ... MUST download '%v' for '%v'\n", c.id, url, filename)
 	download(url, Path(filename), 100000, cookies)
 	fmt.Printf("CacheDisk.GetArchive[%v]: ... DONE download '%v' for '%v'\n", c.id, url, filename)
 	c.checkArchive(filename, name)
-	if err == nil && c.last != "" {
+	if c.last != "" {
 		return c.last
 	}
 	return ""
 }
 
-func (c *CacheDisk) checkArchive(filename string, name string) error {
-	if exists, err := exists(filename); exists && err == nil {
+func (c *CacheDisk) checkArchive(filename string, name string) {
+	if exists(filename) {
 		c.last = Path(filename)
 		c.next.UpdateArchive(c.last, name)
-	} else if err != nil {
-		fmt.Printf("CacheDisk.GetArchive[%v]: Error trying to access '%v': '%v'\n", c.id, filename, err)
-		return err
 	}
-	return nil
 }
 
 func (p *Path) fileContent() string {
@@ -1319,14 +1299,11 @@ var cfgRx, _ = regexp.Compile(`^([^\.]+)\.([^\.\s]+)\s+(.*?)$`)
 
 func NewCacheDisk(id string, root string) *CacheDisk {
 	cache := &CacheDisk{CacheData: &CacheData{id: id}, root: root}
-	if e, err := exists(root); !e && err == nil {
-		if err = os.MkdirAll(root, 0755); err != nil {
+	if !exists(root) {
+		if err := os.MkdirAll(root, 0755); err != nil {
 			fmt.Printf("Error creating cache '%v' with root folder'%v': '%v'\n", id, root, err)
 			return nil
 		}
-	} else if err != nil {
-		fmt.Printf("Unable to check root '%v' for new CacheDisk '%v': '%v'\n", root, id, err)
-		return nil
 	}
 	return cache
 }
@@ -1487,11 +1464,7 @@ func (p *Prg) checkLatest() {
 	folderFull := folderMain + folder
 	folderLatest := folderMain + "latest/"
 
-	hasLatest, err := exists(folderLatest)
-	if err != nil {
-		fmt.Printf("Error while testing folderLatest existence '%v': '%v'\n", folderLatest, err)
-		return
-	}
+	hasLatest := exists(folderLatest)
 	mainf, err := filepath.Abs(filepath.FromSlash(folderMain))
 	if err != nil {
 		fmt.Printf("Unable to get full path for folderMain '%v': '%v'\n%v", p.GetName(), folderMain, err)
@@ -1562,15 +1535,12 @@ func (p *Prg) install() {
 		return
 	}
 	folderMain := "test/" + p.GetName() + "/"
-	if hasFolder, err := exists(folderMain); !hasFolder && err == nil {
+	if !exists(folderMain) {
 		err := os.MkdirAll(folderMain, 0755)
 		if err != nil {
 			fmt.Printf("Error creating main folder for name '%v': '%v'\n", folderMain, err)
 			return
 		}
-	} else if err != nil {
-		fmt.Printf("Error while testing main folder existence '%v': '%v'\n", folderMain, err)
-		return
 	}
 	folderFull := folderMain + folder
 	archive := p.GetArchive()
@@ -1582,28 +1552,22 @@ func (p *Prg) install() {
 
 	fmt.Printf("folderFull (%v): '%v'\narchive '%v'\n", p.GetName(), folderFull, archive)
 
-	if test, err := exists(folderFull + "/" + p.test); p.test != "" && err == nil && test {
-		fmt.Printf("No Need to install %v in '%v' per test '%v'\n", p.GetName(), folderFull, test)
+	if exists(folderFull+"/"+p.test) && p.test != "" {
+		fmt.Printf("No Need to install %v in '%v' per test\n", p.GetName(), folderFull)
 		p.checkLatest()
 		p.BuildZip()
-		return
-	} else if p.test != "" && err != nil {
-		fmt.Printf("Error while testing test existence '%v': '%v'\n", test, err)
 		return
 	}
 	fmt.Printf("TEST.... '%v' (for '%v')\n", false, folderFull+"/"+p.test)
 
 	folderTmp := folderMain + "tmp"
-	if hasFolder, err := exists(folderTmp); !hasFolder && err == nil {
+	if !exists(folderTmp) {
 		fmt.Printf("Need to make tmp for %v in '%v'\n", p.GetName(), folderTmp)
 		err := os.MkdirAll(folderTmp, 0755)
 		if err != nil {
 			fmt.Printf("Error creating tmp folder for name '%v': '%v'\n", folderTmp, err)
 			return
 		}
-	} else if err != nil {
-		fmt.Printf("Error while testing tmp folder existence '%v': '%v'\n", folderTmp, err)
-		return
 	}
 	if archive.isZip() && p.invoke == "" {
 		p.invokeUnZip()
@@ -1663,7 +1627,7 @@ func (i Invoke) InstallJDKsrc(folder string, archive Path) {
 	archive2f := filepath.Base(archive2)
 	archive2folder := filepath.Dir(archive2)
 
-	if archive2Exists, _ := exists(archive2); !archive2Exists {
+	if !exists(archive2) {
 		uncompress7z(archive.String(), archive2folder, archive2f, "Extract src tar", true)
 	}
 	l := list7z(archive2, "src.zip")
@@ -1679,15 +1643,15 @@ func (i Invoke) InstallJDKsrc(folder string, archive Path) {
 func (i Invoke) InstallJDK(folder string, archive Path) {
 	fmt.Printf("folder='%v'\n", folder)
 	fmt.Printf("archive='%v'\n", archive)
-	if toolsExists, _ := exists(folder + "/tools.zip"); !toolsExists {
+	if !exists(folder + "/tools.zip") {
 		uncompress7z(archive.String(), folder, "tools.zip", "Extract tools.zip", true)
 	}
-	if licenseExists, _ := exists(folder + "/LICENSE"); !licenseExists {
+	if !exists(folder + "/LICENSE") {
 		uncompress7z(folder+"/tools.zip", folder, "", "Extract tools.zip in JDK", false)
 	}
 
 	unpack := filepath.FromSlash(folder + "/bin/unpack200.exe")
-	if unpackExists, _ := exists(unpack); !unpackExists {
+	if !exists(unpack) {
 		fmt.Printf("Error bin/unpack200.exe not found in '%v'\n", folder)
 		return
 	}
@@ -1704,7 +1668,7 @@ func (i Invoke) InstallJDK(folder string, archive Path) {
 	fmt.Printf("files '%+v'\n", files)
 	for _, file := range files {
 		nopack := file[:len(file)-len(".pack")] + ".jar"
-		if nopackExists, _ := exists(nopack); !nopackExists {
+		if !exists(nopack) {
 			cmd := fmt.Sprintf("%v %v %v", unpack, file, nopack)
 			fmt.Printf("%v '%v' => '%v'...\n", unpack, file, nopack)
 			c := exec.Command("cmd", "/C", cmd)
@@ -1731,7 +1695,7 @@ func (p *Prg) BuildZip() {
 		p.callFunc(methodName, folderFull, archive)
 	} else {
 		portableArchive := Path(strings.Replace(archive.String(), ".exe", ".zip", -1))
-		if ex, _ := exists(portableArchive.String()); !ex {
+		if !exists(portableArchive.String()) {
 
 			compress7z(portableArchive, folderFull, "", fmt.Sprintf("Compress '%v' for '%v'", portableArchive, p.GetName()), "zip")
 		}
@@ -1913,16 +1877,13 @@ func (p *Prg) invokeUnZip() {
 		unzip(archive.String(), folderTmp)
 	}
 	folderToMove := folderTmp + "/" + folder
-	if hasFolder, err := exists(folderToMove); hasFolder && err == nil {
+	if exists(folderToMove) {
 		fmt.Printf("Need to move %v in '%v'\n", folderToMove, folderFull)
 		err := os.Rename(folderToMove, folderFull)
 		if err != nil {
 			fmt.Printf("Error moving tmp folder '%v' to '%v': '%v'\n", folderTmp, folderFull, err)
 			return
 		}
-	} else if err != nil {
-		fmt.Printf("Error while testing tmp 'folder to move' existence '%v': '%v'\n", folderToMove, err)
-		return
 	}
 }
 
@@ -1995,16 +1956,17 @@ func get(iniValue string, ext Extractor, underscore bool) string {
 
 // exists returns whether the given file or directory exists or not
 // http://stackoverflow.com/questions/10510691/how-to-check-whether-a-file-or-directory-denoted-by-a-path-exists-in-golang
-func exists(path string) (bool, error) {
+func exists(path string) bool {
 	path = filepath.FromSlash(path)
 	_, err := os.Stat(path)
 	if err == nil {
-		return true, nil
+		return true
 	}
 	if os.IsNotExist(err) {
-		return false, nil
+		return false
 	}
-	return false, err
+	fmt.Printf("[exists] Error while checking if '%v' exists: '%v'\n", path, err)
+	return false
 }
 
 // https://groups.google.com/forum/#!topic/golang-nuts/Q7hYQ9GdX9Q
