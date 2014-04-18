@@ -1621,16 +1621,15 @@ func (p *Prg) install() {
 	if strings.HasPrefix(p.invoke, "go:") {
 		methodName := strings.TrimSpace(p.invoke[len("go:"):])
 		p.callFunc(methodName, dst, archive)
-		os.Exit(0)
-	}
-
-	cmd := p.invoke
-	cmd = strings.Replace(cmd, "@FILE@", archive.String(), -1)
-	cmd = strings.Replace(cmd, "@DEST@", dst, -1)
-	fmt.Printf("invoking for '%v': '%v'\n", p.GetName(), cmd)
-	c := exec.Command("cmd", "/C", cmd)
-	if out, err := c.Output(); err != nil {
-		fmt.Printf("Error invoking '%v'\n''%v': %v'\n", cmd, string(out), err)
+	} else {
+		cmd := p.invoke
+		cmd = strings.Replace(cmd, "@FILE@", archive.String(), -1)
+		cmd = strings.Replace(cmd, "@DEST@", dst, -1)
+		fmt.Printf("invoking for '%v': '%v'\n", p.GetName(), cmd)
+		c := exec.Command("cmd", "/C", cmd)
+		if out, err := c.Output(); err != nil {
+			fmt.Printf("Error invoking '%v'\n''%v': %v'\n", cmd, string(out), err)
+		}
 	}
 	p.BuildZip()
 	p.checkLatest()
