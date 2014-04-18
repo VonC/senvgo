@@ -85,6 +85,7 @@ var defaultConfig = `
 	url.replace		^http://download with http://edelivery
 	cookie			oraclelicense;accept-securebackup-cookie
 	invoke			go: InstallJDK
+	buildZip		go: BuildZipJDK
 `
 
 // Prg is a Program to be installed
@@ -101,6 +102,7 @@ type Prg struct {
 	arch        *Arch
 	cookies     []*http.Cookie
 	test        string
+	buildZip    string
 }
 
 func (p *Prg) String() string {
@@ -1403,6 +1405,11 @@ func ReadConfig() []*Prg {
 		if strings.HasPrefix(line, "invoke") && currentPrg != nil {
 			line = strings.TrimSpace(line[len("invoke"):])
 			currentPrg.invoke = line
+			continue
+		}
+		if strings.HasPrefix(line, "buildZip") && currentPrg != nil {
+			line = strings.TrimSpace(line[len("buildZip"):])
+			currentPrg.buildZip = line
 			continue
 		}
 		if strings.HasPrefix(line, "root") && currentCacheName != "" {
