@@ -1158,6 +1158,7 @@ func download(url *url.URL, filename Path, minLength int64, cookies []*http.Cook
 	mainRepoJar.SetCookies(cookies)
 	getClient().Jar.SetCookies(url, cookies)
 
+	fmt.Fprintf(os.Stderr, fmt.Sprintf("*** Download url '%v'\n", url))
 	response, err := do(req) // http.Get(url.String())
 	if err != nil {
 		fmt.Println("Error while downloading", url, "-", err)
