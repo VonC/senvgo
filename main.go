@@ -1720,14 +1720,40 @@ func (p *Prg) BuildZip() {
 	if !archive.isExe() {
 		return
 	}
-	portableArchive := Path(strings.Replace(archive.String(), ".exe", ".zip", -1))
-	if ex, _ := exists(portableArchive.String()); !ex {
 
-		folder := p.GetFolder()
-		folderMain := "test/" + p.GetName() + "/"
-		folderFull := folderMain + folder
-		compress7z(portableArchive, folderFull, "", fmt.Sprintf("Compress '%v' for '%v'", portableArchive, p.GetName()), "zip")
+
+var hasTarRx, _ = regexp.Compile(`\.tar\.[^\.]+$`)
+
+func (p Path) HasTar() bool {
+	matches := hasTarRx.FindAllStringSubmatchIndex(p.String(), -1)
+	if len(matches) > 0 {
+		return true
 	}
+	return false
+}
+
+func (p Path) IsTar() bool {
+	return filepath.Ext(p.String()) == ".tar"
+}
+
+func (p Path) Tar() Path {
+	if p.IsTar() {
+		return p
+	}
+	p = p.RemoveExtension()
+	if p.IsTar() {
+		return p
+	}
+	return Path(p.String() + ".tar")
+}
+
+func (p Path) RemoveExtension() Path {
+	sp := p.String()
+	ext := filepath.Ext(sp)
+	if ext != "" {
+		sp = sp[:len(sp)-len(ext)]
+	}
+	return Path(sp)
 }
 
 var fcmd = ""
