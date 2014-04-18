@@ -1721,6 +1721,31 @@ func (p *Prg) BuildZip() {
 		return
 	}
 
+	folder := p.GetFolder()
+	folderMain := "test/" + p.GetName() + "/"
+	folderFull := filepath.FromSlash(folderMain + folder)
+
+	if strings.HasPrefix(p.buildZip, "go:") {
+		methodName := strings.TrimSpace(p.buildZip[len("go:"):])
+		p.callFunc(methodName, folderFull, archive)
+	} else {
+		portableArchive := Path(strings.Replace(archive.String(), ".exe", ".zip", -1))
+		if ex, _ := exists(portableArchive.String()); !ex {
+
+			compress7z(portableArchive, folderFull, "", fmt.Sprintf("Compress '%v' for '%v'", portableArchive, p.GetName()), "zip")
+		}
+	}
+}
+
+func (i Invoke) BuildZipJDK(folder string, archive Path) {
+	if !archive.isExe() && archive.HasTar() {
+		return
+	}
+	fmt.Printf("[BuildZipJDK] folder='%v'\n", folder)
+	archiveTar := archive.Tar()
+	fmt.Printf("[BuildZipJDK] archive='%v'\n", archiveTar)
+	os.Exit(0)
+}
 
 var hasTarRx, _ = regexp.Compile(`\.tar\.[^\.]+$`)
 
