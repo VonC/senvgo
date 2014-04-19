@@ -1005,7 +1005,7 @@ func (eg *ExtractorGet) ExtractFrom(data string) string {
 	//fmt.Println("ok! " + url)
 	name := eg.p.GetName()
 	page := cache.GetPage(url, name)
-	if page == "" {
+	if page == nil {
 		fmt.Printf("Unable to download '%v'\n", url)
 	} else {
 		fmt.Printf("Got '%v' from cache\n", url)
@@ -1153,8 +1153,8 @@ func (pt *PassThru) Read(p []byte) (int, error) {
 	return n, err
 }
 
-func download(url *url.URL, filename Path, minLength int64, cookies []*http.Cookie) Path {
-	res := Path("")
+func download(url *url.URL, filename *Path, minLength int64, cookies []*http.Cookie) *Path {
+	var res *Path
 	// http://stackoverflow.com/questions/18414212/golang-how-to-follow-location-with-cookie
 	// http://stackoverflow.com/questions/10268583/how-to-automate-download-and-installation-of-java-jdk-on-linux
 	// wget --no-check-certificate --no-cookies - --header "Cookie: oraclelicense=accept-securebackup-cookie" http://download.oracle.com/otn-pub/java/jdk/7u51-b13/jdk-7u51-linux-x64.tar.gz
@@ -1171,7 +1171,7 @@ func download(url *url.URL, filename Path, minLength int64, cookies []*http.Cook
 	req, err := http.NewRequest("GET", url.String(), nil)
 	if err != nil {
 		fmt.Printf("Error NewRequest: %v\n", err)
-		return ""
+		return nil
 	}
 	mainRepoJar.SetCookies(cookies)
 	getClient().Jar.SetCookies(url, cookies)
@@ -1180,26 +1180,26 @@ func download(url *url.URL, filename Path, minLength int64, cookies []*http.Cook
 	response, err := do(req) // http.Get(url.String())
 	if err != nil {
 		fmt.Println("Error while downloading", url, "-", err)
-		return ""
+		return nil
 	}
 	defer response.Body.Close()
 	fmt.Printf("---> %+v\n", response)
 	if minLength < 0 && response.ContentLength < minLength {
 		fmt.Printf("download ERROR too small: '%v' when downloading '%v' in '%v'\n", response.ContentLength, url, filename)
-		return ""
+		return nil
 	}
 	//os.Exit(0)
 	readerpt := &PassThru{Reader: response.Body, length: response.ContentLength}
 	body, err := ioutil.ReadAll(readerpt)
 	if err != nil {
 		fmt.Println("Error while reading downloaded", url, "-", err)
-		return ""
+		return nil
 	}
 	fmt.Fprintf(os.Stderr, "\nCopying\n")
 	err = ioutil.WriteFile(filename.String(), body, 0666)
 	if err != nil {
 		fmt.Printf("Error while writing downloaded '%v': '%v'\n", url, err)
-		return ""
+		return nil
 	}
 	res = filename
 	return res
@@ -1534,8 +1534,8 @@ func (p *Prg) checkLatest() {
 	}
 }
 
-func junction(link, dst, name string) {
-	cmd := "mklink /J " + link + " " + dst
+func junction(link, dst *Path, name string) {
+	cmd := "mklink /J " + link.String() + " " + dst.String()
 	fmt.Printf("junction: invoking for '%v': '%v'\n", name, cmd)
 	c := exec.Command("cmd", "/C", cmd)
 	if out, err := c.Output(); err != nil {
@@ -1543,10 +1543,9 @@ func junction(link, dst, name string) {
 	}
 }
 
-var junctionRx, _ = regexp.Compile(`N>\s+latest\s+\[([^\]]*?)\]`)
-
-func readJunction(link, folder, name string) string {
-	cmd := "dir /A:L " + folder
+func readJunction(link string, folder *Path, name string) *Path {
+	var junctionRx, _ = regexp.Compile(`N>\s+` + link + `\s+\[([^\]]*?)\]`)
+	cmd := "dir /A:L " + folder.String()
 	fmt.Printf("readJunction: invoking for '%v': '%v'\n", name, cmd)
 	c := exec.Command("cmd", "/C", cmd)
 	out, err := c.Output()
@@ -1648,43 +1647,43 @@ func (p *Prg) callFunc(methodName string, folder, archive *Path) {
 	reflect.ValueOf(Invoke{}).MethodByName(methodName).Call(inputs)
 }
 
-func (i Invoke) InstallJDKsrc(folder string, archive Path) {
+func (i Invoke) InstallJDKsrc(folder, archive *Path) {
 	fmt.Printf("[installJDKsrc] folder='%v'\n", folder)
 	fmt.Printf("[installJDKsrc] archive='%v'\n", archive)
-	archive2 := strings.Replace(archive.String(), ".gz", "", -1)
-	archive2f := filepath.Base(archive2)
-	archive2folder := filepath.Dir(archive2)
+	archive2 := NewPath(strings.Replace(archive.String(), ".gz", "", -1))
+	archive2f := NewPath(filepath.Base(archive2.String()))
+	archive2folder := NewPathDir(filepath.Dir(archive2.String()))
 
-	if !Path(archive2).Exists() {
-		uncompress7z(archive.String(), archive2folder, archive2f, "Extract src tar", true)
+	if !archive2.Exists() {
+		uncompress7z(archive, archive2folder, archive2f, "Extract src tar", true)
 	}
 	l := list7z(archive2, "src.zip")
 	rx, _ := regexp.Compile(`(?m).*\s(\S+\\src.zip).*$`)
 
 	matches := rx.FindAllStringSubmatchIndex(l, -1)
 	fmt.Printf("matches: '%v'\n", matches)
-	f := l[matches[0][2]:matches[0][3]]
+	f := NewPath(l[matches[0][2]:matches[0][3]])
 
 	uncompress7z(archive2, folder, f, "Extract src.zip", true)
 }
 
-func (i Invoke) InstallJDK(folder string, archive Path) {
+func (i Invoke) InstallJDK(folder *Path, archive *Path) {
 	fmt.Printf("folder='%v'\n", folder)
 	fmt.Printf("archive='%v'\n", archive)
-	if !Path(folder + "/tools.zip").Exists() {
-		uncompress7z(archive.String(), folder, "tools.zip", "Extract tools.zip", true)
+	if !folder.Add("tools.zip").Exists() {
+		uncompress7z(archive, folder, NewPath("tools.zip"), "Extract tools.zip", true)
 	}
-	if !Path(folder + "/LICENSE").Exists() {
-		uncompress7z(folder+"/tools.zip", folder, "", "Extract tools.zip in JDK", false)
+	if !folder.Add("LICENSE").Exists() {
+		uncompress7z(folder.Add("tools.zip"), folder, nil, "Extract tools.zip in JDK", false)
 	}
 
-	unpack := filepath.FromSlash(folder + "/bin/unpack200.exe")
-	if !Path(unpack).Exists() {
+	unpack := folder.Add("bin/unpack200.exe")
+	if !unpack.Exists() {
 		fmt.Printf("Error bin/unpack200.exe not found in '%v'\n", folder)
 		return
 	}
 	files := []string{}
-	err := filepath.Walk(folder, func(path string, f os.FileInfo, _ error) error {
+	err := filepath.Walk(folder.String(), func(path string, f os.FileInfo, _ error) error {
 		if strings.HasSuffix(f.Name(), ".pack") {
 			files = append(files, path)
 		}
@@ -1695,9 +1694,9 @@ func (i Invoke) InstallJDK(folder string, archive Path) {
 	}
 	fmt.Printf("files '%+v'\n", files)
 	for _, file := range files {
-		nopack := file[:len(file)-len(".pack")] + ".jar"
-		if !Path(nopack).Exists() {
-			cmd := fmt.Sprintf("%v %v %v", unpack, file, nopack)
+		nopack := NewPath(file[:len(file)-len(".pack")] + ".jar")
+		if !nopack.Exists() {
+			cmd := fmt.Sprintf("%v %v %v", unpack.String(), file, nopack.String())
 			fmt.Printf("%v '%v' => '%v'...\n", unpack, file, nopack)
 			c := exec.Command("cmd", "/C", cmd)
 			if _, err := c.Output(); err != nil {
@@ -1715,31 +1714,30 @@ func (p *Prg) BuildZip() {
 	}
 
 	folder := p.GetFolder()
-	folderMain := "test/" + p.GetName() + "/"
-	folderFull := filepath.FromSlash(folderMain + folder)
+	folderMain := NewPathDir("test/" + p.GetName())
+	folderFull := folderMain.AddP(folder)
 
 	if strings.HasPrefix(p.buildZip, "go:") {
 		methodName := strings.TrimSpace(p.buildZip[len("go:"):])
 		p.callFunc(methodName, folderFull, archive)
 	} else {
-		portableArchive := Path(strings.Replace(archive.String(), ".exe", ".zip", -1))
-		if !Path(portableArchive.String()).Exists() {
-
-			compress7z(portableArchive, folderFull, "", fmt.Sprintf("Compress '%v' for '%v'", portableArchive, p.GetName()), "zip")
+		portableArchive := NewPath(strings.Replace(archive.String(), ".exe", ".zip", -1))
+		if !portableArchive.Exists() {
+			compress7z(portableArchive, folderFull, nil, fmt.Sprintf("Compress '%v' for '%v'", portableArchive, p.GetName()), "zip")
 		}
 	}
 }
 
-func (i Invoke) BuildZipJDK(folder string, archive Path) {
+func (i Invoke) BuildZipJDK(folder *Path, archive *Path) {
 	if !archive.isExe() && archive.HasTar() {
 		return
 	}
 	fmt.Printf("[BuildZipJDK] folder='%v'\n", folder)
 	archiveTar := archive.Tar()
 	fmt.Printf("[BuildZipJDK] archive='%v'\n", archiveTar)
-	if !Path(archiveTar.String()).Exists() {
-		compress7z(archiveTar, folder, folder+"tools.zip", "Add tools.zip", "tar")
-		compress7z(archiveTar, folder, folder+"src.zip", "Add src.zip", "tar")
+	if !archiveTar.Exists() {
+		compress7z(archiveTar, folder, folder.Add("tools.zip"), "Add tools.zip", "tar")
+		compress7z(archiveTar, folder, folder.Add("src.zip"), "Add src.zip", "tar")
 	}
 	os.Exit(0)
 }
@@ -1795,11 +1793,9 @@ func cmd7z() string {
 	return cmd
 }
 
-func list7z(archive string, file string) string {
-
-	farchive, err := filepath.Abs(filepath.FromSlash(archive))
-	if err != nil {
-		fmt.Printf("7z: Unable to get full path for list archive: '%v'\n%v\n", archive, err)
+func list7z(archive *Path, file string) string {
+	farchive := archive.Abs()
+	if farchive == nil {
 		return ""
 	}
 	cmd := cmd7z()
@@ -1810,7 +1806,7 @@ func list7z(archive string, file string) string {
 	if file != "" {
 		argFile = " -- " + file
 	}
-	cmd = fmt.Sprintf("%v l -r %v%v", cmd, farchive, argFile)
+	cmd = fmt.Sprintf("%v l -r %v%v", cmd, farchive.String(), argFile)
 	fmt.Printf("'%v'%v => 7zL...\n%v\n", archive, argFile, cmd)
 	c := exec.Command("cmd", "/C", cmd)
 	res := ""
@@ -1823,25 +1819,22 @@ func list7z(archive string, file string) string {
 	return res
 }
 
-func uncompress7z(archive string, folder string, file string, msg string, extract bool) {
-
-	farchive, err := filepath.Abs(filepath.FromSlash(archive))
-	if err != nil {
-		fmt.Printf("7z: Unable to get full path for archive: '%v'\n%v\n", archive, err)
-		return
+func uncompress7z(archive, folder, file *Path, msg string, extract bool) bool {
+	farchive := archive.Abs()
+	if farchive == nil {
+		return false
 	}
-	ffolder, err := filepath.Abs(filepath.FromSlash(folder))
-	if err != nil {
-		fmt.Printf("7z: Unable to get full path for folder: '%v'\n%v\n", archive, err)
-		return
+	ffolder := folder.Abs()
+	if ffolder == nil {
+		return false
 	}
 	cmd := cmd7z()
 	if cmd == "" {
-		return
+		return false
 	}
 	argFile := ""
-	if file != "" {
-		argFile = " -- " + file
+	if !isEmpty(file) {
+		argFile = " -- " + file.String()
 	}
 	msg = strings.TrimSpace(msg)
 	if msg != "" {
@@ -1851,37 +1844,36 @@ func uncompress7z(archive string, folder string, file string, msg string, extrac
 	if extract {
 		extractCmd = "e"
 	}
-	cmd = fmt.Sprintf("%v %v -aos -o%v -pdefault -sccUTF-8 %v%v", cmd, extractCmd, ffolder, farchive, argFile)
+	cmd = fmt.Sprintf("%v %v -aos -o%v -pdefault -sccUTF-8 %v%v", cmd, extractCmd, ffolder.String(), farchive.String(), argFile)
 	fmt.Printf("%v'%v'%v => 7zU...\n%v\n", msg, archive, argFile, cmd)
 	c := exec.Command("cmd", "/C", cmd)
 	if out, err := c.Output(); err != nil {
 		fmt.Printf("Error invoking 7ZU '%v'\n''%v' %v'\n%v\n", cmd, string(out), err, cmd)
+		return false
 	}
 	fmt.Printf("%v'%v'%v => 7zU... DONE\n", msg, archive, argFile)
+	return true
 }
 
-func compress7z(archive Path, folder, file, msg, format string) {
-
-	farchive, err := filepath.Abs(filepath.FromSlash(archive.String()))
-	if err != nil {
-		fmt.Printf("7z: Unable to get full path for compress to archive: '%v'\n%v\n", archive, err)
-		return
+func compress7z(archive, folder, file *Path, msg, format string) bool {
+	farchive := archive.Abs()
+	if farchive == nil {
+		return false
 	}
-	ffolder, err := filepath.Abs(filepath.FromSlash(folder))
-	if err != nil {
-		fmt.Printf("7z: Unable to get full path for compress to folder: '%v'\n%v\n", archive, err)
-		return
-	}
-	if folder == "" {
-		ffolder = ""
+	ffolder := NewPath("")
+	if folder != nil {
+		ffolder = folder.Abs()
+		if ffolder == nil {
+			return false
+		}
 	}
 	cmd := cmd7z()
 	if cmd == "" {
-		return
+		return false
 	}
 	argFile := ""
-	if file != "" {
-		argFile = " -- " + file
+	if !isEmpty(file) {
+		argFile = " -- " + file.String()
 	}
 	msg = strings.TrimSpace(msg)
 	if msg != "" {
@@ -2039,9 +2031,9 @@ func (f byDate) Swap(i, j int) {
 	f[i], f[j] = f[j], f[i]
 }
 
-func getLastModifiedFile(dir string, pattern string) string {
+func getLastModifiedFile(dir *Path, pattern string) string {
 	fmt.Printf("Look in '%v' for '%v'\n", dir, pattern)
-	f, err := os.Open(dir)
+	f, err := os.Open(dir.String())
 	if err != nil {
 		fmt.Printf("Error while opening dir '%v': '%v'\n", dir, err)
 		return ""
@@ -2099,46 +2091,49 @@ func deleteFolderContent(dir string) error {
 
 // http://stackoverflow.com/questions/20357223/easy-way-to-unzip-file-with-golang
 
-func cloneZipItem(f *zip.File, dest string) {
+func cloneZipItem(f *zip.File, dest *Path) bool {
 	// Create full directory path
-	path := filepath.Join(dest, f.Name)
+	path := dest.Add(f.Name)
 	fmt.Println("Creating", path)
-	err := os.MkdirAll(filepath.Dir(path), os.ModeDir|os.ModePerm)
-	if err != nil {
-		fmt.Printf("Error while mkdir zip element '%v' from '%v'\n", path, f)
-		return
+	if !path.MkDirAll() {
+		return false
 	}
 
 	// Clone if item is a file
 	rc, err := f.Open()
 	if err != nil {
 		fmt.Printf("Error while checking if zip element is a file: '%v'\n", f)
-		return
+		return false
 	}
+	defer rc.Close()
 	if !f.FileInfo().IsDir() {
 		// Use os.Create() since Zip don't store file permissions.
-		fileCopy, err := os.Create(path)
+		fileCopy, err := os.Create(path.String())
 		if err != nil {
 			fmt.Printf("Error while creating zip element to '%v' from '%v'\n", path, f)
-			return
+			return false
 		}
 		_, err = io.Copy(fileCopy, rc)
 		fileCopy.Close()
 		if err != nil {
 			fmt.Printf("Error while copying zip element to '%v' from '%v'\n", fileCopy, rc)
-			return
+			return false
 		}
 	}
-	rc.Close()
+	return true
 }
-func unzip(zipPath, dest string) {
-	r, err := zip.OpenReader(zipPath)
+
+func unzip(zipPath, dest *Path) bool {
+	r, err := zip.OpenReader(zipPath.String())
 	if err != nil {
 		fmt.Printf("Error while opening zip '%v' for '%v'\n'%v'\n", zipPath, dest, err)
-		return
+		return false
 	}
 	defer r.Close()
 	for _, f := range r.File {
-		cloneZipItem(f, dest)
+		if !cloneZipItem(f, dest) {
+			return false
+		}
 	}
+	return true
 }
