@@ -1739,6 +1739,10 @@ func (i Invoke) BuildZipJDK(folder *Path, archive *Path) {
 		compress7z(archiveTar, nil, folder.Add("tools.zip").Dot(), "Add tools.zip", "tar")
 		compress7z(archiveTar, nil, folder.Add("src.zip").Dot(), "Add src.zip", "tar")
 	}
+	archiveTarGz := archiveTar.Gz()
+	if !archiveTarGz.Exists() {
+		compress7z(archiveTarGz, nil, archiveTar, "gz the jDK tar", "gzip")
+	}
 	os.Exit(0)
 }
 
@@ -1772,6 +1776,17 @@ func (p *Path) Tar() *Path {
 		return p
 	}
 	return p.Add(".tar")
+}
+
+func (p *Path) IsGz() bool {
+	return filepath.Ext(p.String()) == ".gz"
+}
+
+func (p *Path) Gz() *Path {
+	if p.IsGz() {
+		return p
+	}
+	return p.Add(".gz")
 }
 
 func (p *Path) RemoveExtension() *Path {
@@ -1886,7 +1901,11 @@ func compress7z(archive, folder, file *Path, msg, format string) bool {
 	if msg != "" {
 		msg = msg + ": "
 	}
-	cmd = fmt.Sprintf("%v a -t%v -mm=Deflate -mmt=on -mx5 -w %v %v%v", cmd, format, farchive, ffolder, argFile)
+	deflate := "-mm=Deflate"
+	if format == "gzip" {
+		deflate = ""
+	}
+	cmd = fmt.Sprintf("%v a -t%v%v -mmt=on -mx5 -w %v %v%v", cmd, format, deflate, farchive, ffolder, argFile)
 	is := fmt.Sprintf("%v'%v'%v => 7zC...\n%v\n", msg, archive, argFile, cmd)
 	fmt.Println(is)
 	c := exec.Command("cmd", "/C", cmd)
