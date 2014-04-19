@@ -91,9 +91,9 @@ var defaultConfig = `
 // Prg is a Program to be installed
 type Prg struct {
 	name        string
-	dir         string
-	folder      string
-	archive     Path
+	dir         *Path
+	folder      *Path
+	archive     *Path
 	url         *url.URL
 	invoke      string
 	exts        *Extractors
@@ -122,10 +122,14 @@ type PrgData interface {
 	GetArch() *Arch
 }
 
+func (p *Path) AddP(path *Path) *Path {
+	return p.Add(path.String())
+}
+
 // GetName returns the name of the program to be installed, used for folder
 func (p *Prg) GetName() string {
-	if p.dir != "" {
-		return p.dir
+	if p.dir != nil {
+		return p.dir.String()
 	}
 	return p.name
 }
@@ -1359,7 +1363,7 @@ func ReadConfig() []*Prg {
 		}
 		if strings.HasPrefix(line, "dir") && currentPrg != nil {
 			dir := strings.TrimSpace(line[len("dir"):])
-			currentPrg.dir = dir
+			currentPrg.dir = NewPathDir(dir)
 			continue
 		}
 
@@ -1458,26 +1462,29 @@ func ReadConfig() []*Prg {
 	return res
 }
 
+func (p *Path) Abs() *Path {
+	res, err := filepath.Abs(p.path)
+	if err != nil {
+		fmt.Printf("Unable to get full absollute path for '%v'\n%v\n", p.path, err)
+		return nil
+	}
+	if strings.HasSuffix(p.path, string(filepath.Separator)) {
+		return NewPathDir(res)
+	}
+	return NewPath(res)
+}
+
 func (p *Prg) checkLatest() {
 	folder := p.GetFolder()
-	folderMain := "test/" + p.GetName() + "/"
-	folderFull := folderMain + folder
-	folderLatest := folderMain + "latest/"
+	folderMain := NewPathDir("test/" + p.GetName())
+	folderFull := folderMain.AddP(folder)
+	folderLatest := folderMain.Add("latest")
 
-	hasLatest := Path(folderLatest).Exists()
-	mainf, err := filepath.Abs(filepath.FromSlash(folderMain))
-	if err != nil {
-		fmt.Printf("Unable to get full path for folderMain '%v': '%v'\n%v", p.GetName(), folderMain, err)
-		return
-	}
-	latest, err := filepath.Abs(filepath.FromSlash(folderLatest))
-	if err != nil {
-		fmt.Printf("Unable to get full path for LATEST '%v': '%v'\n%v", p.GetName(), folderLatest, err)
-		return
-	}
-	full, err := filepath.Abs(filepath.FromSlash(folderFull))
-	if err != nil {
-		fmt.Printf("Unable to get full path for folderFull '%v': '%v'\n%v", p.GetName(), folderFull, err)
+	hasLatest := folderLatest.Exists()
+	mainf := folderMain.Abs()
+	latest := folderLatest.Abs()
+	full := folderFull.Abs()
+	if mainf == nil || latest == nil || full == nil {
 		return
 	}
 	if !hasLatest {
@@ -1485,8 +1492,8 @@ func (p *Prg) checkLatest() {
 	} else {
 		target := readJunction("latest", mainf, p.GetName())
 		fmt.Printf("Target='%v'\n", target)
-		if target != full {
-			err := os.Remove(latest)
+		if target.String() != full.String() {
+			err := os.Remove(latest.String())
 			if err != nil {
 				fmt.Printf("Error removing LATEST '%v' in '%v': '%v'\n", latest, folderLatest, err)
 				return
@@ -1522,52 +1529,43 @@ func readJunction(link, folder, name string) string {
 	}
 	if err != nil && res == "" {
 		fmt.Printf("Error invoking '%v'\n'%v':\nerr='%v'\n", cmd, sout, err)
-		return ""
+		return nil
 	}
 	fmt.Printf("OUT ===> '%v'\n", sout)
-	return res
+	return NewPathDir(res)
 }
 
 func (p *Prg) install() {
 	folder := p.GetFolder()
-	if folder == "" {
+	if folder == nil {
 		fmt.Printf("[install] ERR: no folder on '%v'\n", p.GetName())
 		return
 	}
-	folderMain := "test/" + p.GetName() + "/"
-	if !Path(folderMain).Exists() {
-		err := os.MkdirAll(folderMain, 0755)
-		if err != nil {
-			fmt.Printf("Error creating main folder for name '%v': '%v'\n", folderMain, err)
-			return
-		}
+	folderMain := NewPathDir("test/" + p.GetName())
+	if !folderMain.Exists() && !folderMain.MkDirAll() {
+		return
 	}
-	folderFull := folderMain + folder
+	folderFull := folderMain.AddP(folder)
 	archive := p.GetArchive()
 	fmt.Printf("[install] GetArchive()='%v'\n", archive)
-	if archive == "" {
+	if archive == nil {
 		fmt.Printf("[install] ERR: no archive on '%v'\n", p.GetName())
 		return
 	}
 
 	fmt.Printf("folderFull (%v): '%v'\narchive '%v'\n", p.GetName(), folderFull, archive)
 
-	if Path(folderFull+"/"+p.test).Exists() && p.test != "" {
+	if p.test != "" && folderFull.Add(p.test).Exists() {
 		fmt.Printf("No Need to install %v in '%v' per test\n", p.GetName(), folderFull)
 		p.checkLatest()
 		p.BuildZip()
 		return
 	}
-	fmt.Printf("TEST.... '%v' (for '%v')\n", false, folderFull+"/"+p.test)
+	fmt.Printf("TEST.... '%v' (for '%v')\n", false, folderFull.Add(p.test))
 
-	folderTmp := folderMain + "tmp"
-	if !Path(folderTmp).Exists() {
-		fmt.Printf("Need to make tmp for %v in '%v'\n", p.GetName(), folderTmp)
-		err := os.MkdirAll(folderTmp, 0755)
-		if err != nil {
-			fmt.Printf("Error creating tmp folder for name '%v': '%v'\n", folderTmp, err)
-			return
-		}
+	folderTmp := folderMain.Add("tmp/")
+	if !folderTmp.Exists() && !folderTmp.MkDirAll() {
+		return
 	}
 	if archive.isZip() && p.invoke == "" {
 		p.invokeUnZip()
@@ -1582,9 +1580,8 @@ func (p *Prg) install() {
 		return
 	}
 
-	dst, err := filepath.Abs(filepath.FromSlash(folderFull))
-	if err != nil {
-		fmt.Printf("Unable to get full path for '%v': '%v'\n%v", p.GetName(), folderFull, err)
+	dst := folderFull.Abs()
+	if dst == nil {
 		return
 	}
 
@@ -1596,7 +1593,7 @@ func (p *Prg) install() {
 	} else {
 		cmd := p.invoke
 		cmd = strings.Replace(cmd, "@FILE@", archive.String(), -1)
-		cmd = strings.Replace(cmd, "@DEST@", dst, -1)
+		cmd = strings.Replace(cmd, "@DEST@", dst.String(), -1)
 		fmt.Printf("invoking for '%v': '%v'\n", p.GetName(), cmd)
 		c := exec.Command("cmd", "/C", cmd)
 		if out, err := c.Output(); err != nil {
@@ -1610,7 +1607,7 @@ func (p *Prg) install() {
 type Invoke struct {
 }
 
-func (p *Prg) callFunc(methodName, folder string, archive Path) {
+func (p *Prg) callFunc(methodName string, folder, archive *Path) {
 	fmt.Printf("methodName '%v'\n", methodName)
 	// http://groups.google.com/forum/#!topic/golang-nuts/-J17cxJnmss
 	// http://stackoverflow.com/questions/8103617/call-a-struct-and-its-method-by-name-in-go
@@ -1865,57 +1862,62 @@ func compress7z(archive Path, folder, file, msg, format string) {
 	c := exec.Command("cmd", "/C", cmd)
 	if out, err := c.Output(); err != nil {
 		fmt.Printf("Error invoking 7zC '%v'\nout='%v' => err='%v'\n", cmd, string(out), err)
+		return false
 	}
 	fmt.Printf("%v'%v'%v => 7zC... DONE\n", msg, archive, argFile)
+	return true
 }
 
-func (p *Prg) invokeUnZip() {
+func (p *Prg) invokeUnZip() bool {
 	folder := p.GetFolder()
 	archive := p.GetArchive()
-	folderMain := "test/" + p.GetName() + "/"
-	folderTmp := folderMain + "tmp"
-	folderFull := folderMain + folder
+	folderMain := NewPathDir("test/" + p.GetName())
+	folderTmp := folderMain.Add("tmp/")
+	folderFull := folderMain.AddP(folder)
 	t := getLastModifiedFile(folderTmp, ".*")
 	if t == "" {
 		fmt.Printf("Need to uncompress '%v' in '%v'\n", archive, folderTmp)
-		unzip(archive.String(), folderTmp)
-	}
-	folderToMove := folderTmp + "/" + folder
-	if Path(folderToMove).Exists() {
-		fmt.Printf("Need to move %v in '%v'\n", folderToMove, folderFull)
-		err := os.Rename(folderToMove, folderFull)
-		if err != nil {
-			fmt.Printf("Error moving tmp folder '%v' to '%v': '%v'\n", folderTmp, folderFull, err)
-			return
+		if !unzip(archive, folderTmp) {
+			return false
 		}
 	}
+	folderToMove := folderTmp.AddP(folder)
+	if folderToMove.Exists() {
+		fmt.Printf("Need to move %v in '%v'\n", folderToMove, folderFull)
+		err := os.Rename(folderToMove.String(), folderFull.String())
+		if err != nil {
+			fmt.Printf("Error moving tmp folder '%v' to '%v': '%v'\n", folderTmp, folderFull, err)
+			return false
+		}
+	}
+	return true
 }
 
 // GetFolder returns full folder path ofr a program
-func (p *Prg) GetFolder() string {
+func (p *Prg) GetFolder() *Path {
 	if p.exts != nil {
 		fmt.Printf("Get folder for %v", p.GetName())
 		p.folder = get(p.folder, p.exts.extractFolder, true)
-		fmt.Printf("DONE Get folder for %v", p.String())
+		fmt.Printf("DONE Get folder for %v", p)
 	}
 	return p.folder
 }
 
 // GetArchive returns archive name
-func (p *Prg) GetArchive() Path {
-	if p.archive != "" {
+func (p *Prg) GetArchive() *Path {
+	if p.archive != nil {
 		return p.archive
 	}
 	if p.exts != nil {
 		fmt.Printf("Get archive for %v", p.GetName())
-		archiveName := get(p.archive.String(), p.exts.extractArchive, false)
+		archiveName := get(p.archive, p.exts.extractArchive, false)
 		url := p.GetURL()
-		p.archive = cache.GetArchive(Path(archiveName), url, p.GetName(), p.cookies)
+		p.archive = cache.GetArchive(archiveName, url, p.GetName(), p.cookies)
 	}
-	if strings.HasSuffix(p.archive.String(), ".exe") {
-		pname := Path(p.archive.releaseName() + ".zip")
+	if p.archive.isExe() {
+		pname := NewPath(p.archive.releaseName() + ".zip")
 		portableArchive := cache.GetArchive(pname, nil, p.GetName(), p.cookies)
-		if portableArchive != "" {
+		if portableArchive != nil {
 			p.archive = portableArchive
 		}
 	}
@@ -1929,8 +1931,8 @@ func (p *Prg) GetURL() *url.URL {
 	}
 	if p.exts != nil {
 		fmt.Printf("Get url for %v", p.GetName())
-		rawurl := get("", p.exts.extractURL, false)
-		if anurl, err := url.ParseRequestURI(rawurl); err == nil {
+		rawurl := get(nil, p.exts.extractURL, false)
+		if anurl, err := url.ParseRequestURI(rawurl.String()); err == nil {
 			p.url = anurl
 		} else {
 			fmt.Printf("Unable to parse url '%v' because '%v'", rawurl, err)
