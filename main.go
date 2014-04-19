@@ -1736,10 +1736,17 @@ func (i Invoke) BuildZipJDK(folder *Path, archive *Path) {
 	archiveTar := archive.Tar()
 	fmt.Printf("[BuildZipJDK] archive='%v'\n", archiveTar)
 	if !archiveTar.Exists() {
-		compress7z(archiveTar, folder, folder.Add("tools.zip"), "Add tools.zip", "tar")
-		compress7z(archiveTar, folder, folder.Add("src.zip"), "Add src.zip", "tar")
+		compress7z(archiveTar, nil, folder.Add("tools.zip").Dot(), "Add tools.zip", "tar")
+		compress7z(archiveTar, nil, folder.Add("src.zip").Dot(), "Add src.zip", "tar")
 	}
 	os.Exit(0)
+}
+
+func (p *Path) Dot() *Path {
+	if strings.HasPrefix("."+string(filepath.Separator), p.path) {
+		return p
+	}
+	return NewPath("." + string(filepath.Separator) + p.path)
 }
 
 var hasTarRx, _ = regexp.Compile(`\.tar\.[^\.]+$`)
@@ -1881,7 +1888,7 @@ func compress7z(archive, folder, file *Path, msg, format string) bool {
 	}
 	cmd = fmt.Sprintf("%v a -t%v -mm=Deflate -mmt=on -mx5 -w %v %v%v", cmd, format, farchive, ffolder, argFile)
 	is := fmt.Sprintf("%v'%v'%v => 7zC...\n%v\n", msg, archive, argFile, cmd)
-	fmt.Fprintf(os.Stderr, is)
+	fmt.Println(is)
 	c := exec.Command("cmd", "/C", cmd)
 	if out, err := c.Output(); err != nil {
 		fmt.Printf("Error invoking 7zC '%v'\nout='%v' => err='%v'\n", cmd, string(out), err)
