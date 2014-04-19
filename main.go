@@ -178,10 +178,38 @@ type Extractor interface {
 	Nb() int
 }
 
-type Path string
+type Path struct {
+	path string
+}
+
+func NewPath(p string) *Path {
+	res := &Path{}
+	res.path = filepath.FromSlash(p)
+	if !strings.HasSuffix(res.path, string(filepath.Separator)) && res.path != "" {
+		if res.Exists() && res.IsDir() {
+			res.path = res.path + string(filepath.Separator)
+		} else if strings.HasSuffix(p, string(filepath.Separator)) {
+			res.path = res.path + string(filepath.Separator)
+		}
+	}
+	return res
+}
+
+func NewPathDir(p string) *Path {
+	res := &Path{}
+	res.path = filepath.FromSlash(p)
+	if !strings.HasSuffix(res.path, string(filepath.Separator)) {
+		res.path = res.path + string(filepath.Separator)
+	}
+	return res
+}
+
+func (p *Path) Add(s string) *Path {
+	return NewPath(p.path + s)
+}
 
 func (p *Path) String() string {
-	res := fmt.Sprintf(string(*p))
+	res := fmt.Sprintf(p.path)
 	if len(res) > 200 {
 		res = res[:20] + fmt.Sprintf(" (%v)", len(res))
 	}
@@ -744,18 +772,18 @@ func (c *CacheDisk) GetArchive(p Path, url *url.URL, name string, cookies []*htt
 	return ""
 }
 
-func (c *CacheDisk) checkArchive(filename string, name string) {
-	if Path(filename).Exists() {
-		c.last = Path(filename)
+func isEmpty(p *Path) bool {
+	return p == nil || p.path == ""
+}
+
 		c.next.UpdateArchive(c.last, name)
 	}
 }
 
 func (p *Path) fileContent() string {
-	filepath := string(*p)
-	var f *os.File
-	var err error
-	if f, err = os.Open(filepath); err != nil {
+	filepath := p
+	f, err := os.Open(filepath.String())
+	if err != nil {
 		fmt.Printf("Error while reading content of '%v': '%v'\n", filepath, err)
 		return ""
 	}
@@ -771,16 +799,16 @@ func (p *Path) fileContent() string {
 	return content
 }
 
-func copy(dst string, src string) bool {
+func copy(dst, src *Path) bool {
 	copied := false
 	// open files r and w
-	r, err := os.Open(src)
+	r, err := os.Open(src.String())
 	if err != nil {
 		fmt.Printf("Couldn't open src '%v' for copy: '%v'\n", src, err)
 	}
 	defer r.Close()
 
-	w, err := os.Create(dst)
+	w, err := os.Create(dst.String())
 	if err != nil {
 		fmt.Printf("Couldn't create dst '%v' for copy: '%v'\n", src, err)
 	}
@@ -841,13 +869,15 @@ func (c *CacheDisk) getResourceName(url *url.URL, name string) string {
 	return res
 }
 
-func (c *CacheDisk) getFile(url *url.URL, name string) Path {
-	c.last = ""
-	dir := c.Folder(name)
-	err := os.MkdirAll(dir, 0755)
+func (p *Path) MkDirAll() bool {
+	err := os.MkdirAll(p.path, 0755)
 	if err != nil {
-		fmt.Printf("Error creating cache folder for name '%v': '%v'\n", dir, err)
-		return ""
+		fmt.Printf("Error creating cache folder for name '%v': '%v'\n", p.path, err)
+		return false
+	}
+	return true
+}
+
 	}
 	rsc := c.getResourceName(url, name)
 	pattern := name + "_" + rsc + "_.*"
@@ -1723,11 +1753,11 @@ func (p Path) HasTar() bool {
 	return false
 }
 
-func (p Path) IsTar() bool {
+func (p *Path) IsTar() bool {
 	return filepath.Ext(p.String()) == ".tar"
 }
 
-func (p Path) Tar() Path {
+func (p *Path) Tar() *Path {
 	if p.IsTar() {
 		return p
 	}
@@ -1735,16 +1765,16 @@ func (p Path) Tar() Path {
 	if p.IsTar() {
 		return p
 	}
-	return Path(p.String() + ".tar")
+	return p.Add(".tar")
 }
 
-func (p Path) RemoveExtension() Path {
+func (p *Path) RemoveExtension() *Path {
 	sp := p.String()
 	ext := filepath.Ext(sp)
 	if ext != "" {
 		sp = sp[:len(sp)-len(ext)]
 	}
-	return Path(sp)
+	return NewPath(sp)
 }
 
 var fcmd = ""
@@ -1941,23 +1971,23 @@ func (p *Prg) GetURL() *url.URL {
 	return p.url
 }
 
-func get(iniValue string, ext Extractor, underscore bool) string {
+func get(iniValue *Path, ext Extractor, underscore bool) *Path {
 	fmt.Println(" ")
 	fmt.Println(" ")
 	fmt.Println(" ")
 	fmt.Println("-----")
 	fmt.Println(" ")
-	if iniValue != "" {
+	if iniValue != nil {
 		return iniValue
 	}
 	if ext == nil {
-		return ""
+		return nil
 	}
 	res := ext.Extract()
 	if underscore {
 		res = strings.Replace(res, " ", "_", -1)
 	}
-	return res
+	return NewPath(res)
 }
 
 // exists returns whether the given file or directory exists or not
@@ -1972,6 +2002,25 @@ func (p Path) Exists() bool {
 		return false
 	}
 	fmt.Printf("[exists] Error while checking if '%v' exists: '%v'\n", path, err)
+	return false
+}
+
+func (p Path) IsDir() bool {
+	f, err := os.Open(p.path)
+	if err != nil {
+		fmt.Println(err)
+		return false
+	}
+	defer f.Close()
+	fi, err := f.Stat()
+	if err != nil {
+		fmt.Println(err)
+		return false
+	}
+	switch mode := fi.Mode(); {
+	case mode.IsDir():
+		return true
+	}
 	return false
 }
 
