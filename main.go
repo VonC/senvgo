@@ -156,7 +156,7 @@ type Arch struct {
 // Arch returns the appropriate pattern, depending on the current architecture
 func (a *Arch) Arch() string {
 	// http://stackoverflow.com/questions/601089/detect-whether-current-windows-version-is-32-bit-or-64-bit
-	if exists("C:\\Program Files (x86)") {
+	if Path("C:\\Program Files (x86)").Exists() {
 		return a.win64
 	}
 	return a.win32
@@ -636,14 +636,14 @@ func (c *CacheDisk) IsGitHub() bool {
 func (c *CacheDisk) UpdateArchive(p Path, name string) {
 	fmt.Printf("UPDARC Disk '%v' for '%v' from '%v'\n", p, name, c.String())
 	filepath := c.Folder(name) + p.release()
-	if exists(filepath) {
+	if Path(filepath).Exists() {
 		c.last = Path(filepath)
 	} else {
 		c.last = ""
 	}
 	fmt.Printf("UPDARC Disk 2 '%v' for '%v' from '%v' => c.last '%v'\n", p, name, c.String(), c.last)
 	if c.last == "" {
-		if !exists(c.Folder(name)) {
+		if !Path(c.Folder(name)).Exists() {
 			if err := os.MkdirAll(c.Folder(name), 0755); err != nil {
 				fmt.Printf("UPDARC CacheDisk %v Error creating folder '%v' for name '%v': '%v'\n", c.id, c.Folder(name), name, err)
 				return
@@ -668,11 +668,11 @@ func (c *CacheGitHub) UpdatePage(p Path, name string) {
 func (c *CacheDisk) UpdatePage(p Path, name string) {
 	fmt.Printf("UPDPAG Disk '%v' for '%v' from '%v'\n", p, name, c.String())
 	filepath := c.Folder(name) + p.release()
-	if exists(filepath) {
+	if Path(filepath).Exists() {
 		c.last = Path(filepath)
 	}
 	if c.last == "" {
-		if !exists(c.Folder(name)) {
+		if !Path(c.Folder(name)).Exists() {
 			err := os.MkdirAll(c.Folder(name), 0755)
 			if err != nil {
 				fmt.Printf("UPDPAG CacheDisk %v Error creating folder '%v' for name '%v': '%v'\n", c.id, c.Folder(name), name, err)
@@ -741,7 +741,7 @@ func (c *CacheDisk) GetArchive(p Path, url *url.URL, name string, cookies []*htt
 }
 
 func (c *CacheDisk) checkArchive(filename string, name string) {
-	if exists(filename) {
+	if Path(filename).Exists() {
 		c.last = Path(filename)
 		c.next.UpdateArchive(c.last, name)
 	}
@@ -1299,7 +1299,7 @@ var cfgRx, _ = regexp.Compile(`^([^\.]+)\.([^\.\s]+)\s+(.*?)$`)
 
 func NewCacheDisk(id string, root string) *CacheDisk {
 	cache := &CacheDisk{CacheData: &CacheData{id: id}, root: root}
-	if !exists(root) {
+	if !Path(root).Exists() {
 		if err := os.MkdirAll(root, 0755); err != nil {
 			fmt.Printf("Error creating cache '%v' with root folder'%v': '%v'\n", id, root, err)
 			return nil
@@ -1464,7 +1464,7 @@ func (p *Prg) checkLatest() {
 	folderFull := folderMain + folder
 	folderLatest := folderMain + "latest/"
 
-	hasLatest := exists(folderLatest)
+	hasLatest := Path(folderLatest).Exists()
 	mainf, err := filepath.Abs(filepath.FromSlash(folderMain))
 	if err != nil {
 		fmt.Printf("Unable to get full path for folderMain '%v': '%v'\n%v", p.GetName(), folderMain, err)
@@ -1535,7 +1535,7 @@ func (p *Prg) install() {
 		return
 	}
 	folderMain := "test/" + p.GetName() + "/"
-	if !exists(folderMain) {
+	if !Path(folderMain).Exists() {
 		err := os.MkdirAll(folderMain, 0755)
 		if err != nil {
 			fmt.Printf("Error creating main folder for name '%v': '%v'\n", folderMain, err)
@@ -1552,7 +1552,7 @@ func (p *Prg) install() {
 
 	fmt.Printf("folderFull (%v): '%v'\narchive '%v'\n", p.GetName(), folderFull, archive)
 
-	if exists(folderFull+"/"+p.test) && p.test != "" {
+	if Path(folderFull+"/"+p.test).Exists() && p.test != "" {
 		fmt.Printf("No Need to install %v in '%v' per test\n", p.GetName(), folderFull)
 		p.checkLatest()
 		p.BuildZip()
@@ -1561,7 +1561,7 @@ func (p *Prg) install() {
 	fmt.Printf("TEST.... '%v' (for '%v')\n", false, folderFull+"/"+p.test)
 
 	folderTmp := folderMain + "tmp"
-	if !exists(folderTmp) {
+	if !Path(folderTmp).Exists() {
 		fmt.Printf("Need to make tmp for %v in '%v'\n", p.GetName(), folderTmp)
 		err := os.MkdirAll(folderTmp, 0755)
 		if err != nil {
@@ -1627,7 +1627,7 @@ func (i Invoke) InstallJDKsrc(folder string, archive Path) {
 	archive2f := filepath.Base(archive2)
 	archive2folder := filepath.Dir(archive2)
 
-	if !exists(archive2) {
+	if !Path(archive2).Exists() {
 		uncompress7z(archive.String(), archive2folder, archive2f, "Extract src tar", true)
 	}
 	l := list7z(archive2, "src.zip")
@@ -1643,15 +1643,15 @@ func (i Invoke) InstallJDKsrc(folder string, archive Path) {
 func (i Invoke) InstallJDK(folder string, archive Path) {
 	fmt.Printf("folder='%v'\n", folder)
 	fmt.Printf("archive='%v'\n", archive)
-	if !exists(folder + "/tools.zip") {
+	if !Path(folder + "/tools.zip").Exists() {
 		uncompress7z(archive.String(), folder, "tools.zip", "Extract tools.zip", true)
 	}
-	if !exists(folder + "/LICENSE") {
+	if !Path(folder + "/LICENSE").Exists() {
 		uncompress7z(folder+"/tools.zip", folder, "", "Extract tools.zip in JDK", false)
 	}
 
 	unpack := filepath.FromSlash(folder + "/bin/unpack200.exe")
-	if !exists(unpack) {
+	if !Path(unpack).Exists() {
 		fmt.Printf("Error bin/unpack200.exe not found in '%v'\n", folder)
 		return
 	}
@@ -1668,7 +1668,7 @@ func (i Invoke) InstallJDK(folder string, archive Path) {
 	fmt.Printf("files '%+v'\n", files)
 	for _, file := range files {
 		nopack := file[:len(file)-len(".pack")] + ".jar"
-		if !exists(nopack) {
+		if !Path(nopack).Exists() {
 			cmd := fmt.Sprintf("%v %v %v", unpack, file, nopack)
 			fmt.Printf("%v '%v' => '%v'...\n", unpack, file, nopack)
 			c := exec.Command("cmd", "/C", cmd)
@@ -1695,7 +1695,7 @@ func (p *Prg) BuildZip() {
 		p.callFunc(methodName, folderFull, archive)
 	} else {
 		portableArchive := Path(strings.Replace(archive.String(), ".exe", ".zip", -1))
-		if !exists(portableArchive.String()) {
+		if !Path(portableArchive.String()).Exists() {
 
 			compress7z(portableArchive, folderFull, "", fmt.Sprintf("Compress '%v' for '%v'", portableArchive, p.GetName()), "zip")
 		}
@@ -1709,6 +1709,10 @@ func (i Invoke) BuildZipJDK(folder string, archive Path) {
 	fmt.Printf("[BuildZipJDK] folder='%v'\n", folder)
 	archiveTar := archive.Tar()
 	fmt.Printf("[BuildZipJDK] archive='%v'\n", archiveTar)
+	if !Path(archiveTar.String()).Exists() {
+		compress7z(archiveTar, folder, folder+"tools.zip", "Add tools.zip", "tar")
+		compress7z(archiveTar, folder, folder+"src.zip", "Add src.zip", "tar")
+	}
 	os.Exit(0)
 }
 
@@ -1877,7 +1881,7 @@ func (p *Prg) invokeUnZip() {
 		unzip(archive.String(), folderTmp)
 	}
 	folderToMove := folderTmp + "/" + folder
-	if exists(folderToMove) {
+	if Path(folderToMove).Exists() {
 		fmt.Printf("Need to move %v in '%v'\n", folderToMove, folderFull)
 		err := os.Rename(folderToMove, folderFull)
 		if err != nil {
@@ -1956,8 +1960,8 @@ func get(iniValue string, ext Extractor, underscore bool) string {
 
 // exists returns whether the given file or directory exists or not
 // http://stackoverflow.com/questions/10510691/how-to-check-whether-a-file-or-directory-denoted-by-a-path-exists-in-golang
-func exists(path string) bool {
-	path = filepath.FromSlash(path)
+func (p Path) Exists() bool {
+	path := filepath.FromSlash(p.String())
 	_, err := os.Stat(path)
 	if err == nil {
 		return true
