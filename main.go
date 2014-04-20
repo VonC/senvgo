@@ -437,8 +437,8 @@ func (c *CacheGitHub) getRepo(name string) *github.Repository {
 // Update make sure the zip archive is uploaded on GitHub as a release
 func (c *CacheGitHub) UpdateArchive(p *Path, name string) {
 	fmt.Printf("UPDARC Github '%v' for '%v' from '%v'\n", p, name, c)
-	if !p.isZip() {
-		fmt.Printf("UPDARC Github '%v' for '%v' from '%v': no zip\n", p, name, c)
+	if !p.isPortableCompressed() {
+		fmt.Printf("UPDARC Github '%v' for '%v' from '%v': no zip or tar gz\n", p, name, c)
 		return
 	}
 	if c.last == p {
@@ -1825,6 +1825,10 @@ func (p *Path) Sz() *Path {
 		return p
 	}
 	return p.Add(".7z")
+}
+
+func (p *Path) isPortableCompressed() bool {
+	return p.isZip() || p.isTarGz() || p.isTarSz()
 }
 
 func (p *Path) RemoveExtension() *Path {
