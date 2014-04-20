@@ -1922,7 +1922,7 @@ func compress7z(archive, folder, file *Path, msg, format string) bool {
 	if msg != "" {
 		msg = msg + ": "
 	}
-	deflate := "-mm=Deflate"
+	deflate := " -mm=Deflate"
 	if format == "gzip" {
 		deflate = ""
 	}
