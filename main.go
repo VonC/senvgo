@@ -534,7 +534,7 @@ func (c *CacheGitHub) uploadAsset(authUser *github.User, rid int, p *Path, name 
 	owner := *authUser.Name
 	client := c.getClient()
 	repos := client.Repositories
-	rela, _, err := repos.UploadReleaseAsset(owner, p.releaseName(), rid, &github.UploadOptions{Name: p.releaseName() + ".zip"}, file)
+	rela, _, err := repos.UploadReleaseAsset(owner, p.releaseName(), rid, &github.UploadOptions{Name: p.Base()}, file)
 	if err != nil {
 		fmt.Printf("Error while uploading release asset '%v'(%v): '%v'\n", p.releaseName(), rid, err)
 		return nil
@@ -1764,9 +1764,10 @@ func (i Invoke) BuildZipJDK(folder *Path, archive *Path) {
 		compress7z(archiveTar, nil, folder.Add("tools.zip").Dot(), "Add tools.zip", "tar")
 		compress7z(archiveTar, nil, folder.Add("src.zip").Dot(), "Add src.zip", "tar")
 	}
-	archiveTarGz := archiveTar.Gz()
+	archiveTarGz := archiveTar.Sz()
 	if !archiveTarGz.Exists() {
 		compress7z(archiveTarGz, nil, archiveTar, "gz the jDK tar", "gzip")
+		//compress7z(archiveTarGz, nil, archiveTar, "7z the jDK tar", "7z")
 	}
 	name := folder.Dir().Base()
 	fmt.Println(folder, name)
