@@ -313,6 +313,12 @@ func (c *CacheGitHub) getClient() *github.Client {
 func (p *Path) isZip() bool {
 	return strings.HasSuffix(p.String(), ".zip")
 }
+func (p *Path) isTarGz() bool {
+	return strings.HasSuffix(p.String(), ".tar.gz")
+}
+func (p *Path) isTarSz() bool {
+	return strings.HasSuffix(p.String(), ".tar.7z")
+}
 func (p *Path) isExe() bool {
 	return strings.HasSuffix(p.String(), ".exe")
 }
@@ -1808,6 +1814,17 @@ func (p *Path) Gz() *Path {
 		return p
 	}
 	return p.Add(".gz")
+}
+
+func (p *Path) isSz() bool {
+	return strings.HasSuffix(p.String(), ".7z")
+}
+
+func (p *Path) Sz() *Path {
+	if p.isSz() {
+		return p
+	}
+	return p.Add(".7z")
 }
 
 func (p *Path) RemoveExtension() *Path {
