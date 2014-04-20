@@ -444,10 +444,18 @@ func (c *CacheGitHub) UpdateArchive(p *Path, name string) {
 	if c.last == p {
 		fmt.Printf("UPDARC Github '%v' for '%v' from '%v': already there\n", p, name, c)
 	}
+	authUser := c.getAuthUser()
+	if authUser == nil {
+		fmt.Printf("UPDARC Github '%v' for '%v' from '%v': user '%v' not authenticated to GitHub\n", p, name, c, c.owner)
+		return
+	}
 	repo := c.getRepo(name)
 	if repo == nil {
-		fmt.Printf("UPDARC Github '%v' for '%v' from '%v': no repo\n", p, name, c)
-		return
+		repo = c.createRepo(name, authUser)
+		if repo == nil {
+			fmt.Printf("UPDARC Github '%v' for '%v' from '%v': unable to create a repo\n", p, name, c)
+			return
+		}
 	}
 	releaseName := p.releaseName()
 	release := c.getRelease(repo, releaseName)
@@ -462,11 +470,6 @@ func (c *CacheGitHub) UpdateArchive(p *Path, name string) {
 		return
 	}
 	var rid int
-	authUser := c.getAuthUser()
-	if authUser == nil {
-		fmt.Printf("UPDARC Github '%v' for '%v' from '%v': user '%v' not authenticated to GitHub\n", p, name, c, c.owner)
-		return
-	}
 	if release == nil {
 		// check for last commit, tag, release, asset
 		owner := *authUser.Name
@@ -615,6 +618,22 @@ func (c *CacheGitHub) createTag(tagName string, authUser *github.User, repo *git
 	}
 	fmt.Printf("Ref created: '%v'\n", ref)
 	return tag
+}
+
+func (c *CacheGitHub) createRepo(name string, authUser *github.User) *github.Repository {
+	client := c.getClient()
+	repos := client.Repositories
+	owner := *authUser.Name
+	rp := &github.Repository{}
+	repo, _, err := repos.Create("", rp)
+	if err != nil {
+		fmt.Printf("Error while creating repo %v/'%v': '%v'\n", owner, *repo.Name, err)
+		return nil
+	}
+	fmt.Printf("%+v", repo)
+	os.Exit(0)
+	return repo
+
 }
 
 func (c *CacheGitHub) createCommit(rc *github.RepositoryCommit, authUser *github.User, portableArchive string, repo *github.Repository, branch string) *github.Commit {
@@ -1772,6 +1791,7 @@ func (i Invoke) BuildZipJDK(folder *Path, archive *Path) {
 	name := folder.Dir().Base()
 	fmt.Println(folder, name)
 	cache.UpdateArchive(archiveTarGz, name)
+	os.Exit(0)
 }
 
 func (p *Path) Dot() *Path {
