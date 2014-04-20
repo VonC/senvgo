@@ -669,6 +669,7 @@ func (c *CacheDisk) UpdateArchive(p *Path, name string) {
 	fmt.Printf("UPDARC Disk '%v' for '%v' from '%v'\n", p, name, c)
 	folder := c.Folder(name)
 	filepath := folder.Add(p.release())
+	fmt.Printf("UPDARC Disk 1 '%v' for '%v'\n", folder, filepath)
 	if filepath.Exists() {
 		c.last = filepath
 	} else {
@@ -681,6 +682,7 @@ func (c *CacheDisk) UpdateArchive(p *Path, name string) {
 		}
 		if copy(filepath, p) {
 			c.last = filepath
+			fmt.Printf("UPDARC Disk COPIED '%v' for '%v' from '%v' => c.last '%v'\n", p, name, c, c.last)
 		}
 	}
 	if c.last != nil && c.next != nil {
@@ -1728,6 +1730,23 @@ func (p *Prg) BuildZip() {
 	}
 }
 
+func (p *Path) Dir() *Path {
+	pp := p.path
+	for strings.HasSuffix(pp, string(filepath.Separator)) {
+		pp = pp[:len(pp)-1]
+	}
+	fmt.Println(p.path, filepath.Dir(pp))
+	return NewPathDir(filepath.Dir(pp))
+}
+
+func (p *Path) Base() string {
+	pp := p.path
+	for strings.HasSuffix(pp, string(filepath.Separator)) {
+		pp = pp[:len(pp)-1]
+	}
+	return filepath.Base(pp)
+}
+
 func (i Invoke) BuildZipJDK(folder *Path, archive *Path) {
 	if !archive.isExe() && archive.HasTar() {
 		return
@@ -1743,7 +1762,9 @@ func (i Invoke) BuildZipJDK(folder *Path, archive *Path) {
 	if !archiveTarGz.Exists() {
 		compress7z(archiveTarGz, nil, archiveTar, "gz the jDK tar", "gzip")
 	}
-	os.Exit(0)
+	name := folder.Dir().Base()
+	fmt.Println(folder, name)
+	cache.UpdateArchive(archiveTarGz, name)
 }
 
 func (p *Path) Dot() *Path {
