@@ -113,7 +113,7 @@ type Prg struct {
 }
 
 func (p *Prg) String() string {
-	res := fmt.Sprintf("Prg\n'%v' folder='%v', archive='%v'\n%v, arc '%v'>\nexts : '%v'\n", p.GetName(), p.folder, p.archive, p.cache, p.arch, p.exts)
+	res := fmt.Sprintf("Prg '%v' ['%v']\n  Folder='%v', archive='%v'\n  %v,  Arc '%v'>\n  Exts : '%v'\n", p.name, p.GetName(), p.folder, p.archive, p.cache, p.arch, p.exts)
 	if p.portableExt != nil {
 		res = res + fmt.Sprintf("pexts: '%v'\n", p.portableExt)
 	}
@@ -216,6 +216,9 @@ func (p *Path) Add(s string) *Path {
 }
 
 func (p *Path) String() string {
+	if p == nil {
+		return "<nil>"
+	}
 	res := fmt.Sprintf(p.path)
 	if len(res) > 200 {
 		res = res[:20] + fmt.Sprintf(" (%v)", len(res))
@@ -1144,7 +1147,9 @@ func do(req *http.Request) (*http.Response, error) {
 	resp, err := getClient().Do(req)
 	if err != nil {
 		fmt.Printf("Error : %s\n", err)
+		return nil, err
 	}
+	fmt.Printf("mainRepoJar '%+v' vs. resp '%+v'\n", mainRepoJar, resp)
 	mainRepoJar.SetCookies(resp.Cookies())
 	fmt.Printf("(do) Status received: '%v'\n", resp.Status)
 	fmt.Printf("(do) cookies received (%v) '%v'\n", len(resp.Cookies()), resp.Cookies())
@@ -1693,7 +1698,6 @@ func (p *Prg) install() bool {
 			return false
 		}
 	}
-	os.Exit(0)
 	folder := p.GetFolder()
 	if folder == nil {
 		fmt.Printf("[install] ERR: no folder on '%v'\n", p.GetName())
@@ -1720,6 +1724,8 @@ func (p *Prg) install() bool {
 		return true
 	}
 	fmt.Printf("TEST.... '%v' (for '%v')\n", false, folderFull.Add(p.test))
+
+	os.Exit(0)
 
 	folderTmp := folderMain.Add("tmp/")
 	if !folderTmp.Exists() && !folderTmp.MkDirAll() {
