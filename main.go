@@ -383,15 +383,18 @@ func (c *CacheGitHub) getFileFromGitHub(p *Path, name string) *Path {
 		return nil
 	}
 	fmt.Printf("Asset found: '%+v'\n", asset)
+	p = NewPath(p.Dir().String() + *asset.Name)
 	// https://github.com/VonC/gow/releases/download/vGow-0.8.0/Gow-0.8.0.zip
-	url := "https://github.com/" + c.owner + "/" + name + "/releases/download/v" + releaseName + "/" + releaseName + ".zip"
-	fmt.Printf("Downloading from GitHub: '%+v'\n", url)
+	url := "https://github.com/" + c.owner + "/" + name + "/releases/download/v" + releaseName + "/" + p.Base()
+	fmt.Printf("Downloading from GitHub: '%+v' for p '%v'\n", url, p)
+
 	response, err := http.Get(url)
 	if err != nil {
 		fmt.Println("Error while downloading", url, "-", err)
 		return nil
 	}
-	body, err := ioutil.ReadAll(response.Body)
+	readerpt := &PassThru{Reader: response.Body, length: response.ContentLength}
+	body, err := ioutil.ReadAll(readerpt)
 	if err != nil {
 		fmt.Println("Error while reading downloaded", url, "-", err)
 		return nil
@@ -417,11 +420,17 @@ func (c *CacheGitHub) getAsset(release *github.RepositoryRelease, repo *github.R
 		fmt.Printf("Error while getting assets from release '%v'(%v): '%v'\n", releaseName, releaseID, err)
 		return nil
 	}
+	name2 := ""
+	if strings.HasSuffix(name, ".7z") {
+		name2 = name[:len(name)-len(".7z")] + ".gz"
+	} else if strings.HasSuffix(name, ".gz") {
+		name2 = name[:len(name)-len(".gz")] + ".7z"
+	}
 
 	var rela github.ReleaseAsset
 	relaFound := false
 	for _, rela = range assets {
-		if *rela.Name == name {
+		if *rela.Name == name || *rela.Name == name2 {
 			relaFound = true
 			break
 		}
