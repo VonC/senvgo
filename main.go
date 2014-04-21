@@ -35,8 +35,11 @@ func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	prgs = ReadConfig()
 	for _, p := range prgs {
-		p.install()
-		fmt.Printf("INSTALLED '%v'\n", p)
+		if p.install() {
+			fmt.Printf("INSTALLED '%v'\n", p)
+		} else {
+			fmt.Printf("FAILED INSTALLED '%v'\n", p)
+		}
 	}
 }
 
@@ -1675,7 +1678,7 @@ func (p *Prg) isInstalled() bool {
 	return folderFull.Add(p.test).Exists()
 }
 
-func (p *Prg) install() {
+func (p *Prg) install() bool {
 	addToGitHub = true
 	p.updateDeps()
 	if !isEmpty(p.dir) {
@@ -1683,28 +1686,30 @@ func (p *Prg) install() {
 		p.updateDependOn()
 		if p.depOn == nil {
 			fmt.Printf("[install] ERR: '%v' depOn '%v' MISSING\n", p.name, p.GetName())
-			return
+			return false
 		}
 		if !p.depOn.isInstalled() {
 			fmt.Printf("[install] ERR: '%v' depOn '%v' not installed yet\n", p.name, p.GetName())
-			return
+			return false
 		}
 	}
+	os.Exit(0)
 	folder := p.GetFolder()
 	if folder == nil {
 		fmt.Printf("[install] ERR: no folder on '%v'\n", p.GetName())
-		return
+		return false
 	}
 	folderMain := NewPathDir("test/" + p.GetName())
 	if !folderMain.Exists() && !folderMain.MkDirAll() {
-		return
+		fmt.Printf("[install] ERR: unable to create folder on '%v'\n", folderMain.String())
+		return false
 	}
 	folderFull := folderMain.AddP(folder)
 	archive := p.GetArchive()
 	fmt.Printf("[install] GetArchive()='%v'\n", archive)
 	if archive == nil {
 		fmt.Printf("[install] ERR: no archive on '%v'\n", p.GetName())
-		return
+		return false
 	}
 
 	fmt.Printf("folderFull (%v): '%v'\narchive '%v'\n", p.GetName(), folderFull, archive)
@@ -1712,17 +1717,17 @@ func (p *Prg) install() {
 	if p.isInstalled() {
 		fmt.Printf("No Need to install %v in '%v' per test\n", p.GetName(), folderFull)
 		p.postInstall()
-		return
+		return true
 	}
 	fmt.Printf("TEST.... '%v' (for '%v')\n", false, folderFull.Add(p.test))
 
 	folderTmp := folderMain.Add("tmp/")
 	if !folderTmp.Exists() && !folderTmp.MkDirAll() {
-		return
+		return false
 	}
 	if archive.isZip() && p.invoke == "" {
 		p.invokeUnZip()
-		return
+		return true
 	}
 	/*
 		if strings.Contains(folder, "Java_SE") {
@@ -1730,12 +1735,12 @@ func (p *Prg) install() {
 		}*/
 	if p.invoke == "" {
 		fmt.Printf("Unknown command for installing '%v'\n", archive)
-		return
+		return false
 	}
 
 	dst := folderFull.Abs()
 	if dst == nil {
-		return
+		return false
 	}
 
 	fmt.Printf("============ '%v'\n", p.invoke)
@@ -1754,6 +1759,7 @@ func (p *Prg) install() {
 		}
 	}
 	p.postInstall()
+	return true
 }
 
 type Invoke struct {
