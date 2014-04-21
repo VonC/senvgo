@@ -2130,18 +2130,28 @@ func (p *Prg) GetArchive() *Path {
 	if p.archive != nil {
 		return p.archive
 	}
+	var archiveName *Path
 	if p.exts != nil {
 		fmt.Printf("Get archive for %v", p.GetName())
-		archiveName := get(p.archive, p.exts.extractArchive, false)
-		url := p.GetURL()
-		p.archive = cache.GetArchive(archiveName, url, p.GetName(), p.cookies)
+		archiveName = get(p.archive, p.exts.extractArchive, false)
 	}
-	if p.archive.isExe() {
-		pname := NewPath(p.archive.releaseName() + ".zip")
+	fmt.Printf("***** Prg name '%v': isexe %v for depOn %v\n", p.name, archiveName.isExe(), p.depOn)
+	if archiveName.isExe() && p.depOn == nil {
+		pext := ".zip"
+		if len(p.deps) > 0 {
+			pext = ".tar.gz"
+		}
+		pname := NewPath(archiveName.NoExt().String() + pext)
 		portableArchive := cache.GetArchive(pname, nil, p.GetName(), p.cookies)
 		if portableArchive != nil {
 			p.archive = portableArchive
 		}
+	}
+	if p.archive == nil && archiveName != nil && p.exts != nil {
+		fmt.Printf("Get archive for %v", p.GetName())
+		archiveName := get(p.archive, p.exts.extractArchive, false)
+		url := p.GetURL()
+		p.archive = cache.GetArchive(archiveName, url, p.GetName(), p.cookies)
 	}
 	return p.archive
 }
