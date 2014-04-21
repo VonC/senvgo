@@ -459,6 +459,10 @@ func (c *CacheGitHub) UpdateArchive(p *Path, name string) {
 		fmt.Printf("UPDARC Github '%v' for '%v' from '%v': no zip or tar gz\n", p, name, c)
 		return
 	}
+	if addToGitHub == false {
+		fmt.Printf("UPDARC Github DENIED for '%v' for '%v' from '%v': addToGitHub false\n", p, name, c)
+		return
+	}
 	if c.last == p {
 		fmt.Printf("UPDARC Github '%v' for '%v' from '%v': already there\n", p, name, c)
 	}
@@ -501,7 +505,7 @@ func (c *CacheGitHub) UpdateArchive(p *Path, name string) {
 		sha := *repocommit.SHA
 		portableArchive := p.release()
 		if *repocommit.Commit.Message != "version for portable "+portableArchive {
-			fmt.Println("Must create commit")
+			fmt.Println("Must create commit for " + portableArchive + " vs '" + *repocommit.Commit.Message + "'")
 			commit := c.createCommit(repocommit, authUser, portableArchive, repo, "master")
 			if commit == nil {
 				fmt.Printf("UPDARC Github '%v' for '%v': unable to create commit on master\n", p, name)
@@ -1621,7 +1625,13 @@ func readJunction(link string, folder *Path, name string) *Path {
 	return NewPathDir(res)
 }
 
+var addToGitHub = true
+
 func (p *Prg) install() {
+	addToGitHub = true
+	if !isEmpty(p.dir) {
+		addToGitHub = false
+	}
 	folder := p.GetFolder()
 	if folder == nil {
 		fmt.Printf("[install] ERR: no folder on '%v'\n", p.GetName())
