@@ -287,8 +287,8 @@ func (c *CacheGitHub) IsGitHub() bool {
 // Get gets or download zip archives only from GitHub
 func (c *CacheGitHub) GetArchive(p *Path, url *url.URL, name string, cookies []*http.Cookie) *Path {
 	fmt.Printf("CacheGitHub.GetArchive '%v' for '%v' from '%v'\n", p, name, c)
-	if !p.isZip() {
-		fmt.Printf("GetArchive '%v' is not a .zip\n", p)
+	if !p.isPortableCompressed() {
+		fmt.Printf("GetArchive '%v' is not a .zip or tag.gz\n", p)
 		return nil
 	}
 	c.last = c.getFileFromGitHub(p, name)
@@ -373,11 +373,13 @@ func (c *CacheGitHub) getFileFromGitHub(p *Path, name string) *Path {
 	releaseName := p.releaseName()
 	release := c.getRelease(repo, releaseName)
 	if release == nil {
+		fmt.Printf("[CacheGitHub] NO RELEASE for '%v'\n", releaseName)
 		return nil
 	}
 	fmt.Printf("Release found: '%+v'\n", release)
 	asset := c.getAsset(release, repo, p.release())
 	if asset == nil {
+		fmt.Printf("[CacheGitHub] NO ASSET for '%v' (%v)\n", releaseName, p.release())
 		return nil
 	}
 	fmt.Printf("Asset found: '%+v'\n", asset)
