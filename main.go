@@ -191,12 +191,15 @@ type Path struct {
 
 func NewPath(p string) *Path {
 	res := &Path{}
-	res.path = filepath.FromSlash(p)
-	if !strings.HasSuffix(res.path, string(filepath.Separator)) && res.path != "" {
-		if res.Exists() && res.IsDir() {
-			res.path = res.path + string(filepath.Separator)
-		} else if strings.HasSuffix(p, string(filepath.Separator)) {
-			res.path = res.path + string(filepath.Separator)
+	res.path = p
+	if strings.HasPrefix(res.path, "http") == false {
+		res.path = filepath.FromSlash(p)
+		if !strings.HasSuffix(res.path, string(filepath.Separator)) && res.path != "" {
+			if res.Exists() && res.IsDir() {
+				res.path = res.path + string(filepath.Separator)
+			} else if strings.HasSuffix(p, string(filepath.Separator)) {
+				res.path = res.path + string(filepath.Separator)
+			}
 		}
 	}
 	return res
@@ -1136,7 +1139,7 @@ func do(req *http.Request) (*http.Response, error) {
 		req.AddCookie(c)
 	}
 
-	fmt.Printf("(do) Sent URL: '%v:%v'\n", req.Method, req.URL)
+	fmt.Printf("(do) Sent URL: '%v:%v' => Host: '%v'\n", req.Method, req.URL, req.Host)
 	fmt.Printf("~~~~\n")
 	fmt.Printf("(do) Cookies set: '[%v]: %v'\n", len(req.Cookies()), req.Cookies())
 	fmt.Printf("(do) Sent header: '%v'\n", req.Header)
@@ -2151,6 +2154,7 @@ func (p *Prg) GetURL() *url.URL {
 	if p.exts != nil {
 		fmt.Printf("Get url for %v", p.GetName())
 		rawurl := get(nil, p.exts.extractURL, false)
+		fmt.Printf("URL '%+v'\n", rawurl)
 		if anurl, err := url.ParseRequestURI(rawurl.String()); err == nil {
 			p.url = anurl
 		} else {
@@ -2176,6 +2180,7 @@ func get(iniValue *Path, ext Extractor, underscore bool) *Path {
 	if underscore {
 		res = strings.Replace(res, " ", "_", -1)
 	}
+	fmt.Printf("get == '%v'\n", res)
 	return NewPath(res)
 }
 
