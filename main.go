@@ -648,14 +648,19 @@ func (c *CacheGitHub) createRepo(name string, authUser *github.User) *github.Rep
 	client := c.getClient()
 	repos := client.Repositories
 	owner := *authUser.Name
-	rp := &github.Repository{}
+	rp := &github.Repository{
+		Name:        github.String(name),
+		Description: github.String("Release repo for " + name),
+		Homepage:    github.String("https://github.com/" + owner + "/" + name),
+		AutoInit:    github.Bool(true),
+	}
+	fmt.Printf("NAME REPO '%v'\n", name)
 	repo, _, err := repos.Create("", rp)
 	if err != nil {
 		fmt.Printf("Error while creating repo %v/'%v': '%v'\n", owner, *repo.Name, err)
 		return nil
 	}
 	fmt.Printf("%+v", repo)
-	os.Exit(0)
 	return repo
 
 }
