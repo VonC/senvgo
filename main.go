@@ -1646,13 +1646,34 @@ func (p *Prg) updateDependOn() {
 	}
 }
 
+func (p *Prg) postInstall() {
+	for _, dep := range p.deps {
+		dep.install()
+	}
+	p.checkLatest()
+	p.BuildZip()
+}
+func (p *Prg) isInstalled() bool {
+	if p.test == "" {
+		return false
+	}
+	folder := p.GetFolder()
+	folderMain := NewPathDir("test/" + p.GetName())
+	folderFull := folderMain.AddP(folder)
+	return folderFull.Add(p.test).Exists()
+}
+
 func (p *Prg) install() {
 	addToGitHub = true
 	if !isEmpty(p.dir) {
 		addToGitHub = false
 		p.updateDependOn()
 		if p.depOn == nil {
-			fmt.Printf("[install] ERR: depOn '%v' MISSING\n", p.GetName())
+			fmt.Printf("[install] ERR: '%v' depOn '%v' MISSING\n", p.name, p.GetName())
+			return
+		}
+		if !p.depOn.isInstalled() {
+			fmt.Printf("[install] ERR: '%v' depOn '%v' not installed yet\n", p.name, p.GetName())
 			return
 		}
 	}
@@ -1675,10 +1696,9 @@ func (p *Prg) install() {
 
 	fmt.Printf("folderFull (%v): '%v'\narchive '%v'\n", p.GetName(), folderFull, archive)
 
-	if p.test != "" && folderFull.Add(p.test).Exists() {
+	if p.isInstalled() {
 		fmt.Printf("No Need to install %v in '%v' per test\n", p.GetName(), folderFull)
-		p.checkLatest()
-		p.BuildZip()
+		p.postInstall()
 		return
 	}
 	fmt.Printf("TEST.... '%v' (for '%v')\n", false, folderFull.Add(p.test))
@@ -1720,11 +1740,7 @@ func (p *Prg) install() {
 			fmt.Printf("Error invoking '%v'\n''%v': %v'\n", cmd, string(out), err)
 		}
 	}
-	for _, dep := range p.deps {
-		dep.install()
-	}
-	p.BuildZip()
-	p.checkLatest()
+	p.postInstall()
 }
 
 type Invoke struct {
