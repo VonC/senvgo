@@ -129,7 +129,7 @@ func (p *Path) AddP(path *Path) *Path {
 // GetName returns the name of the program to be installed, used for folder
 func (p *Prg) GetName() string {
 	if p.dir != nil {
-		return p.dir.String()
+		return p.dir.Base()
 	}
 	return p.name
 }
