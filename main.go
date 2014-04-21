@@ -29,9 +29,11 @@ import (
 	"code.google.com/p/goauth2/oauth"
 )
 
+var prgs []*Prg
+
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
-	prgs := ReadConfig()
+	prgs = ReadConfig()
 	for _, p := range prgs {
 		p.install()
 		fmt.Printf("INSTALLED '%v'\n", p)
@@ -103,6 +105,8 @@ type Prg struct {
 	cookies     []*http.Cookie
 	test        string
 	buildZip    string
+	deps        []*Prg
+	depOn       *Prg
 }
 
 func (p *Prg) String() string {
@@ -1627,10 +1631,30 @@ func readJunction(link string, folder *Path, name string) *Path {
 
 var addToGitHub = true
 
+func (p *Prg) updateDependOn() {
+	if p.depOn != nil {
+		return
+	}
+	if isEmpty(p.dir) {
+		return
+	}
+	for _, prg := range prgs {
+		if prg.GetName() == p.dir.Base() {
+			p.depOn = prg
+			break
+		}
+	}
+}
+
 func (p *Prg) install() {
 	addToGitHub = true
 	if !isEmpty(p.dir) {
 		addToGitHub = false
+		p.updateDependOn()
+		if p.depOn == nil {
+			fmt.Printf("[install] ERR: depOn '%v' MISSING\n", p.GetName())
+			return
+		}
 	}
 	folder := p.GetFolder()
 	if folder == nil {
@@ -1696,6 +1720,9 @@ func (p *Prg) install() {
 			fmt.Printf("Error invoking '%v'\n''%v': %v'\n", cmd, string(out), err)
 		}
 	}
+	for _, dep := range p.deps {
+		dep.install()
+	}
 	p.BuildZip()
 	p.checkLatest()
 }
@@ -1736,6 +1763,7 @@ func (i Invoke) InstallJDKsrc(folder, archive *Path) {
 func (i Invoke) InstallJDK(folder *Path, archive *Path) {
 	fmt.Printf("folder='%v'\n", folder)
 	fmt.Printf("archive='%v'\n", archive)
+	os.Exit(0)
 	if !folder.Add("tools.zip").Exists() {
 		uncompress7z(archive, folder, NewPath("tools.zip"), "Extract tools.zip", true)
 	}
@@ -1770,7 +1798,6 @@ func (i Invoke) InstallJDK(folder *Path, archive *Path) {
 			}
 		}
 	}
-	os.Exit(0)
 }
 
 func (p *Prg) BuildZip() {
