@@ -19,6 +19,7 @@ import (
 	"reflect"
 	"regexp"
 	"runtime"
+	"runtime/debug"
 	"sort"
 	"strings"
 	"sync"
@@ -292,6 +293,8 @@ func (c *CacheGitHub) GetArchive(p *Path, url *url.URL, name string, cookies []*
 		return nil
 	}
 	c.last = c.getFileFromGitHub(p, name)
+	fmt.Printf("c.last '%v'\n", c.last)
+	os.Exit(0)
 	if c.next != nil {
 		if c.last == nil {
 			c.last = c.Next().GetArchive(p, url, name, cookies)
@@ -821,6 +824,20 @@ func (c *CacheDisk) GetArchive(p *Path, url *url.URL, name string, cookies []*ht
 	if c.last != nil {
 		return c.last
 	}
+	archiveName := p.Base()
+	name2 := ""
+	if strings.HasSuffix(archiveName, ".7z") {
+		name2 = archiveName[:len(archiveName)-len(".7z")] + ".gz"
+	} else if strings.HasSuffix(archiveName, ".gz") {
+		name2 = archiveName[:len(archiveName)-len(".gz")] + ".7z"
+	}
+	if name2 != "" {
+		filename = folder.Add(name2)
+		c.checkArchive(filename, name)
+		if c.last != nil {
+			return c.last
+		}
+	}
 
 	if c.next != nil {
 		if c.last == nil {
@@ -843,6 +860,8 @@ func (c *CacheDisk) GetArchive(p *Path, url *url.URL, name string, cookies []*ht
 		return nil
 	}
 	fmt.Printf("CacheDisk.GetArchive[%v]: ... MUST download '%v' for '%v'\n", c.id, url, filename)
+	debug.PrintStack()
+	os.Exit(0)
 	download(url, filename, 100000, cookies)
 	fmt.Printf("CacheDisk.GetArchive[%v]: ... DONE download '%v' for '%v'\n", c.id, url, filename)
 	c.checkArchive(filename, name)
@@ -1739,8 +1758,6 @@ func (p *Prg) install() bool {
 	}
 	fmt.Printf("TEST.... '%v' (for '%v')\n", false, folderFull.Add(p.test))
 
-	os.Exit(0)
-
 	folderTmp := folderMain.Add("tmp/")
 	if !folderTmp.Exists() && !folderTmp.MkDirAll() {
 		return false
@@ -1818,7 +1835,7 @@ func (i Invoke) InstallJDKsrc(folder, archive *Path) {
 func (i Invoke) InstallJDK(folder *Path, archive *Path) {
 	fmt.Printf("folder='%v'\n", folder)
 	fmt.Printf("archive='%v'\n", archive)
-	os.Exit(0)
+
 	if !folder.Add("tools.zip").Exists() {
 		uncompress7z(archive, folder, NewPath("tools.zip"), "Extract tools.zip", true)
 	}
