@@ -1646,6 +1646,18 @@ func (p *Prg) updateDependOn() {
 	}
 }
 
+func (p *Prg) updateDeps() {
+	if p.deps != nil {
+		return
+	}
+	p.deps = []*Prg{}
+	for _, prg := range prgs {
+		if prg.GetName() == p.name && prg.GetName() != prg.name {
+			p.deps = append(p.deps, prg)
+		}
+	}
+}
+
 func (p *Prg) postInstall() {
 	for _, dep := range p.deps {
 		dep.install()
@@ -1665,6 +1677,7 @@ func (p *Prg) isInstalled() bool {
 
 func (p *Prg) install() {
 	addToGitHub = true
+	p.updateDeps()
 	if !isEmpty(p.dir) {
 		addToGitHub = false
 		p.updateDependOn()
