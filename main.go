@@ -531,7 +531,7 @@ func (c *CacheGitHub) UpdateArchive(p *Path, name string) {
 			tag := c.createTag(tagName, authUser, repo, sha)
 			fmt.Printf("UPDARC Github Created tag (and ref) '%v'\n", tag)
 		}
-		release = c.createRelease(repo, authUser, name, sha, releaseName)
+		release = c.createRelease(repo, authUser, tagName, sha, releaseName)
 		if release == nil {
 			fmt.Printf("UPDARC Github ERROR unable to create release '%v' for '%v'\n", releaseName, name)
 			return
@@ -567,19 +567,19 @@ func (c *CacheGitHub) uploadAsset(authUser *github.User, rid int, p *Path, name 
 	return rela
 }
 
-func (c *CacheGitHub) createRelease(repo *github.Repository, authUser *github.User, name string, sha string, releaseName string) *github.RepositoryRelease {
+func (c *CacheGitHub) createRelease(repo *github.Repository, authUser *github.User, tagName string, sha string, releaseName string) *github.RepositoryRelease {
 	client := c.getClient()
 	repos := client.Repositories
 	owner := *authUser.Name
 	reprel := &github.RepositoryRelease{
-		TagName:         github.String(name),
+		TagName:         github.String(tagName),
 		TargetCommitish: github.String(sha),
 		Name:            github.String(releaseName),
 		Body:            github.String("Portable version of " + releaseName),
 	}
-	reprel, _, err := repos.CreateRelease(owner, releaseName, reprel)
+	reprel, _, err := repos.CreateRelease(owner, *repo.Name, reprel)
 	if err != nil {
-		fmt.Printf("Error while creating repo release '%v'-'%v' for repo %v/'%v': '%v'\n", releaseName, "v"+releaseName, owner, *repo.Name, err)
+		fmt.Printf("Error while creating repo release '%v'-'%v' for repo %v/'%v': '%v'\n", releaseName, tagName, owner, *repo.Name, err)
 		return nil
 	}
 	return reprel
