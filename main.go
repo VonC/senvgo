@@ -559,7 +559,7 @@ func (c *CacheGitHub) uploadAsset(authUser *github.User, rid int, p *Path, name 
 	owner := *authUser.Name
 	client := c.getClient()
 	repos := client.Repositories
-	rela, _, err := repos.UploadReleaseAsset(owner, p.releaseName(), rid, &github.UploadOptions{Name: p.Base()}, file)
+	rela, _, err := repos.UploadReleaseAsset(owner, name, rid, &github.UploadOptions{Name: p.Base()}, file)
 	if err != nil {
 		fmt.Printf("Error while uploading release asset '%v'(%v): '%v'\n", p.releaseName(), rid, err)
 		return nil
