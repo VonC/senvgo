@@ -524,7 +524,7 @@ func (c *CacheGitHub) UpdateArchive(p *Path, name string) {
 		}
 		if !tagFound {
 			fmt.Printf("Must create tag '%v' for commit '%v', repo VonC/'%v'.\n", tagName, sha, *repo.Name)
-			tag := c.createTag(tagName, authUser, repo, releaseName, sha)
+			tag := c.createTag(tagName, authUser, repo, sha)
 			fmt.Printf("UPDARC Github Created tag (and ref) '%v'\n", tag)
 		}
 		release = c.createRelease(repo, authUser, name, sha, releaseName)
@@ -592,26 +592,32 @@ func (c *CacheGitHub) getTag(tagName string, authUser *github.User, repo *github
 	}
 
 	var tagShort github.RepositoryTagShort
+	found := false
 	for _, tagShort = range tags {
 		fmt.Printf("Tags '%v' => %v\n", *tagShort.Name, *tagShort.CommitTag.SHA)
 		if *tagShort.Name == tagName {
 			fmt.Printf("Tag '%v' found: '%v-%v-%v'\n", tagName, *tagShort.Name, *tagShort.CommitTag.SHA, *tagShort.CommitTag.URL)
+			found = true
 			break
 		}
+	}
+	if !found {
+		return nil
 	}
 	return &tagShort
 }
 
-func (c *CacheGitHub) createTag(tagName string, authUser *github.User, repo *github.Repository, releaseName string, sha string) *github.RepositoryTag {
+func (c *CacheGitHub) createTag(tagName string, authUser *github.User, repo *github.Repository, sha string) *github.RepositoryTag {
 
 	client := c.getClient()
 	repos := client.Repositories
+	name := *repo.Name
 
 	owner := *authUser.Name
 	email := *authUser.Email
 	input := &github.DataTag{
 		Tag:     github.String(tagName),
-		Message: github.String("tag for version portable " + releaseName),
+		Message: github.String("tag for version portable " + name),
 		Object:  github.String(sha),
 		Type:    github.String("commit"),
 		Tagger: &github.Tagger{
@@ -619,19 +625,19 @@ func (c *CacheGitHub) createTag(tagName string, authUser *github.User, repo *git
 			Email: github.String(email),
 		},
 	}
-	tag, _, err := repos.CreateTag(owner, releaseName, input)
+	tag, _, err := repos.CreateTag(owner, name, input)
 	if err != nil {
-		fmt.Printf("Error while creating tag '%v'-'%v' from repo VonC/'%v': '%v'\n", *input.Tag, *input.Object, releaseName, err)
+		fmt.Printf("Error while creating tag '%v'-'%v' from repo VonC/'%v': '%v'\n", *input.Tag, *input.Object, name, err)
 		return nil
 	}
-	ref, _, err := client.Git.CreateRef(owner, releaseName, &github.Reference{
+	ref, _, err := client.Git.CreateRef(owner, name, &github.Reference{
 		Ref: github.String("tags/" + tagName),
 		Object: &github.GitObject{
 			SHA: github.String(*tag.SHA),
 		},
 	})
 	if err != nil {
-		fmt.Printf("Error while creating reference to tag '%v'-'%v' from repo VonC/'%v': '%v'\n", *tag.Tag, *tag.SHA, releaseName, err)
+		fmt.Printf("Error while creating reference to tag '%v'-'%v' from repo VonC/'%v': '%v'\n", *tag.Tag, *tag.SHA, name, err)
 		return nil
 	}
 	fmt.Printf("Ref created: '%v'\n", ref)
