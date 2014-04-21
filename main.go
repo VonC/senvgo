@@ -323,10 +323,28 @@ func (p *Path) isExe() bool {
 	return strings.HasSuffix(p.String(), ".exe")
 }
 
+func (p *Path) NoExt() *Path {
+	f := p.String()
+	if strings.HasSuffix(f, ".exe") {
+		return NewPath(f[:len(f)-len(".exe")])
+	}
+	if strings.HasSuffix(f, ".zip") {
+		return NewPath(f[:len(f)-len(".zip")])
+	}
+	if strings.HasSuffix(f, ".tar.gz") {
+		return NewPath(f[:len(f)-len(".tar.gz")])
+	}
+	if strings.HasSuffix(f, ".tar.7z") {
+		return NewPath(f[:len(f)-len(".tar.7z")])
+	}
+	if strings.HasSuffix(f, ".tar") {
+		return NewPath(f[:len(f)-len(".tar")])
+	}
+	return p
+}
+
 func (p *Path) releaseName() string {
-	_, f := filepath.Split(p.String())
-	releaseName := f[:len(f)-len(".zip")]
-	return releaseName
+	return p.NoExt().Base()
 }
 
 func (p *Path) release() string {
