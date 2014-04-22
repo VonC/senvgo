@@ -2030,6 +2030,16 @@ func (i Invoke) BuildZipJDK(folder *Path, archive *Path) bool {
 	archiveTar := archive.Tar()
 	fmt.Printf("[BuildZipJDK] archive='%v'\n", archiveTar)
 	if !archiveTar.Exists() {
+		tools := folder.Add("tools.zip")
+		if !tools.Exists() {
+			fmt.Printf("[BuildZipJDK] tools.zip not found at '%v'\n", tools)
+			return false
+		}
+		src := folder.Add("src.zip")
+		if !src.Exists() {
+			fmt.Printf("[BuildZipJDK] src.zip not found at '%v'\n", src)
+			return false
+		}
 		compress7z(archiveTar, nil, folder.Add("tools.zip").Dot(), "Add tools.zip", "tar")
 		compress7z(archiveTar, nil, folder.Add("src.zip").Dot(), "Add src.zip", "tar")
 	}
