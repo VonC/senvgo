@@ -19,7 +19,6 @@ import (
 	"reflect"
 	"regexp"
 	"runtime"
-	"runtime/debug"
 	"sort"
 	"strings"
 	"sync"
@@ -510,7 +509,7 @@ func (c *CacheGitHub) UpdateArchive(p *Path, name string) {
 	if asset != nil {
 		c.last = p
 		fmt.Printf("UPDARC Github '%v' for '%v' from '%v': nothing to do\n", p, name, c)
-		debug.PrintStack()
+		// debug.PrintStack()
 		return
 	}
 	var rid int
@@ -2190,7 +2189,7 @@ func (p *Prg) GetArchive() *Path {
 		savePath = cache.Last()
 	}
 	fmt.Printf("***** Prg name '%v': isexe %v for depOn %v len %v\n", p.name, archiveName.isExe(), p.depOn, len(p.deps))
-	debug.PrintStack()
+	//debug.PrintStack()
 	if archiveName.isExe() && p.depOn == nil {
 		pext := ".zip"
 		if len(p.deps) > 0 {
