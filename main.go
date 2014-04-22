@@ -1834,7 +1834,10 @@ func (p *Prg) install() bool {
 
 	if strings.HasPrefix(p.invoke, "go:") {
 		methodName := strings.TrimSpace(p.invoke[len("go:"):])
-		p.callFunc(methodName, dst, archive)
+		if !p.callFunc(methodName, dst, archive) {
+			fmt.Printf("[install] Unable to install '%v' invoke '%v'\n", p.name, archive)
+			return false
+		}
 	} else {
 		cmd := p.invoke
 		cmd = strings.Replace(cmd, "@FILE@", archive.String(), -1)
@@ -1852,14 +1855,17 @@ func (p *Prg) install() bool {
 type Invoke struct {
 }
 
-func (p *Prg) callFunc(methodName string, folder, archive *Path) {
+func (p *Prg) callFunc(methodName string, folder, archive *Path) bool {
 	fmt.Printf("methodName '%v'\n", methodName)
 	// http://groups.google.com/forum/#!topic/golang-nuts/-J17cxJnmss
 	// http://stackoverflow.com/questions/8103617/call-a-struct-and-its-method-by-name-in-go
 	inputs := make([]reflect.Value, 2)
 	inputs[0] = reflect.ValueOf(folder)
 	inputs[1] = reflect.ValueOf(archive)
-	reflect.ValueOf(Invoke{}).MethodByName(methodName).Call(inputs)
+	values := reflect.ValueOf(Invoke{}).MethodByName(methodName).Call(inputs)
+	val := values[0]
+	res := val.Bool()
+	return res
 }
 
 func (i Invoke) InstallJDKsrc(folder, archive *Path) {
@@ -1884,13 +1890,17 @@ func (i Invoke) InstallJDKsrc(folder, archive *Path) {
 	uncompress7z(archive, folder, f, "Extract src.zip", true)
 }
 
-func (i Invoke) InstallJDK(folder *Path, archive *Path) {
+func (i Invoke) InstallJDK(folder *Path, archive *Path) bool {
 	fmt.Printf("folder='%v'\n", folder)
 	fmt.Printf("archive='%v'\n", archive)
 
-	archiveTar := archive.Tar()
+	archiveTar := folder.Add(archive.Tar().Base())
 	if !archiveTar.Exists() {
-		uncompress7z(archive, archive.Dir(), nil, "Extract jdk tar from tar.gz", true)
+		uncompress7z(archive, folder, nil, "Extract jdk tar from tar.gz", true)
+	}
+	if !archiveTar.Exists() {
+		fmt.Println("[InstallJDK] ERR: unable to access tar '%v'\n", archiveTar)
+		return false
 	}
 
 	fmt.Printf("folder='%+v', ", folder)
@@ -1907,7 +1917,7 @@ func (i Invoke) InstallJDK(folder *Path, archive *Path) {
 	unpack := folder.Add("bin/unpack200.exe")
 	if !unpack.Exists() {
 		fmt.Printf("Error bin/unpack200.exe not found in '%v'\n", folder)
-		return
+		return false
 	}
 	files := []string{}
 	err := filepath.Walk(folder.String(), func(path string, f os.FileInfo, _ error) error {
@@ -1931,6 +1941,7 @@ func (i Invoke) InstallJDK(folder *Path, archive *Path) {
 			}
 		}
 	}
+	return true
 }
 
 func (p *Prg) BuildZip() {
