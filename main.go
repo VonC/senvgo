@@ -1857,6 +1857,11 @@ func (i Invoke) InstallJDK(folder *Path, archive *Path) {
 }
 
 func (p *Prg) BuildZip() {
+
+	if p.depOn != nil {
+		return
+	}
+
 	archive := p.GetArchive()
 	if !archive.isExe() {
 		return
