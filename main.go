@@ -2160,6 +2160,7 @@ func (p *Prg) GetFolder() *Path {
 
 // GetArchive returns archive name
 func (p *Prg) GetArchive() *Path {
+	p.updateDeps()
 	if p.archive != nil {
 		return p.archive
 	}
