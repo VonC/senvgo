@@ -1910,7 +1910,7 @@ func (i Invoke) BuildZipJDK(folder *Path, archive *Path) {
 		compress7z(archiveTar, nil, folder.Add("tools.zip").Dot(), "Add tools.zip", "tar")
 		compress7z(archiveTar, nil, folder.Add("src.zip").Dot(), "Add src.zip", "tar")
 	}
-	archiveTarGz := archiveTar.Sz()
+	archiveTarGz := archiveTar.Gz()
 	if !archiveTarGz.Exists() {
 		compress7z(archiveTarGz, nil, archiveTar, "gz the jDK tar", "gzip")
 		//compress7z(archiveTarGz, nil, archiveTar, "7z the jDK tar", "7z")
