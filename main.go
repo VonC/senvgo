@@ -294,7 +294,6 @@ func (c *CacheGitHub) GetArchive(p *Path, url *url.URL, name string, cookies []*
 	}
 	c.last = c.getFileFromGitHub(p, name)
 	fmt.Printf("c.last '%v'\n", c.last)
-	debug.PrintStack()
 
 	if c.next != nil {
 		if c.last == nil {
@@ -511,6 +510,7 @@ func (c *CacheGitHub) UpdateArchive(p *Path, name string) {
 	if asset != nil {
 		c.last = p
 		fmt.Printf("UPDARC Github '%v' for '%v' from '%v': nothing to do\n", p, name, c)
+		debug.PrintStack()
 		return
 	}
 	var rid int
@@ -841,7 +841,7 @@ func (c *CacheDisk) GetArchive(p *Path, url *url.URL, name string, cookies []*ht
 		return nil
 	}
 	fmt.Printf("CacheDisk.GetArchive[%v]: ... MUST download '%v' for '%v'\n", c.id, url, filename)
-	debug.PrintStack()
+	os.Exit(0)
 	download(url, filename, 100000, cookies)
 	fmt.Printf("CacheDisk.GetArchive[%v]: ... DONE download '%v' for '%v'\n", c.id, url, filename)
 	c.checkArchive(filename, name)
@@ -1677,9 +1677,11 @@ func (p *Prg) updateDeps() {
 			p.deps = append(p.deps, prg)
 		}
 	}
+	fmt.Printf("~~~~~~~~~~~~~~~ %v %v\n", p.name, len(p.deps))
 }
 
 func (p *Prg) postInstall() {
+	fmt.Printf("PostInstall '%v': %v\n", p.name, p.deps)
 	for _, dep := range p.deps {
 		dep.install()
 	}
@@ -1693,7 +1695,9 @@ func (p *Prg) isInstalled() bool {
 	folder := p.GetFolder()
 	folderMain := NewPathDir("test/" + p.GetName())
 	folderFull := folderMain.AddP(folder)
-	return folderFull.Add(p.test).Exists()
+	test := folderFull.Add(p.test)
+	fmt.Printf("*** TEST='%+v'\n", test)
+	return test.Exists()
 }
 
 func resetAddToGitHub() {
@@ -1712,7 +1716,7 @@ func (p *Prg) install() bool {
 			return false
 		}
 		if !p.depOn.isInstalled() {
-			fmt.Printf("[install] ERR: '%v' depOn '%v' not installed yet\n", p.name, p.GetName())
+			fmt.Printf("[install] ERR: '%v' depOn '%v' not installed yet\n", p.name, p.depOn.name)
 			return false
 		}
 	}
@@ -1774,7 +1778,9 @@ func (p *Prg) install() bool {
 	}
 
 	dst := folderFull.Abs()
-	if dst == nil {
+	fmt.Printf("Dst='%+v'\n", dst)
+
+	if isEmpty(dst) {
 		return false
 	}
 
@@ -1813,6 +1819,7 @@ func (p *Prg) callFunc(methodName string, folder, archive *Path) {
 func (i Invoke) InstallJDKsrc(folder, archive *Path) {
 	fmt.Printf("[installJDKsrc] folder='%v'\n", folder)
 	fmt.Printf("[installJDKsrc] archive='%v'\n", archive)
+	os.Exit(0)
 	archive2 := NewPath(strings.Replace(archive.String(), ".gz", "", -1))
 	archive2f := NewPath(filepath.Base(archive2.String()))
 	archive2folder := NewPathDir(filepath.Dir(archive2.String()))
@@ -2080,6 +2087,7 @@ func uncompress7z(archive, folder, file *Path, msg string, extract bool) bool {
 	}
 	cmd = fmt.Sprintf("%v %v -aos -o%v -pdefault -sccUTF-8 %v%v", cmd, extractCmd, ffolder.String(), farchive.String(), argFile)
 	fmt.Printf("%v'%v'%v => 7zU...\n%v\n", msg, archive, argFile, cmd)
+
 	c := exec.Command("cmd", "/C", cmd)
 	if out, err := c.Output(); err != nil {
 		fmt.Printf("Error invoking 7ZU '%v'\n''%v' %v'\n%v\n", cmd, string(out), err, cmd)
@@ -2180,7 +2188,8 @@ func (p *Prg) GetArchive() *Path {
 		archiveName = get(p.archive, p.exts.extractArchive, false)
 		savePath = cache.Last()
 	}
-	fmt.Printf("***** Prg name '%v': isexe %v for depOn %v\n", p.name, archiveName.isExe(), p.depOn)
+	fmt.Printf("***** Prg name '%v': isexe %v for depOn %v len %v\n", p.name, archiveName.isExe(), p.depOn, len(p.deps))
+	debug.PrintStack()
 	if archiveName.isExe() && p.depOn == nil {
 		pext := ".zip"
 		if len(p.deps) > 0 {
