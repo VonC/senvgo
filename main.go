@@ -214,8 +214,23 @@ func NewPathDir(p string) *Path {
 	return res
 }
 
+func (p *Path) EndsWithSeparator() bool {
+	if strings.HasSuffix(p.path, string(filepath.Separator)) {
+		return true
+	}
+	return false
+}
+
+func (p *Path) SetDir() *Path {
+	if p.EndsWithSeparator() {
+		return p
+	}
+	return NewPathDir(p.path)
+}
+
 func (p *Path) Add(s string) *Path {
-	return NewPath(p.path + s)
+	pp := p.SetDir()
+	return NewPath(pp.path + s)
 }
 
 func (p *Path) String() string {
