@@ -1956,15 +1956,15 @@ func (i Invoke) InstallJDK(folder *Path, archive *Path) bool {
 	return true
 }
 
-func (p *Prg) BuildZip() {
+func (p *Prg) BuildZip() bool {
 
 	if p.depOn != nil {
-		return
+		return true
 	}
 
 	archive := p.GetArchive()
 	if !archive.isExe() {
-		return
+		return true
 	}
 
 	folder := p.GetFolder()
@@ -1973,13 +1973,14 @@ func (p *Prg) BuildZip() {
 
 	if strings.HasPrefix(p.buildZip, "go:") {
 		methodName := strings.TrimSpace(p.buildZip[len("go:"):])
-		p.callFunc(methodName, folderFull, archive)
+		return p.callFunc(methodName, folderFull, archive)
 	} else {
 		portableArchive := NewPath(strings.Replace(archive.String(), ".exe", ".zip", -1))
 		if !portableArchive.Exists() {
 			compress7z(portableArchive, folderFull, nil, fmt.Sprintf("Compress '%v' for '%v'", portableArchive, p.GetName()), "zip")
 		}
 	}
+	return true
 }
 
 func (p *Path) Dir() *Path {
@@ -1999,9 +2000,9 @@ func (p *Path) Base() string {
 	return filepath.Base(pp)
 }
 
-func (i Invoke) BuildZipJDK(folder *Path, archive *Path) {
+func (i Invoke) BuildZipJDK(folder *Path, archive *Path) bool {
 	if !archive.isExe() && archive.HasTar() {
-		return
+		return false
 	}
 	fmt.Printf("[BuildZipJDK] folder='%v'\n", folder)
 	archiveTar := archive.Tar()
@@ -2018,6 +2019,7 @@ func (i Invoke) BuildZipJDK(folder *Path, archive *Path) {
 	name := folder.Dir().Base()
 	fmt.Println(folder, name)
 	cache.UpdateArchive(archiveTarGz, name)
+	return true
 }
 
 func (p *Path) Dot() *Path {
