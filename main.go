@@ -1716,12 +1716,23 @@ func (p *Prg) install() bool {
 		fmt.Printf("[install] ERR: no folder on '%v'\n", p.GetName())
 		return false
 	}
+
 	folderMain := NewPathDir("test/" + p.GetName())
 	if !folderMain.Exists() && !folderMain.MkDirAll() {
 		fmt.Printf("[install] ERR: unable to create folder on '%v'\n", folderMain.String())
 		return false
 	}
 	folderFull := folderMain.AddP(folder)
+
+	if p.isInstalled() {
+		fmt.Printf("No Need to install %v in '%v' per test\n", p.GetName(), folderFull)
+		if p.depOn == nil {
+			p.postInstall()
+		}
+		return true
+	}
+	fmt.Printf("TEST.... '%v' (for '%v')\n", false, folderFull.Add(p.test))
+
 	archive := p.GetArchive()
 	fmt.Printf("[install] GetArchive()='%v'\n", archive)
 	if archive == nil {
@@ -1730,13 +1741,6 @@ func (p *Prg) install() bool {
 	}
 
 	fmt.Printf("folderFull (%v): '%v'\narchive '%v'\n", p.GetName(), folderFull, archive)
-
-	if p.isInstalled() {
-		fmt.Printf("No Need to install %v in '%v' per test\n", p.GetName(), folderFull)
-		p.postInstall()
-		return true
-	}
-	fmt.Printf("TEST.... '%v' (for '%v')\n", false, folderFull.Add(p.test))
 
 	folderTmp := folderMain.Add("tmp/")
 	if !folderTmp.Exists() && !folderTmp.MkDirAll() {
