@@ -1746,13 +1746,16 @@ func (p *Prg) updateDeps() {
 	fmt.Printf("~~~~~~~~~~~~~~~ %v %v\n", p.name, len(p.deps))
 }
 
-func (p *Prg) postInstall() {
+func (p *Prg) postInstall() bool {
 	fmt.Printf("PostInstall '%v': %v\n", p.name, p.deps)
 	for _, dep := range p.deps {
-		dep.install()
+		if !dep.install() {
+			fmt.Printf("[postInstall] FAIL to install dep '%v'\n", dep.name)
+			return false
+		}
 	}
 	p.checkLatest()
-	p.BuildZip()
+	return p.BuildZip()
 }
 func (p *Prg) isInstalled() bool {
 	if p.test == "" {
@@ -1802,7 +1805,7 @@ func (p *Prg) install() bool {
 	if p.isInstalled() {
 		fmt.Printf("No Need to install %v in '%v' per test\n", p.GetName(), folderFull)
 		if p.depOn == nil {
-			p.postInstall()
+			return p.postInstall()
 		}
 		return true
 	}
@@ -1868,8 +1871,7 @@ func (p *Prg) install() bool {
 			fmt.Printf("Error invoking '%v'\n''%v': %v'\n", cmd, string(out), err)
 		}
 	}
-	p.postInstall()
-	return true
+	return p.postInstall()
 }
 
 type Invoke struct {
