@@ -2134,10 +2134,14 @@ func (p *Prg) invokeUnZip() bool {
 
 // GetFolder returns full folder path ofr a program
 func (p *Prg) GetFolder() *Path {
+	if isEmpty(p.folder) == false {
+		return p.folder
+	}
 	if p.exts != nil {
 		fmt.Printf("Get folder for %v", p.GetName())
 		p.folder = get(p.folder, p.exts.extractFolder, true)
-		fmt.Printf("DONE Get folder for %v", p)
+		fmt.Printf("DONE Get folder for %v", p.folder)
+		debug.PrintStack()
 	}
 	return p.folder
 }
