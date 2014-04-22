@@ -1868,7 +1868,7 @@ func (p *Prg) callFunc(methodName string, folder, archive *Path) bool {
 	return res
 }
 
-func (i Invoke) InstallJDKsrc(folder, archive *Path) {
+func (i Invoke) InstallJDKsrc(folder, archive *Path) bool {
 	fmt.Printf("[installJDKsrc] folder='%v'\n", folder)
 	fmt.Printf("[installJDKsrc] archive='%v'\n", archive)
 
@@ -1879,15 +1879,25 @@ func (i Invoke) InstallJDKsrc(folder, archive *Path) {
 		}
 		archive = archiveTar
 	}
+	if !archive.Exists() {
+		fmt.Printf("[installJDKsrc] unable to access archive '%v'\n", archive)
+		return false
+	}
 
 	l := list7z(archive, "src.zip")
 	rx, _ := regexp.Compile(`(?m).*\s((?:\S+\\)?src.zip).*$`)
-
 	matches := rx.FindAllStringSubmatchIndex(l, -1)
 	fmt.Printf("matches: '%v'\n", matches)
+
+	if len(matches) < 4 {
+		fmt.Printf("[installJDKsrc] unable to find src.zip in archive '%v'\n", archive)
+		return false
+	}
+
 	f := NewPath(l[matches[0][2]:matches[0][3]])
 
 	uncompress7z(archive, folder, f, "Extract src.zip", true)
+	return true
 }
 
 func (i Invoke) InstallJDK(folder *Path, archive *Path) bool {
