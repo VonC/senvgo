@@ -129,10 +129,6 @@ type PrgData interface {
 	GetArch() *Arch
 }
 
-func (p *Path) AddP(path *Path) *Path {
-	return p.Add(path.String())
-}
-
 // GetName returns the name of the program to be installed, used for folder
 func (p *Prg) GetName() string {
 	if p.dir != nil {
@@ -231,6 +227,30 @@ func (p *Path) SetDir() *Path {
 func (p *Path) Add(s string) *Path {
 	pp := p.SetDir()
 	return NewPath(pp.path + s)
+}
+
+func (p *Path) AddP(path *Path) *Path {
+	return p.Add(path.String())
+}
+
+func (p *Path) NoSep() *Path {
+	if !p.EndsWithSeparator() {
+		return p
+	}
+	pp := p.path
+	for strings.HasSuffix(pp, string(filepath.Separator)) {
+		pp = pp[:len(pp)-1]
+	}
+	return NewPath(pp)
+}
+
+func (p *Path) AddNoSep(s string) *Path {
+	pp := p.NoSep()
+	return NewPath(pp.path + s)
+}
+
+func (p *Path) AddPNoSep(path *Path) *Path {
+	return p.AddNoSep(path.String())
 }
 
 func (p *Path) String() string {
@@ -2051,7 +2071,7 @@ func (p *Path) Tar() *Path {
 	if p.IsTar() {
 		return p
 	}
-	return p.Add(".tar")
+	return p.AddNoSep(".tar")
 }
 
 func (p *Path) IsGz() bool {
@@ -2062,7 +2082,7 @@ func (p *Path) Gz() *Path {
 	if p.IsGz() {
 		return p
 	}
-	return p.Add(".gz")
+	return p.AddNoSep(".gz")
 }
 
 func (p *Path) isSz() bool {
@@ -2073,7 +2093,7 @@ func (p *Path) Sz() *Path {
 	if p.isSz() {
 		return p
 	}
-	return p.Add(".7z")
+	return p.AddNoSep(".7z")
 }
 
 func (p *Path) isPortableCompressed() bool {
