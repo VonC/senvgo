@@ -856,7 +856,7 @@ func (c *CacheDisk) GetArchive(p *Path, url *url.URL, name string, cookies []*ht
 		return nil
 	}
 	fmt.Printf("CacheDisk.GetArchive[%v]: ... MUST download '%v' for '%v'\n", c.id, url, filename)
-	os.Exit(0)
+	time.Sleep(time.Duration(5) * time.Second)
 	download(url, filename, 100000, cookies)
 	fmt.Printf("CacheDisk.GetArchive[%v]: ... DONE download '%v' for '%v'\n", c.id, url, filename)
 	c.checkArchive(filename, name)
@@ -1819,7 +1819,7 @@ func (p *Prg) install() bool {
 			installJDK(folderFull, archive)
 		}*/
 	if p.invoke == "" {
-		fmt.Printf("Unknown command for installing '%v'\n", archive)
+		fmt.Printf("[install] Unknown command for installing '%v'\n", archive)
 		return false
 	}
 
