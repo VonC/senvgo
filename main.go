@@ -1904,13 +1904,15 @@ func (i Invoke) InstallJDK(folder *Path, archive *Path) bool {
 	fmt.Printf("folder='%v'\n", folder)
 	fmt.Printf("archive='%v'\n", archive)
 
+	archiveTools := archive
 	archiveTar := folder.Add(archive.Tar().Base())
-	if !archiveTar.Exists() {
+	if archive.HasTar() && !archiveTar.Exists() {
 		uncompress7z(archive, folder, nil, "Extract jdk tar from tar.gz", true)
-	}
-	if !archiveTar.Exists() {
-		fmt.Println("[InstallJDK] ERR: unable to access tar '%v'\n", archiveTar)
-		return false
+		if !archiveTar.Exists() {
+			fmt.Println("[InstallJDK] ERR: unable to access tar '%v'\n", archiveTar)
+			return false
+		}
+		archiveTools = archiveTar
 	}
 
 	fmt.Printf("folder='%+v', ", folder)
@@ -1918,7 +1920,7 @@ func (i Invoke) InstallJDK(folder *Path, archive *Path) bool {
 	fmt.Printf("tools='%+v', ", tools)
 
 	if !tools.Exists() {
-		uncompress7z(archiveTar, folder, NewPath("tools.zip"), "Extract tools.zip", true)
+		uncompress7z(archiveTools, folder, NewPath("tools.zip"), "Extract tools.zip", true)
 	}
 	if !folder.Add("LICENSE").Exists() {
 		uncompress7z(tools, folder, nil, "Extract tools.zip in JDK", false)
