@@ -1819,22 +1819,23 @@ func (p *Prg) callFunc(methodName string, folder, archive *Path) {
 func (i Invoke) InstallJDKsrc(folder, archive *Path) {
 	fmt.Printf("[installJDKsrc] folder='%v'\n", folder)
 	fmt.Printf("[installJDKsrc] archive='%v'\n", archive)
-	os.Exit(0)
-	archive2 := NewPath(strings.Replace(archive.String(), ".gz", "", -1))
-	archive2f := NewPath(filepath.Base(archive2.String()))
-	archive2folder := NewPathDir(filepath.Dir(archive2.String()))
 
-	if !archive2.Exists() {
-		uncompress7z(archive, archive2folder, archive2f, "Extract src tar", true)
+	if !archive.isZip() && archive.HasTar() {
+		archiveTar := archive.Tar()
+		if !archiveTar.Exists() {
+			uncompress7z(archive, archive.Dir(), nil, "Extract jdk tar for src, from tar.gz", true)
+		}
+		archive = archiveTar
 	}
-	l := list7z(archive2, "src.zip")
-	rx, _ := regexp.Compile(`(?m).*\s(\S+\\src.zip).*$`)
+
+	l := list7z(archive, "src.zip")
+	rx, _ := regexp.Compile(`(?m).*\s((?:\S+\\)?src.zip).*$`)
 
 	matches := rx.FindAllStringSubmatchIndex(l, -1)
 	fmt.Printf("matches: '%v'\n", matches)
 	f := NewPath(l[matches[0][2]:matches[0][3]])
 
-	uncompress7z(archive2, folder, f, "Extract src.zip", true)
+	uncompress7z(archive, folder, f, "Extract src.zip", true)
 }
 
 func (i Invoke) InstallJDK(folder *Path, archive *Path) {
