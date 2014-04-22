@@ -423,17 +423,11 @@ func (c *CacheGitHub) getAsset(release *github.RepositoryRelease, repo *github.R
 		fmt.Printf("Error while getting assets from release '%v'(%v): '%v'\n", releaseName, releaseID, err)
 		return nil
 	}
-	name2 := ""
-	if strings.HasSuffix(name, ".7z") {
-		name2 = name[:len(name)-len(".7z")] + ".gz"
-	} else if strings.HasSuffix(name, ".gz") {
-		name2 = name[:len(name)-len(".gz")] + ".7z"
-	}
 
 	var rela github.ReleaseAsset
 	relaFound := false
 	for _, rela = range assets {
-		if *rela.Name == name || *rela.Name == name2 {
+		if *rela.Name == name {
 			relaFound = true
 			break
 		}
@@ -823,20 +817,6 @@ func (c *CacheDisk) GetArchive(p *Path, url *url.URL, name string, cookies []*ht
 	c.checkArchive(filename, name)
 	if c.last != nil {
 		return c.last
-	}
-	archiveName := p.Base()
-	name2 := ""
-	if strings.HasSuffix(archiveName, ".7z") {
-		name2 = archiveName[:len(archiveName)-len(".7z")] + ".gz"
-	} else if strings.HasSuffix(archiveName, ".gz") {
-		name2 = archiveName[:len(archiveName)-len(".gz")] + ".7z"
-	}
-	if name2 != "" {
-		filename = folder.Add(name2)
-		c.checkArchive(filename, name)
-		if c.last != nil {
-			return c.last
-		}
 	}
 
 	if c.next != nil {
