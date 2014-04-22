@@ -294,7 +294,8 @@ func (c *CacheGitHub) GetArchive(p *Path, url *url.URL, name string, cookies []*
 	}
 	c.last = c.getFileFromGitHub(p, name)
 	fmt.Printf("c.last '%v'\n", c.last)
-	os.Exit(0)
+	debug.PrintStack()
+
 	if c.next != nil {
 		if c.last == nil {
 			c.last = c.Next().GetArchive(p, url, name, cookies)
@@ -841,7 +842,6 @@ func (c *CacheDisk) GetArchive(p *Path, url *url.URL, name string, cookies []*ht
 	}
 	fmt.Printf("CacheDisk.GetArchive[%v]: ... MUST download '%v' for '%v'\n", c.id, url, filename)
 	debug.PrintStack()
-	os.Exit(0)
 	download(url, filename, 100000, cookies)
 	fmt.Printf("CacheDisk.GetArchive[%v]: ... DONE download '%v' for '%v'\n", c.id, url, filename)
 	c.checkArchive(filename, name)
@@ -1696,8 +1696,13 @@ func (p *Prg) isInstalled() bool {
 	return folderFull.Add(p.test).Exists()
 }
 
+func resetAddToGitHub() {
+	addToGitHub = true
+}
+
 func (p *Prg) install() bool {
 	addToGitHub = true
+	defer resetAddToGitHub()
 	p.updateDeps()
 	if !isEmpty(p.dir) {
 		addToGitHub = false
@@ -1918,7 +1923,6 @@ func (i Invoke) BuildZipJDK(folder *Path, archive *Path) {
 	name := folder.Dir().Base()
 	fmt.Println(folder, name)
 	cache.UpdateArchive(archiveTarGz, name)
-	os.Exit(0)
 }
 
 func (p *Path) Dot() *Path {
@@ -2141,7 +2145,6 @@ func (p *Prg) GetFolder() *Path {
 		fmt.Printf("Get folder for %v", p.GetName())
 		p.folder = get(p.folder, p.exts.extractFolder, true)
 		fmt.Printf("DONE Get folder for %v", p.folder)
-		debug.PrintStack()
 	}
 	return p.folder
 }
