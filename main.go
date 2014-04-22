@@ -1660,7 +1660,7 @@ func (p *Prg) updateDependOn() {
 		return
 	}
 	for _, prg := range prgs {
-		if prg.GetName() == p.dir.Base() {
+		if prg.GetName() == p.dir.Base() && prg.GetName() == prg.name {
 			p.depOn = prg
 			break
 		}
