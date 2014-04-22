@@ -1738,7 +1738,16 @@ func (p *Prg) install() bool {
 	}
 	fmt.Printf("TEST.... '%v' (for '%v')\n", false, folderFull.Add(p.test))
 
-	archive := p.GetArchive()
+	var archive *Path
+	if p.depOn != nil && p.depOn.isInstalled() {
+		archive = p.depOn.GetArchive()
+		if !archive.isPortableCompressed() {
+			archive = nil
+		}
+	}
+	if archive == nil {
+		archive = p.GetArchive()
+	}
 	fmt.Printf("[install] GetArchive()='%v'\n", archive)
 	if archive == nil {
 		fmt.Printf("[install] ERR: no archive on '%v'\n", p.GetName())
