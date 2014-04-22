@@ -778,6 +778,7 @@ func (c *CacheGitHub) UpdatePage(p *Path, name string) {
 
 func (c *CacheDisk) UpdatePage(p *Path, name string) {
 	fmt.Printf("UPDPAG Disk '%v' for '%v' from '%v'\n", p, name, c)
+	c.last = nil
 	folder := c.Folder(name)
 	filepath := folder.Add(p.release())
 	if filepath.Exists() {
@@ -913,7 +914,9 @@ var updatePage = true
 // Get will get either an url or an archive extension (exe, zip, tar.gz, ...)
 func (c *CacheDisk) GetPage(url *url.URL, name string) *Path {
 	fmt.Printf("GetPage '%v' for '%v' from '%v'\n", url, name, c)
+	c.last = nil
 	c.last = c.getFile(url, name)
+	fmt.Printf("c.last '%v'\n", c.last)
 	wasNotFound := true
 	if c.next != nil {
 		if c.last == nil {
@@ -923,6 +926,7 @@ func (c *CacheDisk) GetPage(url *url.URL, name string) *Path {
 			c.Next().UpdatePage(c.last, name)
 		}
 	}
+	fmt.Printf("c.last '%v' %v\n", c.last, wasNotFound)
 	if c.last == nil || wasNotFound || updatePage {
 		sha := c.getResourceName(url, name)
 		t := time.Now()
@@ -946,6 +950,7 @@ func (c *CacheDisk) GetPage(url *url.URL, name string) *Path {
 				fmt.Printf("[GetPage] UPDATE %v for URL %v\n", url, name)
 				c.last = filename
 			}
+			fmt.Printf("c.last DONE '%v' %v\n", c.last, wasNotFound)
 		}
 		if c.last != nil {
 			fmt.Printf("Get '%v' has downloaded in '%v' for '%v'\n", c.id, filename, url)
@@ -989,7 +994,6 @@ func (p *Path) MkDirAll() bool {
 }
 
 func (c *CacheDisk) getFile(url *url.URL, name string) *Path {
-	c.last = nil
 	dir := c.Folder(name)
 	if !dir.MkDirAll() {
 		return nil
@@ -1006,8 +1010,7 @@ func (c *CacheDisk) getFile(url *url.URL, name string) *Path {
 		return nil
 	}
 	f.Close()
-	c.last = filepath
-	return c.last
+	return filepath
 }
 
 func (c *CacheGitHub) String() string {
