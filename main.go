@@ -908,6 +908,8 @@ func (c *CacheGitHub) GetPage(url *url.URL, name string) *Path {
 	return nil
 }
 
+var updatePage = true
+
 // Get will get either an url or an archive extension (exe, zip, tar.gz, ...)
 func (c *CacheDisk) GetPage(url *url.URL, name string) *Path {
 	fmt.Printf("GetPage '%v' for '%v' from '%v'\n", url, name, c)
@@ -921,16 +923,29 @@ func (c *CacheDisk) GetPage(url *url.URL, name string) *Path {
 			c.Next().UpdatePage(c.last, name)
 		}
 	}
-	if c.last == nil || wasNotFound {
+	if c.last == nil || wasNotFound || updatePage {
 		sha := c.getResourceName(url, name)
 		t := time.Now()
 		filename := c.Folder(name).Add(name + "_" + sha + "_" + t.Format("20060102") + "_" + t.Format("150405"))
 		fmt.Printf("Get '%v' downloads '%v' for '%v'\n", c.id, filename, url)
 		if c.last == nil {
 			c.last = download(url, filename, 0, nil)
-		} else {
+		} else if wasNotFound {
+			filename = c.Folder(name).Add(c.last.Base())
 			copy(filename, c.last)
 			c.last = filename
+		} else {
+			download(url, filename, 0, nil)
+			if c.last.SameContentAs(filename) {
+				err := os.Remove(filename.String())
+				if err != nil {
+					fmt.Printf("[GetPage] Error removing filename '%v': '%v'\n", filename, err)
+					return nil
+				}
+			} else {
+				fmt.Printf("[GetPage] UPDATE %v for URL %v\n", url, name)
+				c.last = filename
+			}
 		}
 		if c.last != nil {
 			fmt.Printf("Get '%v' has downloaded in '%v' for '%v'\n", c.id, filename, url)
@@ -940,6 +955,20 @@ func (c *CacheDisk) GetPage(url *url.URL, name string) *Path {
 		}
 	}
 	return c.last
+}
+
+func (p *Path) SameContentAs(file *Path) bool {
+	contents, err := ioutil.ReadFile(p.String())
+	if err != nil {
+		fmt.Printf("[SameContentAs] Unable to access p '%v'\n'%v'\n", p, err)
+		return false
+	}
+	fileContents, err := ioutil.ReadFile(file.String())
+	if err != nil {
+		fmt.Printf("[SameContentAs] Unable to access file '%v'\n'%v'\n", file, err)
+		return false
+	}
+	return string(contents) == string(fileContents)
 }
 
 func (c *CacheDisk) getResourceName(url *url.URL, name string) string {
