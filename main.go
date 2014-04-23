@@ -324,17 +324,18 @@ func (c *CacheGitHub) GetArchive(p *Path, url *url.URL, name string, cookies []*
 		fmt.Printf("GetArchive '%v' is not a .zip or tag.gz\n", p)
 		return nil
 	}
-	c.last = c.getFileFromGitHub(p, name)
-	fmt.Printf("c.last '%v'\n", c.last)
+	res := c.getFileFromGitHub(p, name)
+	fmt.Printf("res '%v'\n", res)
 
 	if c.next != nil {
-		if c.last == nil {
-			c.last = c.Next().GetArchive(p, url, name, cookies)
+		if res == nil {
+			res = c.Next().GetArchive(p, url, name, cookies)
 		} else {
 			c.Next().UpdateArchive(p, name)
+			res = p
 		}
 	}
-	return c.last
+	return res
 }
 
 func (c *CacheGitHub) getClient() *github.Client {
