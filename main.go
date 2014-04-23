@@ -986,53 +986,58 @@ var updatePage = true
 
 // Get will get either an url or an archive extension (exe, zip, tar.gz, ...)
 func (c *CacheDisk) GetPage(url *url.URL, name string) *Path {
-	fmt.Printf("GetPage '%v' for '%v' from '%v'\n", url, name, c)
-	c.last = nil
-	c.last = c.getFile(url, name)
-	fmt.Printf("c.last '%v'\n", c.last)
+	fmt.Printf("[CacheDisk.GetPage] '%v' for '%v' from '%v'\n", url, name, c)
+	filepath := c.getFile(url, name)
+	fmt.Printf("[CacheDisk.GetPage] filepatht '%v'\n", filepath)
 	wasNotFound := true
 	if c.next != nil {
-		if c.last == nil {
-			c.last = c.Next().GetPage(url, name)
+		if filepath == nil {
+			filepath = c.Next().GetPage(url, name)
 		} else {
 			wasNotFound = false
-			c.Next().UpdatePage(c.last, name)
+			c.Next().UpdatePage(filepath, name)
 		}
 	}
-	fmt.Printf("c.last '%v' %v\n", c.last, wasNotFound)
-	if c.last == nil || wasNotFound || updatePage {
+	fmt.Printf("c.last '%v' %v\n", filepath, wasNotFound)
+	if filepath == nil || wasNotFound || updatePage {
 		sha := c.getResourceName(url, name)
 		t := time.Now()
 		filename := c.Folder(name).Add(name + "_" + sha + "_" + t.Format("20060102") + "_" + t.Format("150405"))
 		fmt.Printf("Get '%v' downloads '%v' for '%v'\n", c.id, filename, url)
-		if c.last == nil {
-			c.last = download(url, filename, 0, nil)
+		if filepath == nil {
+			filepath = download(url, filename, 0, nil)
 		} else if wasNotFound {
-			filename = c.Folder(name).Add(c.last.Base())
-			copy(filename, c.last)
-			c.last = filename
+			filename = c.Folder(name).Add(filepath.Base())
+			if copy(filename, filepath) {
+				filepath = filename
+			} else {
+				fmt.Printf("[CacheDisk.GetPage] COPY FAILED '%v' for '%v' from '%v' => filepath '%v'\n", filename, name, c, filepath)
+				return nil
+			}
 		} else {
-			download(url, filename, 0, nil)
-			if c.last.SameContentAs(filename) {
-				err := os.Remove(filename.String())
+			// forcing download eventhough filepath is not nil
+			newFilePath := download(url, filename, 0, nil)
+			if filepath.SameContentAs(newFilePath) {
+				err := os.Remove(newFilePath.String())
 				if err != nil {
-					fmt.Printf("[GetPage] Error removing filename '%v': '%v'\n", filename, err)
+					fmt.Printf("[CacheDisk.GetPage] Error removing newFilePath '%v': '%v'\n", newFilePath, err)
 					return nil
 				}
 			} else {
-				fmt.Printf("[GetPage] UPDATE %v for URL %v\n", url, name)
-				c.last = filename
+				fmt.Printf("[CacheDisk.GetPage] UPDATE %v for URL %v\n", url, name)
+				filepath = newFilePath
 			}
-			fmt.Printf("c.last DONE '%v' %v\n", c.last, wasNotFound)
+			fmt.Printf("[CacheDisk.GetPage] filepath DONE '%v' %v\n", filepath, wasNotFound)
 		}
-		if c.last != nil {
-			fmt.Printf("Get '%v' has downloaded in '%v' for '%v'\n", c.id, filename, url)
+		if filepath != nil {
+			fmt.Printf("[CacheDisk.GetPage] Get '%v' has downloaded in '%v' for '%v'\n", c.id, filepath, url)
+			c.RegisterPath(name, filepath)
 		}
-		if c.next != nil && c.last != nil {
-			c.next.UpdatePage(c.last, name)
+		if c.next != nil && filepath != nil {
+			c.next.UpdatePage(filepath, name)
 		}
 	}
-	return c.last
+	return filepath
 }
 
 func (p *Path) SameContentAs(file *Path) bool {
