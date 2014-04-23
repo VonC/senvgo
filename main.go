@@ -808,31 +808,39 @@ func (c *CacheDisk) IsGitHub() bool {
 
 // Update updates c.last and all next caches c.last with content.
 func (c *CacheDisk) UpdateArchive(p *Path, name string) {
-	fmt.Printf("UPDARC Disk '%v' for '%v' from '%v'\n", p, name, c)
-	if p.EndsWithSeparator() {
-		fmt.Printf("[CacheDisk.UpdateArchive] nothing to update: Path is DIR '%v' for '%v' from '%v'\n", p, name, c)
-		return
+	filepath := c.UpdateCache("[CacheDisk.UpdateArchive]", p, name)
+	if filepath != nil && c.next != nil {
+		c.Next().UpdateArchive(filepath, name)
 	}
-	if c.GetPath(name, p) != nil {
-		fmt.Printf("[CacheDisk.UpdateArchive] UPDARC Github '%v' for '%v' from '%v': already there\n", p, name, c)
-		return
+}
+
+func (c *CacheDisk) UpdateCache(msg string, p *Path, name string) *Path {
+	fmt.Printf("%v '%v' for '%v' from '%v'\n", msg, p, name, c)
+	if p.EndsWithSeparator() {
+		fmt.Printf("%v nothing to update: Path is DIR '%v' for '%v' from '%v'\n", msg, p, name, c)
+		return nil
+	}
+	filepath := c.GetPath(name, p)
+	if filepath != nil {
+		fmt.Printf("%v '%v' for '%v' from '%v': already there\n", msg, p, name, c)
+		return filepath
 	}
 	folder := c.Folder(name)
-	filepath := folder.Add(p.release())
+	filepath = folder.Add(p.release())
 	if !filepath.Exists() {
 		if !folder.Exists() && !folder.MkDirAll() {
-			return
+			fmt.Printf("%v '%v' for '%v' from '%v': unable to create folder '%v'\n", msg, p, name, c, folder)
+			return nil
 		}
 		if copy(filepath, p) {
-			fmt.Printf("UPDARC Disk COPIED '%v' for '%v' from '%v' => filepath '%v'\n", p, name, c, filepath)
+			fmt.Printf("%v COPIED '%v' for '%v' from '%v' => filepath '%v'\n", msg, p, name, c, filepath)
 		} else {
-			return
+			fmt.Printf("%v UPDARC CacheDisk COPY FAILED '%v' for '%v' from '%v' => filepath '%v'\n", msg, p, name, c, filepath)
+			return nil
 		}
 	}
 	c.RegisterPath(name, filepath)
-	if c.next != nil {
-		c.Next().UpdateArchive(filepath, name)
-	}
+	return filepath
 }
 
 func (c *CacheGitHub) UpdatePage(p *Path, name string) {
@@ -843,25 +851,12 @@ func (c *CacheGitHub) UpdatePage(p *Path, name string) {
 }
 
 func (c *CacheDisk) UpdatePage(p *Path, name string) {
-	fmt.Printf("UPDPAG Disk '%v' for '%v' from '%v'\n", p, name, c)
-	c.last = nil
-	folder := c.Folder(name)
-	filepath := folder.Add(p.release())
-	if filepath.Exists() {
-		c.last = filepath
-	}
-	if c.last == nil {
-		if !folder.Exists() && !folder.MkDirAll() {
-			return
-		}
-		if copy(filepath, p) {
-			c.last = filepath
-		}
-	}
-	if c.last != nil && c.next != nil {
+	filepath := c.UpdateCache("[CacheDisk.UpdatePage]", p, name)
+	if filepath != nil && c.next != nil {
 		c.Next().UpdatePage(p, name)
 	}
 }
+
 func (c *CacheDisk) HasCacheDiskInNexts() bool {
 	acache := c.next
 	res := false
