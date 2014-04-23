@@ -274,7 +274,7 @@ type Cache interface {
 	Nb() int
 	Add(cache Cache)
 	IsGitHub() bool
-	GetPath(name string) *Path
+	GetPath(name string, p *Path) *Path
 	RegisterPath(name string, p *Path)
 }
 
@@ -285,19 +285,29 @@ type CacheData struct {
 	paths map[string]*Path
 }
 
-func (c *CacheData) GetPath(name string) *Path {
+func (c *CacheData) GetPath(name string, p *Path) *Path {
+	if name == "" {
+		fmt.Printf("[ERR] [CacheData.GetPath] EMPTY name for id '%v', path '%v'\n", c.id, p)
+		return nil
+	}
+	if isEmpty(p) || p.EndsWithSeparator() {
+		fmt.Printf("[ERR] [CacheData.GetPath] INVALID path for id '%v', name '%v', path '%v'\n", c.id, name, p)
+		return nil
+	}
+	key := name + "~" + p.Base()
 	if c.paths == nil {
 		c.paths = make(map[string]*Path)
 		return nil
 	}
-	return c.paths[name]
+	return c.paths[key]
 }
 
 func (c *CacheData) RegisterPath(name string, p *Path) {
 	if c.paths == nil {
 		c.paths = make(map[string]*Path)
 	}
-	c.paths[name] = p
+	key := name + "~" + p.Base()
+	c.paths[key] = p
 }
 
 func (c *CacheData) String() string {
