@@ -1101,11 +1101,6 @@ func (c *CacheDisk) String() string {
 	return res
 }
 
-// Last value cached
-func (c *CacheData) Last() *Path {
-	return c.last
-}
-
 // Nb returns number of linked cache (self counts for 1)
 func (c *CacheData) Nb() int {
 	if c.next == nil {
@@ -1426,22 +1421,13 @@ func (em *ExtractorMatch) ExtractFrom(content string) string {
 		fmt.Printf("   ==> ExtractorMatch.ExtractFrom '%v'\n", content)
 	}
 	rx := em.Regexp()
-	// if content if internal extractor dat (as opposed to actual content)
-	pp := ""
-	if content == em.data {
-		// fall back to main cache last data
-		fmt.Printf("Read from cache.Last() '%v'\n", cache.Last())
-		p := cache.Last()
-		content = p.fileContent()
-		pp = p.String()
-	}
-	fmt.Printf("Rx for '%v' (%v from %v): '%v'\n", em.p.GetName(), len(content), pp, rx)
+	fmt.Printf("[ExtractorMatch.ExtractFrom] Rx for '%v' (%v): '%v'\n", em.p.GetName(), len(content), rx)
 	matches := rx.FindAllStringSubmatchIndex(content, -1)
-	fmt.Printf("matches: '%v'\n", matches)
+	fmt.Printf("[ExtractorMatch.ExtractFrom] matches: '%v'\n", matches)
 	res := ""
 	if len(matches) >= 1 && len(matches[0]) >= 4 {
 		res = content[matches[0][2]:matches[0][3]]
-		fmt.Printf("[ExtractorMatch] RES='%v'\n", res)
+		fmt.Printf("[ExtractorMatch.ExtractFrom]  RES='%v'\n", res)
 	}
 	return res
 }
