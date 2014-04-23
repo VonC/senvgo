@@ -545,8 +545,9 @@ func (c *CacheGitHub) UpdateArchive(p *Path, name string) {
 		fmt.Printf("UPDARC Github DENIED for '%v' for '%v' from '%v': addToGitHub false\n", p, name, c)
 		return
 	}
-	if c.last == p {
+	if c.GetPath(name, p) != nil {
 		fmt.Printf("UPDARC Github '%v' for '%v' from '%v': already there\n", p, name, c)
+		return
 	}
 	authUser := c.getAuthUser()
 	if authUser == nil {
@@ -569,8 +570,8 @@ func (c *CacheGitHub) UpdateArchive(p *Path, name string) {
 		asset = c.getAsset(release, repo, p.release())
 	}
 	if asset != nil {
-		c.last = p
-		fmt.Printf("UPDARC Github '%v' for '%v' from '%v': nothing to do\n", p, name, c)
+		c.RegisterPath(name, p)
+		fmt.Printf("[CacheGitHub.UpdateArchive] UPDARC Github '%v' for '%v' from '%v': nothing to do\n", p, name, c)
 		// debug.PrintStack()
 		return
 	}
