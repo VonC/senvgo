@@ -1173,6 +1173,7 @@ func (eg *ExtractorGet) ExtractFrom(data string) string {
 	url, err := url.Parse(data)
 	if err != nil {
 		fmt.Printf("ExtractorGet.ExtractFrom() error parsing url '%v': '%v'\n", data, err)
+		return ""
 	}
 	//fmt.Println("ok! " + url)
 	name := eg.p.GetName()
@@ -1409,6 +1410,7 @@ func (em *ExtractorMatch) ExtractFrom(content string) string {
 	pp := ""
 	if content == em.data {
 		// fall back to main cache last data
+		fmt.Printf("Read from cache.Last() '%v'\n", cache.Last())
 		p := cache.Last()
 		content = p.fileContent()
 		pp = p.String()
@@ -2296,9 +2298,12 @@ func (p *Prg) GetFolder() *Path {
 		return p.folder
 	}
 	if p.exts != nil {
-		fmt.Printf("Get folder for %v", p.GetName())
+		fmt.Printf("Get folder for %v", p.name)
 		p.folder = get(p.folder, p.exts.extractFolder, true)
-		fmt.Printf("DONE Get folder for %v", p.folder)
+		fmt.Printf("DONE Get folder for %v\n", p.folder)
+		if !isEmpty(p.folder) && p.depOn != nil {
+			p.depOn.folder = p.folder
+		}
 	}
 	return p.folder
 }
@@ -2314,11 +2319,14 @@ func (p *Prg) GetArchive() *Path {
 	if p.exts != nil {
 		fmt.Printf("Get archive for %v", p.GetName())
 		archiveName = get(p.archive, p.exts.extractArchive, false)
+		if archiveName.EndsWithSeparator() {
+			archiveName = nil
+		}
 		savePath = cache.Last()
 	}
 	fmt.Printf("***** Prg name '%v': isexe %v for depOn %v len %v\n", p.name, archiveName.isExe(), p.depOn, len(p.deps))
 	//debug.PrintStack()
-	if archiveName.isExe() && p.depOn == nil {
+	if archiveName != nil && archiveName.isExe() && p.depOn == nil {
 		pext := ".zip"
 		if len(p.deps) > 0 {
 			pext = ".tar.gz"
