@@ -274,12 +274,30 @@ type Cache interface {
 	Nb() int
 	Add(cache Cache)
 	IsGitHub() bool
+	GetPath(name string) *Path
+	RegisterPath(name string, p *Path)
 }
 
 // CacheData has common data between different types od cache
 type CacheData struct {
-	id   string
-	next Cache
+	id    string
+	next  Cache
+	paths map[string]*Path
+}
+
+func (c *CacheData) GetPath(name string) *Path {
+	if c.paths == nil {
+		c.paths = make(map[string]*Path)
+		return nil
+	}
+	return c.paths[name]
+}
+
+func (c *CacheData) RegisterPath(name string, p *Path) {
+	if c.paths == nil {
+		c.paths = make(map[string]*Path)
+	}
+	c.paths[name] = p
 }
 
 func (c *CacheData) String() string {
