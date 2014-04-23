@@ -781,6 +781,11 @@ func (c *CacheDisk) IsGitHub() bool {
 // Update updates c.last and all next caches c.last with content.
 func (c *CacheDisk) UpdateArchive(p *Path, name string) {
 	fmt.Printf("UPDARC Disk '%v' for '%v' from '%v'\n", p, name, c)
+	if p.EndsWithSeparator() {
+		fmt.Printf("[CacheDisk.UpdateArchive] nothing to update: Path is DIR '%v' for '%v' from '%v' => c.last '%v'\n", p, name, c, c.last)
+		c.last = nil
+		return
+	}
 	folder := c.Folder(name)
 	filepath := folder.Add(p.release())
 	fmt.Printf("UPDARC Disk 1 '%v' for '%v'\n", folder, filepath)
@@ -847,6 +852,10 @@ func (c *CacheDisk) HasCacheDiskInNexts() bool {
 // Get will get either an url or an archive extension (exe, zip, tar.gz, ...)
 func (c *CacheDisk) GetArchive(p *Path, url *url.URL, name string, cookies []*http.Cookie) *Path {
 	fmt.Printf("CacheDisk.GetArchive[%v]: '%v' for '%v' from '%v'\n", c.id, p, name, c)
+	if p.EndsWithSeparator() {
+		fmt.Printf("CacheDisk.GetArchive[%v]: no file for '%v': it is a Dir.\n", c.id, p)
+		return nil
+	}
 	c.last = nil
 	folder := c.Folder(name)
 	filename := folder.Add(p.release())
@@ -859,20 +868,32 @@ func (c *CacheDisk) GetArchive(p *Path, url *url.URL, name string, cookies []*ht
 		if c.last == nil {
 			c.last = c.Next().GetArchive(filename, url, name, cookies)
 			if !c.Next().IsGitHub() && c.last != nil {
+				if c.last.EndsWithSeparator() {
+					c.last = nil
+					fmt.Printf("CacheDisk.GetArchive[%v]: GetArchive '%v': it is a Dir.\n", c.id, filename)
+					return nil
+				}
 				copy(filename, c.last)
 				c.last = filename
 			}
 		}
 	}
 	if c.last != nil {
+		if c.last.EndsWithSeparator() {
+			c.last = nil
+			fmt.Printf("CacheDisk.GetArchive[%v]: end GetArchive '%v': it is a Dir.\n", c.id, filename)
+			return nil
+		}
 		return c.last
 	}
 	if c.HasCacheDiskInNexts() {
 		fmt.Printf("CacheDisk.GetArchive[%v]: no download for '%v': already done by secondary cache.\n", c.id, filename)
+		c.last = nil
 		return nil
 	}
 	if url == nil || url.String() == "" {
 		fmt.Printf("CacheDisk.GetArchive[%v]: NO URL '%v''\n", c.id, filename)
+		c.last = nil
 		return nil
 	}
 	fmt.Printf("CacheDisk.GetArchive[%v]: ... MUST download '%v' for '%v'\n", c.id, url, filename)
@@ -891,9 +912,11 @@ func isEmpty(p *Path) bool {
 }
 
 func (c *CacheDisk) checkArchive(filename *Path, name string) {
-	if filename.Exists() {
+	if filename.Exists() && !filename.EndsWithSeparator() {
 		c.last = filename
 		c.next.UpdateArchive(c.last, name)
+	} else {
+		c.last = nil
 	}
 }
 
@@ -1221,7 +1244,6 @@ func do(req *http.Request) (*http.Response, error) {
 	fmt.Printf("(do) Sent header: '%v'\n", req.Header)
 	fmt.Printf("(do) Sent body: '%+v'\n", req.Body)
 	fmt.Printf("(do) -------\n")
-
 	//resp, err := mainHttpClient.Get(req.URL.String())
 	resp, err := getClient().Do(req)
 	if err != nil {
@@ -2040,6 +2062,7 @@ func (i Invoke) BuildZipJDK(folder *Path, archive *Path) bool {
 			fmt.Printf("[BuildZipJDK] src.zip not found at '%v'\n", src)
 			return false
 		}
+		os.Exit(0)
 		compress7z(archiveTar, nil, folder.Add("tools.zip").Dot(), "Add tools.zip", "tar")
 		compress7z(archiveTar, nil, folder.Add("src.zip").Dot(), "Add src.zip", "tar")
 	}
@@ -2232,6 +2255,7 @@ func compress7z(archive, folder, file *Path, msg, format string) bool {
 	cmd = fmt.Sprintf("%v a -t%v%v -mmt=on -mx5 -w %v %v%v", cmd, format, deflate, farchive, ffolder, argFile)
 	is := fmt.Sprintf("%v'%v'%v => 7zC...\n%v\n", msg, archive, argFile, cmd)
 	fmt.Println(is)
+	os.Exit(0)
 	c := exec.Command("cmd", "/C", cmd)
 	if out, err := c.Output(); err != nil {
 		fmt.Printf("Error invoking 7zC '%v'\nout='%v' => err='%v'\n", cmd, string(out), err)
@@ -2327,6 +2351,7 @@ func (p *Prg) GetURL() *url.URL {
 			p.url = anurl
 		} else {
 			fmt.Printf("Unable to parse url '%v' because '%v'", rawurl, err)
+			p.url = nil
 		}
 	}
 	return p.url
