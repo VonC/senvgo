@@ -872,73 +872,67 @@ func (c *CacheDisk) HasCacheDiskInNexts() bool {
 
 // Get will get either an url or an archive extension (exe, zip, tar.gz, ...)
 func (c *CacheDisk) GetArchive(p *Path, url *url.URL, name string, cookies []*http.Cookie) *Path {
-	fmt.Printf("CacheDisk.GetArchive[%v]: '%v' for '%v' from '%v'\n", c.id, p, name, c)
+	fmt.Printf("[CacheDisk.GetArchive][%v]: '%v' for '%v' from '%v'\n", c.id, p, name, c)
 	if p.EndsWithSeparator() {
-		fmt.Printf("CacheDisk.GetArchive[%v]: no file for '%v': it is a Dir.\n", c.id, p)
+		fmt.Printf("[CacheDisk.GetArchive][%v]: no file for '%v': it is a Dir.\n", c.id, p)
 		return nil
 	}
-	c.last = nil
+	filepath := c.GetPath(name, p)
+	if filepath != nil {
+		fmt.Printf("[CacheDisk.GetArchive] '%v' for '%v' from '%v': already there\n", p, name, c)
+		return filepath
+	}
 	folder := c.Folder(name)
 	filename := folder.Add(p.release())
-	c.checkArchive(filename, name)
-	if c.last != nil {
-		return c.last
+	filepath = c.checkArchive(filename, name)
+	if filepath != nil {
+		return filepath
 	}
 
 	if c.next != nil {
-		if c.last == nil {
-			c.last = c.Next().GetArchive(filename, url, name, cookies)
-			if !c.Next().IsGitHub() && c.last != nil {
-				if c.last.EndsWithSeparator() {
-					c.last = nil
-					fmt.Printf("CacheDisk.GetArchive[%v]: GetArchive '%v': it is a Dir.\n", c.id, filename)
+		filepath = c.Next().GetArchive(filename, url, name, cookies)
+		if filepath != nil {
+			if !c.Next().IsGitHub() {
+				if filepath.EndsWithSeparator() {
+					fmt.Printf("CacheDisk.GetArchive[%v]: GetArchive '%v': it is a Dir.\n", c.id, filepath)
 					return nil
 				}
-				copy(filename, c.last)
-				c.last = filename
+				copy(filename, filepath)
+			} else {
+				filename = filepath
 			}
+			c.RegisterPath(name, filename)
+			return filename
 		}
-	}
-	if c.last != nil {
-		if c.last.EndsWithSeparator() {
-			c.last = nil
-			fmt.Printf("CacheDisk.GetArchive[%v]: end GetArchive '%v': it is a Dir.\n", c.id, filename)
-			return nil
-		}
-		return c.last
 	}
 	if c.HasCacheDiskInNexts() {
-		fmt.Printf("CacheDisk.GetArchive[%v]: no download for '%v': already done by secondary cache.\n", c.id, filename)
-		c.last = nil
+		fmt.Printf("CacheDisk.GetArchive[%v]: no download for '%v': already attempted by secondary cache.\n", c.id, filename)
 		return nil
 	}
 	if url == nil || url.String() == "" {
 		fmt.Printf("CacheDisk.GetArchive[%v]: NO URL '%v''\n", c.id, filename)
-		c.last = nil
 		return nil
 	}
 	fmt.Printf("CacheDisk.GetArchive[%v]: ... MUST download '%v' for '%v'\n", c.id, url, filename)
 	time.Sleep(time.Duration(5) * time.Second)
 	download(url, filename, 100000, cookies)
 	fmt.Printf("CacheDisk.GetArchive[%v]: ... DONE download '%v' for '%v'\n", c.id, url, filename)
-	c.checkArchive(filename, name)
-	if c.last != nil {
-		return c.last
-	}
-	return nil
+	filepath = c.checkArchive(filename, name)
+	return filepath
 }
 
 func isEmpty(p *Path) bool {
 	return p == nil || p.path == ""
 }
 
-func (c *CacheDisk) checkArchive(filename *Path, name string) {
+func (c *CacheDisk) checkArchive(filename *Path, name string) *Path {
+	var filepath *Path
 	if filename.Exists() && !filename.EndsWithSeparator() {
-		c.last = filename
-		c.next.UpdateArchive(c.last, name)
-	} else {
-		c.last = nil
+		filepath = filename
+		c.RegisterPath(name, filepath)
+		c.next.UpdateArchive(filepath, name)
 	}
+	return filepath
 }
 
 func (p *Path) fileContent() string {
