@@ -271,7 +271,6 @@ type Cache interface {
 	UpdateArchive(p *Path, name string)
 	UpdatePage(p *Path, name string)
 	Next() Cache
-	Last() *Path
 	Nb() int
 	Add(cache Cache)
 	IsGitHub() bool
@@ -281,11 +280,10 @@ type Cache interface {
 type CacheData struct {
 	id   string
 	next Cache
-	last *Path
 }
 
 func (c *CacheData) String() string {
-	res := fmt.Sprintf("(%v)", c.last)
+	res := fmt.Sprintf("(%v)", c.id)
 	return res
 }
 
