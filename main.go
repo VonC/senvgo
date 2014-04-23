@@ -810,30 +810,28 @@ func (c *CacheDisk) IsGitHub() bool {
 func (c *CacheDisk) UpdateArchive(p *Path, name string) {
 	fmt.Printf("UPDARC Disk '%v' for '%v' from '%v'\n", p, name, c)
 	if p.EndsWithSeparator() {
-		fmt.Printf("[CacheDisk.UpdateArchive] nothing to update: Path is DIR '%v' for '%v' from '%v' => c.last '%v'\n", p, name, c, c.last)
-		c.last = nil
+		fmt.Printf("[CacheDisk.UpdateArchive] nothing to update: Path is DIR '%v' for '%v' from '%v'\n", p, name, c)
+		return
+	}
+	if c.GetPath(name, p) != nil {
+		fmt.Printf("[CacheDisk.UpdateArchive] UPDARC Github '%v' for '%v' from '%v': already there\n", p, name, c)
 		return
 	}
 	folder := c.Folder(name)
 	filepath := folder.Add(p.release())
-	fmt.Printf("UPDARC Disk 1 '%v' for '%v'\n", folder, filepath)
-	if filepath.Exists() {
-		c.last = filepath
-	} else {
-		c.last = nil
-	}
-	fmt.Printf("UPDARC Disk 2 '%v' for '%v' from '%v' => c.last '%v'\n", p, name, c, c.last)
-	if c.last == nil {
+	if !filepath.Exists() {
 		if !folder.Exists() && !folder.MkDirAll() {
 			return
 		}
 		if copy(filepath, p) {
-			c.last = filepath
-			fmt.Printf("UPDARC Disk COPIED '%v' for '%v' from '%v' => c.last '%v'\n", p, name, c, c.last)
+			fmt.Printf("UPDARC Disk COPIED '%v' for '%v' from '%v' => filepath '%v'\n", p, name, c, filepath)
+		} else {
+			return
 		}
 	}
-	if c.last != nil && c.next != nil {
-		c.Next().UpdateArchive(p, name)
+	c.RegisterPath(name, filepath)
+	if c.next != nil {
+		c.Next().UpdateArchive(filepath, name)
 	}
 }
 
