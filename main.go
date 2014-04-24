@@ -35,12 +35,13 @@ var prgs []*Prg
 
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
+	pdbg("MAIN")
 	prgs = ReadConfig()
 	for _, p := range prgs {
 		if p.install() {
-			fmt.Printf("INSTALLED '%v'\n", p)
+			pdbg("INSTALLED '%v'\n", p)
 		} else {
-			fmt.Printf("FAILED INSTALLED '%v'\n", p)
+			pdbg("FAILED INSTALLED '%v'\n", p)
 		}
 	}
 }
@@ -289,11 +290,11 @@ type CacheData struct {
 
 func (c *CacheData) GetPath(name string, p *Path) *Path {
 	if name == "" {
-		fmt.Printf("[ERR] [CacheData.GetPath] EMPTY name for id '%v', path '%v'\n", c.id, p)
+		pdbg("[CacheData.GetPath] EMPTY name for id '%v', path '%v'\n", c.id, p)
 		return nil
 	}
 	if isEmpty(p) || p.EndsWithSeparator() {
-		fmt.Printf("[ERR] [CacheData.GetPath] INVALID path for id '%v', name '%v', path '%v'\n", c.id, name, p)
+		pdbg("[CacheData.GetPath] INVALID path for id '%v', name '%v', path '%v'\n", c.id, name, p)
 		return nil
 	}
 	key := name + "~" + p.Base()
@@ -349,13 +350,13 @@ func (c *CacheGitHub) IsGitHub() bool {
 
 // Get gets or download zip archives only from GitHub
 func (c *CacheGitHub) GetArchive(p *Path, url *url.URL, name string, cookies []*http.Cookie) *Path {
-	fmt.Printf("CacheGitHub.GetArchive '%v' for '%v' from '%v'\n", p, name, c)
+	pdbg("CacheGitHub.GetArchive '%v' for '%v' from '%v'\n", p, name, c)
 	if !p.isPortableCompressed() {
-		fmt.Printf("GetArchive '%v' is not a .zip or tag.gz\n", p)
+		pdbg("GetArchive '%v' is not a .zip or tag.gz\n", p)
 		return nil
 	}
 	res := c.getFileFromGitHub(p, name)
-	fmt.Printf("res '%v'\n", res)
+	pdbg("res '%v'\n", res)
 
 	if c.next != nil {
 		if res == nil {
@@ -373,12 +374,12 @@ func (c *CacheGitHub) getClient() *github.Client {
 		var cl *http.Client
 		contents, err := ioutil.ReadFile("../gh." + c.owner)
 		if err != nil {
-			fmt.Printf("Unable to access to GitHub authentication => anoymous access only\n'%v'\n", err)
+			pdbg("Unable to access to GitHub authentication => anoymous access only\n'%v'\n", err)
 		} else if len(contents) < 20 {
-			fmt.Printf("Invalid content for GitHub authentication PAT ../gh.%s\n", c.owner)
+			pdbg("Invalid content for GitHub authentication PAT ../gh.%s\n", c.owner)
 		} else {
 			pat := strings.TrimSpace(string(contents))
-			fmt.Printf("GitHub authentication PAT '%v' for '%v'\n", pat, c.owner)
+			pdbg("GitHub authentication PAT '%v' for '%v'\n", pat, c.owner)
 			t := &oauth.Transport{
 				Token: &oauth.Token{AccessToken: pat},
 			}
@@ -439,20 +440,20 @@ func (c *CacheGitHub) getFileFromGitHub(p *Path, name string) *Path {
 	releaseName := p.releaseName()
 	release := c.getRelease(repo, releaseName)
 	if release == nil {
-		fmt.Printf("[CacheGitHub] NO RELEASE for '%v'\n", releaseName)
+		pdbg("NO RELEASE for '%v'\n", releaseName)
 		return nil
 	}
-	fmt.Printf("Release found: '%+v'\n", release)
+	pdbg("Release found: '%+v'\n", release)
 	asset := c.getAsset(release, repo, p.release())
 	if asset == nil {
-		fmt.Printf("[CacheGitHub] NO ASSET for '%v' (%v)\n", releaseName, p.release())
+		pdbg("NO ASSET for '%v' (%v)\n", releaseName, p.release())
 		return nil
 	}
-	fmt.Printf("Asset found: '%+v'\n", asset)
+	pdbg("Asset found: '%+v'\n", asset)
 	p = NewPath(p.Dir().String() + *asset.Name)
 	// https://github.com/VonC/gow/releases/download/vGow-0.8.0/Gow-0.8.0.zip
 	url := "https://github.com/" + c.owner + "/" + name + "/releases/download/v" + releaseName + "/" + p.Base()
-	fmt.Printf("Downloading from GitHub: '%+v' for p '%v'\n", url, p)
+	pdbg("Downloading from GitHub: '%+v' for p '%v'\n", url, p)
 
 	response, err := http.Get(url)
 	if err != nil {
@@ -465,7 +466,7 @@ func (c *CacheGitHub) getFileFromGitHub(p *Path, name string) *Path {
 		fmt.Println("Error while reading downloaded", url, "-", err)
 		return nil
 	}
-	fmt.Printf("Downloaded from GitHub: '%+v'\n", len(body))
+	pdbg("Downloaded from GitHub: '%+v'\n", len(body))
 	err = ioutil.WriteFile(p.String(), body, 0644)
 	if err != nil {
 		fmt.Println("Error while writing downloaded", url, " to ", p, ": ", err)
@@ -483,7 +484,7 @@ func (c *CacheGitHub) getAsset(release *github.RepositoryRelease, repo *github.R
 	releaseName := *release.Name
 	assets, _, err := repos.ListReleaseAssets(c.owner, repoName, releaseID)
 	if err != nil {
-		fmt.Printf("Error while getting assets from release '%v'(%v): '%v'\n", releaseName, releaseID, err)
+		pdbg("Error while getting assets from release '%v'(%v): '%v'\n", releaseName, releaseID, err)
 		return nil
 	}
 
@@ -507,7 +508,7 @@ func (c *CacheGitHub) getRelease(repo *github.Repository, name string) *github.R
 	repoName := *repo.Name
 	releases, _, err := repos.ListReleases(c.owner, repoName)
 	if err != nil {
-		fmt.Printf("Error while getting releasesfrom repo %v/'%v': '%v'\n", c.owner, repoName, err)
+		pdbg("Error while getting releasesfrom repo %v/'%v': '%v'\n", c.owner, repoName, err)
 		return nil
 	}
 	var rel github.RepositoryRelease
@@ -529,38 +530,38 @@ func (c *CacheGitHub) getRepo(name string) *github.Repository {
 	repos := client.Repositories
 	repo, _, err := repos.Get(c.owner, name)
 	if err != nil {
-		fmt.Printf("Error while getting repo VonC/'%v': '%v'\n", name, err)
+		pdbg("Error while getting repo VonC/'%v': '%v'\n", name, err)
 		return nil
 	}
-	fmt.Printf("repo='%v', err='%v'\n", *repo.Name, err)
+	pdbg("repo='%v', err='%v'\n", *repo.Name, err)
 	return repo
 }
 
 // Update make sure the zip archive is uploaded on GitHub as a release
 func (c *CacheGitHub) UpdateArchive(p *Path, name string) {
-	fmt.Printf("UPDARC Github '%v' for '%v' from '%v'\n", p, name, c)
+	pdbg("UPDARC Github '%v' for '%v' from '%v'\n", p, name, c)
 	if !p.isPortableCompressed() {
-		fmt.Printf("UPDARC Github '%v' for '%v' from '%v': no zip or tar gz\n", p, name, c)
+		pdbg("UPDARC Github '%v' for '%v' from '%v': no zip or tar gz\n", p, name, c)
 		return
 	}
 	if addToGitHub == false {
-		fmt.Printf("UPDARC Github DENIED for '%v' for '%v' from '%v': addToGitHub false\n", p, name, c)
+		pdbg("UPDARC Github DENIED for '%v' for '%v' from '%v': addToGitHub false\n", p, name, c)
 		return
 	}
 	if c.GetPath(name, p) != nil {
-		fmt.Printf("UPDARC Github '%v' for '%v' from '%v': already there\n", p, name, c)
+		pdbg("UPDARC Github '%v' for '%v' from '%v': already there\n", p, name, c)
 		return
 	}
 	authUser := c.getAuthUser()
 	if authUser == nil {
-		fmt.Printf("UPDARC Github '%v' for '%v' from '%v': user '%v' not authenticated to GitHub\n", p, name, c, c.owner)
+		pdbg("UPDARC Github '%v' for '%v' from '%v': user '%v' not authenticated to GitHub\n", p, name, c, c.owner)
 		return
 	}
 	repo := c.getRepo(name)
 	if repo == nil {
 		repo = c.createRepo(name, authUser)
 		if repo == nil {
-			fmt.Printf("UPDARC Github '%v' for '%v' from '%v': unable to create a repo\n", p, name, c)
+			pdbg("UPDARC Github '%v' for '%v' from '%v': unable to create a repo\n", p, name, c)
 			return
 		}
 	}
@@ -568,12 +569,12 @@ func (c *CacheGitHub) UpdateArchive(p *Path, name string) {
 	release := c.getRelease(repo, releaseName)
 	var asset *github.ReleaseAsset
 	if release != nil {
-		fmt.Printf("Release found: '%+v'\n", release)
+		pdbg("Release found: '%+v'\n", release)
 		asset = c.getAsset(release, repo, p.release())
 	}
 	if asset != nil {
 		c.RegisterPath(name, p)
-		fmt.Printf("[CacheGitHub.UpdateArchive] UPDARC Github '%v' for '%v' from '%v': nothing to do\n", p, name, c)
+		pdbg("UPDARC Github '%v' for '%v' from '%v': nothing to do\n", p, name, c)
 		// debug.PrintStack()
 		return
 	}
@@ -582,10 +583,10 @@ func (c *CacheGitHub) UpdateArchive(p *Path, name string) {
 		// check for last commit, tag, release, asset
 		owner := *authUser.Name
 		email := *authUser.Email
-		fmt.Printf("Authenticated user: '%v' (%v)\n", owner, email)
+		pdbg("Authenticated user: '%v' (%v)\n", owner, email)
 		repocommit := c.getCommit(owner, repo, "master")
 		if repocommit == nil {
-			fmt.Printf("UPDARC Github '%v' for '%v': unable to find commit on master\n", p, name)
+			pdbg("UPDARC Github '%v' for '%v': unable to find commit on master\n", p, name)
 			return
 		}
 		sha := *repocommit.SHA
@@ -594,7 +595,7 @@ func (c *CacheGitHub) UpdateArchive(p *Path, name string) {
 			fmt.Println("Must create commit for " + portableArchive + " vs '" + *repocommit.Commit.Message + "'")
 			commit := c.createCommit(repocommit, authUser, portableArchive, repo, "master")
 			if commit == nil {
-				fmt.Printf("UPDARC Github '%v' for '%v': unable to create commit on master\n", p, name)
+				pdbg("UPDARC Github '%v' for '%v': unable to create commit on master\n", p, name)
 				return
 			}
 			sha = *commit.SHA
@@ -608,26 +609,26 @@ func (c *CacheGitHub) UpdateArchive(p *Path, name string) {
 		}
 
 		if tagFound && *tagShort.CommitTag.SHA != sha {
-			fmt.Printf("UPDARC Github Must delete tag (actually ref) found '%v'\n", tagShort)
+			pdbg("UPDARC Github Must delete tag (actually ref) found '%v'\n", tagShort)
 			tagFound = false
 			return
 		}
 		if !tagFound {
-			fmt.Printf("Must create tag '%v' for commit '%v', repo VonC/'%v'.\n", tagName, sha, *repo.Name)
+			pdbg("Must create tag '%v' for commit '%v', repo VonC/'%v'.\n", tagName, sha, *repo.Name)
 			tag := c.createTag(tagName, authUser, repo, sha)
-			fmt.Printf("UPDARC Github Created tag (and ref) '%v'\n", tag)
+			pdbg("UPDARC Github Created tag (and ref) '%v'\n", tag)
 		}
 		release = c.createRelease(repo, authUser, tagName, sha, releaseName)
 		if release == nil {
-			fmt.Printf("UPDARC Github ERROR unable to create release '%v' for '%v'\n", releaseName, name)
+			pdbg("UPDARC Github ERROR unable to create release '%v' for '%v'\n", releaseName, name)
 			return
 		}
 	}
 	rid = *release.ID
-	fmt.Printf("UPDARC Github release '%v' ID '%v'\n", releaseName, rid)
+	pdbg("UPDARC Github release '%v' ID '%v'\n", releaseName, rid)
 	rela := c.uploadAsset(authUser, rid, p, name)
 	if rela != nil {
-		fmt.Printf("UPDARC Github uploaded asset '%v' ID '%v'\n", *rela.Name, rid)
+		pdbg("UPDARC Github uploaded asset '%v' ID '%v'\n", *rela.Name, rid)
 	}
 	if c.next != nil {
 		c.Next().UpdateArchive(p, name)
@@ -635,10 +636,10 @@ func (c *CacheGitHub) UpdateArchive(p *Path, name string) {
 }
 
 func (c *CacheGitHub) uploadAsset(authUser *github.User, rid int, p *Path, name string) *github.ReleaseAsset {
-	fmt.Printf("Upload asset to release '%v'\n", p.releaseName())
+	pdbg("Upload asset to release '%v'\n", p.releaseName())
 	file, err := os.Open(p.String())
 	if err != nil {
-		fmt.Printf("Error while opening release asset file '%v'(%v): '%v'\n", p, p.releaseName(), err)
+		pdbg("Error while opening release asset file '%v'(%v): '%v'\n", p, p.releaseName(), err)
 		return nil
 	}
 	// no need to close, or "Invalid argument"
@@ -647,7 +648,7 @@ func (c *CacheGitHub) uploadAsset(authUser *github.User, rid int, p *Path, name 
 	repos := client.Repositories
 	rela, _, err := repos.UploadReleaseAsset(owner, name, rid, &github.UploadOptions{Name: p.Base()}, file)
 	if err != nil {
-		fmt.Printf("Error while uploading release asset '%v'(%v): '%v'\n", p.releaseName(), rid, err)
+		pdbg("Error while uploading release asset '%v'(%v): '%v'\n", p.releaseName(), rid, err)
 		return nil
 	}
 	return rela
@@ -665,7 +666,7 @@ func (c *CacheGitHub) createRelease(repo *github.Repository, authUser *github.Us
 	}
 	reprel, _, err := repos.CreateRelease(owner, *repo.Name, reprel)
 	if err != nil {
-		fmt.Printf("Error while creating repo release '%v'-'%v' for repo %v/'%v': '%v'\n", releaseName, tagName, owner, *repo.Name, err)
+		pdbg("Error while creating repo release '%v'-'%v' for repo %v/'%v': '%v'\n", releaseName, tagName, owner, *repo.Name, err)
 		return nil
 	}
 	return reprel
@@ -677,16 +678,16 @@ func (c *CacheGitHub) getTag(tagName string, authUser *github.User, repo *github
 	owner := *authUser.Name
 	tags, _, err := repos.ListTags(owner, *repo.Name)
 	if err != nil {
-		fmt.Printf("Error while getting tags from repo VonC/'%v': '%v'\n", *repo.Name, err)
+		pdbg("Error while getting tags from repo VonC/'%v': '%v'\n", *repo.Name, err)
 		return nil
 	}
 
 	var tagShort github.RepositoryTagShort
 	found := false
 	for _, tagShort = range tags {
-		fmt.Printf("Tags '%v' => %v\n", *tagShort.Name, *tagShort.CommitTag.SHA)
+		pdbg("Tags '%v' => %v\n", *tagShort.Name, *tagShort.CommitTag.SHA)
 		if *tagShort.Name == tagName {
-			fmt.Printf("Tag '%v' found: '%v-%v-%v'\n", tagName, *tagShort.Name, *tagShort.CommitTag.SHA, *tagShort.CommitTag.URL)
+			pdbg("Tag '%v' found: '%v-%v-%v'\n", tagName, *tagShort.Name, *tagShort.CommitTag.SHA, *tagShort.CommitTag.URL)
 			found = true
 			break
 		}
@@ -717,7 +718,7 @@ func (c *CacheGitHub) createTag(tagName string, authUser *github.User, repo *git
 	}
 	tag, _, err := repos.CreateTag(owner, name, input)
 	if err != nil {
-		fmt.Printf("Error while creating tag '%v'-'%v' from repo VonC/'%v': '%v'\n", *input.Tag, *input.Object, name, err)
+		pdbg("Error while creating tag '%v'-'%v' from repo VonC/'%v': '%v'\n", *input.Tag, *input.Object, name, err)
 		return nil
 	}
 	ref, _, err := client.Git.CreateRef(owner, name, &github.Reference{
@@ -727,10 +728,10 @@ func (c *CacheGitHub) createTag(tagName string, authUser *github.User, repo *git
 		},
 	})
 	if err != nil {
-		fmt.Printf("Error while creating reference to tag '%v'-'%v' from repo VonC/'%v': '%v'\n", *tag.Tag, *tag.SHA, name, err)
+		pdbg("Error while creating reference to tag '%v'-'%v' from repo VonC/'%v': '%v'\n", *tag.Tag, *tag.SHA, name, err)
 		return nil
 	}
-	fmt.Printf("Ref created: '%v'\n", ref)
+	pdbg("Ref created: '%v'\n", ref)
 	return tag
 }
 
@@ -744,13 +745,13 @@ func (c *CacheGitHub) createRepo(name string, authUser *github.User) *github.Rep
 		Homepage:    github.String("https://github.com/" + owner + "/" + name),
 		AutoInit:    github.Bool(true),
 	}
-	fmt.Printf("NAME REPO '%v'\n", name)
+	pdbg("NAME REPO '%v'\n", name)
 	repo, _, err := repos.Create("", rp)
 	if err != nil {
-		fmt.Printf("Error while creating repo %v/'%v': '%v'\n", owner, *repo.Name, err)
+		pdbg("Error while creating repo %v/'%v': '%v'\n", owner, *repo.Name, err)
 		return nil
 	}
-	fmt.Printf("%+v", repo)
+	pdbg("%+v", repo)
 	return repo
 
 }
@@ -763,18 +764,18 @@ func (c *CacheGitHub) createCommit(rc *github.RepositoryCommit, authUser *github
 	// fmt.Println(c)
 	commit, _, err := client.Git.CreateCommit(owner, *repo.Name, cr)
 	if err != nil {
-		fmt.Printf("Error while creating commit for repo %v/'%v': '%v'\n", owner, *repo.Name, err)
+		pdbg("Error while creating commit for repo %v/'%v': '%v'\n", owner, *repo.Name, err)
 		return nil
 	}
-	fmt.Printf("COMMIT CREATED: '%v'\n", commit)
+	pdbg("COMMIT CREATED: '%v'\n", commit)
 
 	refc := &github.Reference{Ref: github.String("heads/" + branch), Object: &github.GitObject{SHA: github.String(*commit.SHA)}}
 	ref, _, err := client.Git.UpdateRef(owner, *repo.Name, refc, false)
 	if err != nil {
-		fmt.Printf("Error while updating ref '%v' for commit '%v' for repo %v/'%v': '%v'\n", refc, commit, owner, *repo.Name, err)
+		pdbg("Error while updating ref '%v' for commit '%v' for repo %v/'%v': '%v'\n", refc, commit, owner, *repo.Name, err)
 		return nil
 	}
-	fmt.Printf("REF UPDATED: '%v'\n", ref)
+	pdbg("REF UPDATED: '%v'\n", ref)
 
 	return commit
 }
@@ -784,13 +785,13 @@ func (c *CacheGitHub) getCommit(owner string, repo *github.Repository, branch st
 	repos := client.Repositories
 	commits, _, err := repos.ListCommits(owner, *repo.Name, &github.CommitsListOptions{SHA: branch})
 	if err != nil {
-		fmt.Printf("Error while getting commits on '%v' of %v/'%v': '%v'\n", branch, owner, repo.Name, err)
+		pdbg("Error while getting commits on '%v' of %v/'%v': '%v'\n", branch, owner, repo.Name, err)
 		return nil
 	}
 
 	repocommit := commits[0]
 	sha := *repocommit.SHA
-	fmt.Printf("Commit on '%v': %v' => '%v'\n", branch, sha, repocommit.Commit.Tree)
+	pdbg("Commit on '%v': %v' => '%v'\n", branch, sha, repocommit.Commit.Tree)
 	return &repocommit
 }
 
@@ -798,7 +799,7 @@ func (c *CacheGitHub) getAuthUser() *github.User {
 	client := c.getClient()
 	authUser, _, err := client.Users.Get("")
 	if err != nil {
-		fmt.Printf("Error while getting authenticated user\n")
+		pdbg("Error while getting authenticated user\n")
 		return nil
 	}
 	return authUser
@@ -817,27 +818,27 @@ func (c *CacheDisk) UpdateArchive(p *Path, name string) {
 }
 
 func (c *CacheDisk) UpdateCache(msg string, p *Path, name string) *Path {
-	fmt.Printf("%v '%v' for '%v' from '%v'\n", msg, p, name, c)
+	pdbg("%v '%v' for '%v' from '%v'\n", msg, p, name, c)
 	if p.EndsWithSeparator() {
-		fmt.Printf("%v nothing to update: Path is DIR '%v' for '%v' from '%v'\n", msg, p, name, c)
+		pdbg("%v nothing to update: Path is DIR '%v' for '%v' from '%v'\n", msg, p, name, c)
 		return nil
 	}
 	filepath := c.GetPath(name, p)
 	if filepath != nil {
-		fmt.Printf("%v '%v' for '%v' from '%v': already there\n", msg, p, name, c)
+		pdbg("%v '%v' for '%v' from '%v': already there\n", msg, p, name, c)
 		return filepath
 	}
 	folder := c.Folder(name)
 	filepath = folder.Add(p.release())
 	if !filepath.Exists() {
 		if !folder.Exists() && !folder.MkDirAll() {
-			fmt.Printf("%v '%v' for '%v' from '%v': unable to create folder '%v'\n", msg, p, name, c, folder)
+			pdbg("%v '%v' for '%v' from '%v': unable to create folder '%v'\n", msg, p, name, c, folder)
 			return nil
 		}
 		if copy(filepath, p) {
-			fmt.Printf("%v COPIED '%v' for '%v' from '%v' => filepath '%v'\n", msg, p, name, c, filepath)
+			pdbg("%v COPIED '%v' for '%v' from '%v' => filepath '%v'\n", msg, p, name, c, filepath)
 		} else {
-			fmt.Printf("%v UPDARC CacheDisk COPY FAILED '%v' for '%v' from '%v' => filepath '%v'\n", msg, p, name, c, filepath)
+			pdbg("%v UPDARC CacheDisk COPY FAILED '%v' for '%v' from '%v' => filepath '%v'\n", msg, p, name, c, filepath)
 			return nil
 		}
 	}
@@ -846,7 +847,7 @@ func (c *CacheDisk) UpdateCache(msg string, p *Path, name string) *Path {
 }
 
 func (c *CacheGitHub) UpdatePage(p *Path, name string) {
-	fmt.Printf("UPDPAG GitHub '%v' for '%v' from '%v'\n", p, name, c)
+	pdbg("UPDPAG GitHub '%v' for '%v' from '%v'\n", p, name, c)
 	if c.next != nil {
 		c.Next().UpdatePage(p, name)
 	}
@@ -874,14 +875,14 @@ func (c *CacheDisk) HasCacheDiskInNexts() bool {
 
 // Get will get either an url or an archive extension (exe, zip, tar.gz, ...)
 func (c *CacheDisk) GetArchive(p *Path, url *url.URL, name string, cookies []*http.Cookie) *Path {
-	fmt.Printf("[CacheDisk.GetArchive][%v]: '%v' for '%v' from '%v'\n", c.id, p, name, c)
+	pdbg("[CacheDisk.GetArchive][%v]: '%v' for '%v' from '%v'\n", c.id, p, name, c)
 	if p.EndsWithSeparator() {
-		fmt.Printf("[CacheDisk.GetArchive][%v]: no file for '%v': it is a Dir.\n", c.id, p)
+		pdbg("[CacheDisk.GetArchive][%v]: no file for '%v': it is a Dir.\n", c.id, p)
 		return nil
 	}
 	filepath := c.GetPath(name, p)
 	if filepath != nil {
-		fmt.Printf("[CacheDisk.GetArchive] '%v' for '%v' from '%v': already there\n", p, name, c)
+		pdbg("'%v' for '%v' from '%v': already there\n", p, name, c)
 		return filepath
 	}
 	folder := c.Folder(name)
@@ -896,7 +897,7 @@ func (c *CacheDisk) GetArchive(p *Path, url *url.URL, name string, cookies []*ht
 		if filepath != nil {
 			if !c.Next().IsGitHub() {
 				if filepath.EndsWithSeparator() {
-					fmt.Printf("CacheDisk.GetArchive[%v]: GetArchive '%v': it is a Dir.\n", c.id, filepath)
+					pdbg("CacheDisk.GetArchive[%v]: GetArchive '%v': it is a Dir.\n", c.id, filepath)
 					return nil
 				}
 				copy(filename, filepath)
@@ -908,17 +909,17 @@ func (c *CacheDisk) GetArchive(p *Path, url *url.URL, name string, cookies []*ht
 		}
 	}
 	if c.HasCacheDiskInNexts() {
-		fmt.Printf("CacheDisk.GetArchive[%v]: no download for '%v': already attempted by secondary cache.\n", c.id, filename)
+		pdbg("CacheDisk.GetArchive[%v]: no download for '%v': already attempted by secondary cache.\n", c.id, filename)
 		return nil
 	}
 	if url == nil || url.String() == "" {
-		fmt.Printf("CacheDisk.GetArchive[%v]: NO URL '%v''\n", c.id, filename)
+		pdbg("CacheDisk.GetArchive[%v]: NO URL '%v''\n", c.id, filename)
 		return nil
 	}
-	fmt.Printf("CacheDisk.GetArchive[%v]: ... MUST download '%v' for '%v'\n", c.id, url, filename)
+	pdbg("CacheDisk.GetArchive[%v]: ... MUST download '%v' for '%v'\n", c.id, url, filename)
 	time.Sleep(time.Duration(5) * time.Second)
 	download(url, filename, 100000, cookies)
-	fmt.Printf("CacheDisk.GetArchive[%v]: ... DONE download '%v' for '%v'\n", c.id, url, filename)
+	pdbg("CacheDisk.GetArchive[%v]: ... DONE download '%v' for '%v'\n", c.id, url, filename)
 	filepath = c.checkArchive(filename, name)
 	return filepath
 }
@@ -941,7 +942,7 @@ func (p *Path) fileContent() string {
 	filepath := p
 	f, err := os.Open(filepath.String())
 	if err != nil {
-		fmt.Printf("Error while reading content of '%v': '%v'\n", filepath, err)
+		pdbg("Error while reading content of '%v': '%v'\n", filepath, err)
 		return ""
 	}
 	defer f.Close()
@@ -949,7 +950,7 @@ func (p *Path) fileContent() string {
 	reader := bufio.NewReader(f)
 	var contents []byte
 	if contents, err = ioutil.ReadAll(reader); err != nil {
-		fmt.Printf("Error while reading content of '%v': '%v'\n", filepath, err)
+		pdbg("Error while reading content of '%v': '%v'\n", filepath, err)
 		return ""
 	}
 	content = string(contents)
@@ -961,20 +962,20 @@ func copy(dst, src *Path) bool {
 	// open files r and w
 	r, err := os.Open(src.String())
 	if err != nil {
-		fmt.Printf("Couldn't open src '%v' for copy: '%v'\n", src, err)
+		pdbg("Couldn't open src '%v' for copy: '%v'\n", src, err)
 	}
 	defer r.Close()
 
 	w, err := os.Create(dst.String())
 	if err != nil {
-		fmt.Printf("Couldn't create dst '%v' for copy: '%v'\n", src, err)
+		pdbg("Couldn't create dst '%v' for copy: '%v'\n", src, err)
 	}
 	defer w.Close()
 
 	// do the actual work
 	n, err := io.Copy(w, r)
 	if err != nil {
-		fmt.Printf("Error while copying '%v' (%v) to '%v' for copy: '%v'\n", src, n, dst, err)
+		pdbg("Error while copying '%v' (%v) to '%v' for copy: '%v'\n", src, n, dst, err)
 	} else {
 		copied = true
 	}
@@ -1064,9 +1065,11 @@ func pdbg(format string, args ...interface{}) {
 
 // Get will get either an url or an archive extension (exe, zip, tar.gz, ...)
 func (c *CacheDisk) GetPage(url *url.URL, name string) *Path {
-	fmt.Printf("[CacheDisk.GetPage] '%v' for '%v' from '%v'\n", url, name, c)
+	//debug.PrintStack()
+	pdbg("'%v' for '%v' from '%v'", url, name, c)
 	filepath := c.getFile(url, name)
-	fmt.Printf("[CacheDisk.GetPage] filepatht '%v'\n", filepath)
+	pdbg("filepatht '%v'\n", filepath)
+	os.Exit(0)
 	wasNotFound := true
 	if c.next != nil {
 		if filepath == nil {
@@ -1076,13 +1079,13 @@ func (c *CacheDisk) GetPage(url *url.URL, name string) *Path {
 			c.Next().UpdatePage(filepath, name)
 		}
 	}
-	fmt.Printf("c.last '%v' %v\n", filepath, wasNotFound)
+	pdbg("c.last '%v' %v\n", filepath, wasNotFound)
 	os.Exit(0)
 	if filepath == nil || wasNotFound || updatePage {
 		sha := c.getResourceName(url, name)
 		t := time.Now()
 		filename := c.Folder(name).Add(name + "_" + sha + "_" + t.Format("20060102") + "_" + t.Format("150405"))
-		fmt.Printf("Get '%v' downloads '%v' for '%v'\n", c.id, filename, url)
+		pdbg("Get '%v' downloads '%v' for '%v'\n", c.id, filename, url)
 		if filepath == nil {
 			filepath = download(url, filename, 0, nil)
 		} else if wasNotFound {
@@ -1090,7 +1093,7 @@ func (c *CacheDisk) GetPage(url *url.URL, name string) *Path {
 			if copy(filename, filepath) {
 				filepath = filename
 			} else {
-				fmt.Printf("[CacheDisk.GetPage] COPY FAILED '%v' for '%v' from '%v' => filepath '%v'\n", filename, name, c, filepath)
+				pdbg("COPY FAILED '%v' for '%v' from '%v' => filepath '%v'\n", filename, name, c, filepath)
 				return nil
 			}
 		} else {
@@ -1099,17 +1102,17 @@ func (c *CacheDisk) GetPage(url *url.URL, name string) *Path {
 			if filepath.SameContentAs(newFilePath) {
 				err := os.Remove(newFilePath.String())
 				if err != nil {
-					fmt.Printf("[CacheDisk.GetPage] Error removing newFilePath '%v': '%v'\n", newFilePath, err)
+					pdbg("Error removing newFilePath '%v': '%v'\n", newFilePath, err)
 					return nil
 				}
 			} else {
-				fmt.Printf("[CacheDisk.GetPage] UPDATE %v for URL %v\n", url, name)
+				pdbg("UPDATE %v for URL %v\n", url, name)
 				filepath = newFilePath
 			}
-			fmt.Printf("[CacheDisk.GetPage] filepath DONE '%v' %v\n", filepath, wasNotFound)
+			pdbg("filepath DONE '%v' %v\n", filepath, wasNotFound)
 		}
 		if filepath != nil {
-			fmt.Printf("[CacheDisk.GetPage] Get '%v' has downloaded in '%v' for '%v'\n", c.id, filepath, url)
+			pdbg("Get '%v' has downloaded in '%v' for '%v'\n", c.id, filepath, url)
 			c.RegisterPath(name, filepath)
 		}
 		if c.next != nil && filepath != nil {
@@ -1122,12 +1125,12 @@ func (c *CacheDisk) GetPage(url *url.URL, name string) *Path {
 func (p *Path) SameContentAs(file *Path) bool {
 	contents, err := ioutil.ReadFile(p.String())
 	if err != nil {
-		fmt.Printf("[SameContentAs] Unable to access p '%v'\n'%v'\n", p, err)
+		pdbg("Unable to access p '%v'\n'%v'\n", p, err)
 		return false
 	}
 	fileContents, err := ioutil.ReadFile(file.String())
 	if err != nil {
-		fmt.Printf("[SameContentAs] Unable to access file '%v'\n'%v'\n", file, err)
+		pdbg("Unable to access file '%v'\n'%v'\n", file, err)
 		return false
 	}
 	return string(contents) == string(fileContents)
@@ -1144,7 +1147,7 @@ func (c *CacheDisk) getResourceName(url *url.URL, name string) string {
 func (p *Path) MkDirAll() bool {
 	err := os.MkdirAll(p.path, 0755)
 	if err != nil {
-		fmt.Printf("Error creating cache folder for name '%v': '%v'\n", p.path, err)
+		pdbg("Error creating cache folder for name '%v': '%v'\n", p.path, err)
 		return false
 	}
 	return true
@@ -1163,7 +1166,7 @@ func (c *CacheDisk) getFile(url *url.URL, name string) *Path {
 	}
 	f, err := os.Open(filepath.String())
 	if err != nil {
-		fmt.Printf("Error while opening '%v': '%v'\n", filepath, err)
+		pdbg("Error while opening '%v': '%v'\n", filepath, err)
 		return nil
 	}
 	f.Close()
@@ -1244,7 +1247,7 @@ func (e *Extractable) Extract() string {
 	ext := e.self
 	res := e.data
 	for ext != nil {
-		fmt.Printf("### Calling ExtractFrom on %v\n", ext)
+		pdbg("### Calling ExtractFrom on %v\n", ext)
 		res = ext.ExtractFrom(res)
 		if ext.Next() != nil {
 			ext = ext.Next()
@@ -1252,7 +1255,7 @@ func (e *Extractable) Extract() string {
 			ext = nil
 		}
 	}
-	fmt.Printf("### RETURN ExtractFrom on %v\n", e)
+	pdbg("### RETURN ExtractFrom on %v\n", e)
 	return res
 }
 
@@ -1263,19 +1266,19 @@ type ExtractorGet struct {
 
 // ExtractFrom download an url content
 func (eg *ExtractorGet) ExtractFrom(data string) string {
-	fmt.Printf("=====> ExtractorGet.ExtractFrom '%v'\n", data)
+	pdbg("=====> ExtractorGet.ExtractFrom '%v'\n", data)
 	url, err := url.Parse(data)
 	if err != nil {
-		fmt.Printf("ExtractorGet.ExtractFrom() error parsing url '%v': '%v'\n", data, err)
+		pdbg("ExtractorGet.ExtractFrom() error parsing url '%v': '%v'\n", data, err)
 		return ""
 	}
 	//fmt.Println("ok! " + url)
 	name := eg.p.GetName()
 	page := cache.GetPage(url, name)
 	if page == nil {
-		fmt.Printf("Unable to download '%v'\n", url)
+		pdbg("Unable to download '%v'\n", url)
 	} else {
-		fmt.Printf("Got '%v' from cache\n", url)
+		pdbg("Got '%v' from cache\n", url)
 	}
 	content := page.fileContent()
 	fmt.Println(len(content))
@@ -1328,17 +1331,17 @@ var mainHttpClient *http.Client
 
 func do(req *http.Request) (*http.Response, error) {
 	//debug.PrintStack()
-	fmt.Printf("(do %v) \nvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv\n", len(mainRepoJar.cookies))
+	pdbg("(do %v) \nvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv\n", len(mainRepoJar.cookies))
 	for _, c := range mainRepoJar.cookies {
 		req.AddCookie(c)
 	}
 
-	fmt.Printf("(do) Sent URL: '%v:%v' => Host: '%v'\n", req.Method, req.URL, req.Host)
-	fmt.Printf("~~~~\n")
-	fmt.Printf("(do) Cookies set: '[%v]: %v'\n", len(req.Cookies()), req.Cookies())
-	fmt.Printf("(do) Sent header: '%v'\n", req.Header)
-	fmt.Printf("(do) Sent body: '%+v'\n", req.Body)
-	fmt.Printf("(do) -------\n")
+	pdbg("(do) Sent URL: '%v:%v' => Host: '%v'\n", req.Method, req.URL, req.Host)
+	pdbg("~~~~\n")
+	pdbg("(do) Cookies set: '[%v]: %v'\n", len(req.Cookies()), req.Cookies())
+	pdbg("(do) Sent header: '%v'\n", req.Header)
+	pdbg("(do) Sent body: '%+v'\n", req.Body)
+	pdbg("(do) -------\n")
 	//resp, err := mainHttpClient.Get(req.URL.String())
 
 	debug.PrintStack()
@@ -1346,21 +1349,21 @@ func do(req *http.Request) (*http.Response, error) {
 
 	resp, err := getClient().Do(req)
 	if err != nil {
-		fmt.Printf("Error : %s\n", err)
+		pdbg("Error : %s\n", err)
 		return nil, err
 	}
-	fmt.Printf("mainRepoJar '%+v' vs. resp '%+v'\n", mainRepoJar, resp)
+	pdbg("mainRepoJar '%+v' vs. resp '%+v'\n", mainRepoJar, resp)
 	mainRepoJar.SetCookies(resp.Cookies())
-	fmt.Printf("(do) Status received: '%v'\n", resp.Status)
-	fmt.Printf("(do) cookies received (%v) '%v'\n", len(resp.Cookies()), resp.Cookies())
-	fmt.Printf("(do) Header received: '%v'\n", resp.Header)
-	fmt.Printf("(do) Lenght received: '%v'\n", resp.ContentLength)
-	fmt.Printf("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n")
+	pdbg("(do) Status received: '%v'\n", resp.Status)
+	pdbg("(do) cookies received (%v) '%v'\n", len(resp.Cookies()), resp.Cookies())
+	pdbg("(do) Header received: '%v'\n", resp.Header)
+	pdbg("(do) Lenght received: '%v'\n", resp.ContentLength)
+	pdbg("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n")
 	return resp, err
 }
 
 func redirectPolicy(req *http.Request, via []*http.Request) error {
-	fmt.Printf(".........Redirect '%+v'\n", req)
+	pdbg(".........Redirect '%+v'\n", req)
 	return nil
 }
 
@@ -1373,7 +1376,7 @@ func getClient() *http.Client {
 		if proxy != "" {
 			proxyurl, err := url.Parse(proxy)
 			if err != nil {
-				fmt.Printf("Unabe to parse HTTP_PROXY url '%v': '%v'", proxy, err)
+				pdbg("Unabe to parse HTTP_PROXY url '%v': '%v'", proxy, err)
 				return nil
 			}
 			// http://stackoverflow.com/questions/14661511/setting-up-proxy-for-http-client
@@ -1442,7 +1445,7 @@ func download(url *url.URL, filename *Path, minLength int64, cookies []*http.Coo
 
 	req, err := http.NewRequest("GET", url.String(), nil)
 	if err != nil {
-		fmt.Printf("Error NewRequest: %v\n", err)
+		pdbg("Error NewRequest: %v\n", err)
 		return nil
 	}
 	mainRepoJar.SetCookies(cookies)
@@ -1455,9 +1458,9 @@ func download(url *url.URL, filename *Path, minLength int64, cookies []*http.Coo
 		return nil
 	}
 	defer response.Body.Close()
-	fmt.Printf("---> %+v\n", response)
+	pdbg("---> %+v\n", response)
 	if minLength < 0 && response.ContentLength < minLength {
-		fmt.Printf("download ERROR too small: '%v' when downloading '%v' in '%v'\n", response.ContentLength, url, filename)
+		pdbg("download ERROR too small: '%v' when downloading '%v' in '%v'\n", response.ContentLength, url, filename)
 		return nil
 	}
 	//os.Exit(0)
@@ -1470,7 +1473,7 @@ func download(url *url.URL, filename *Path, minLength int64, cookies []*http.Coo
 	fmt.Fprintf(os.Stderr, "\nCopying\n")
 	err = ioutil.WriteFile(filename.String(), body, 0666)
 	if err != nil {
-		fmt.Printf("Error while writing downloaded '%v': '%v'\n", url, err)
+		pdbg("Error while writing downloaded '%v': '%v'\n", url, err)
 		return nil
 	}
 	res = filename
@@ -1499,18 +1502,18 @@ func NewExtractorMatch(rx string, p PrgData) *ExtractorMatch {
 
 // ExtractFrom returns matched content from a regexp
 func (em *ExtractorMatch) ExtractFrom(content string) string {
-	fmt.Printf("=====> ExtractorMatch.ExtractFrom '%v'\n", len(content))
+	pdbg("=====> ExtractorMatch.ExtractFrom '%v'\n", len(content))
 	if len(content) < 200 {
-		fmt.Printf("   ==> ExtractorMatch.ExtractFrom '%v'\n", content)
+		pdbg("   ==> ExtractorMatch.ExtractFrom '%v'\n", content)
 	}
 	rx := em.Regexp()
-	fmt.Printf("[ExtractorMatch.ExtractFrom] Rx for '%v' (%v): '%v'\n", em.p.GetName(), len(content), rx)
+	pdbg("Rx for '%v' (%v): '%v'\n", em.p.GetName(), len(content), rx)
 	matches := rx.FindAllStringSubmatchIndex(content, -1)
-	fmt.Printf("[ExtractorMatch.ExtractFrom] matches: '%v'\n", matches)
+	pdbg("matches: '%v'\n", matches)
 	res := ""
 	if len(matches) >= 1 && len(matches[0]) >= 4 {
 		res = content[matches[0][2]:matches[0][3]]
-		fmt.Printf("[ExtractorMatch.ExtractFrom]  RES='%v'\n", res)
+		pdbg(" RES='%v'\n", res)
 	}
 	return res
 }
@@ -1526,7 +1529,7 @@ func (em *ExtractorMatch) Regexp() *regexp.Regexp {
 		var err error
 		if em.regexp, err = regexp.Compile(rx); err != nil {
 			em.regexp = nil
-			fmt.Printf("Error compiling Regexp for '%v': '%v' => err '%v'\n", em.p.GetName(), rx, err)
+			pdbg("Error compiling Regexp for '%v': '%v' => err '%v'\n", em.p.GetName(), rx, err)
 		}
 	}
 	return em.regexp
@@ -1546,9 +1549,9 @@ func NewExtractorPrepend(rx string, p PrgData) *ExtractorPrepend {
 
 // ExtractFrom prepends data to content
 func (ep *ExtractorPrepend) ExtractFrom(data string) string {
-	fmt.Printf("=====> ExtractorPrepend.ExtractFrom '%v'\n", data)
+	pdbg("=====> ExtractorPrepend.ExtractFrom '%v'\n", data)
 	res := ep.data + data
-	fmt.Printf("[ExtractorPrepend] RES='%v'\n", res)
+	pdbg("RES='%v'\n", res)
 	return res
 }
 
@@ -1568,9 +1571,9 @@ func NewExtractorReplace(data string, rx *regexp.Regexp, p PrgData) *ExtractorRe
 
 // ExtractFrom prepends data to content
 func (er *ExtractorReplace) ExtractFrom(data string) string {
-	fmt.Printf("=====> ExtractorPrepend.ExtractFrom '%v'\n", data)
+	pdbg("=====> ExtractorPrepend.ExtractFrom '%v'\n", data)
 	res := string(er.regexp.ReplaceAll([]byte(data), []byte(er.data)))
-	fmt.Printf("[ExtractorReplace] RES='%v'\n", res)
+	pdbg("RES='%v'\n", res)
 	return res
 }
 
@@ -1626,7 +1629,7 @@ func ReadConfig() []*Prg {
 		line := strings.TrimSpace(scanner.Text())
 		if strings.HasPrefix(line, "[") {
 			if currentPrg != nil {
-				fmt.Printf("End of config for prg '%v'\n", currentPrg.GetName())
+				pdbg("End of config for prg '%v'\n", currentPrg.GetName())
 				currentPrg.updatePortable()
 				res = append(res, currentPrg)
 				currentPrg = nil
@@ -1666,16 +1669,16 @@ func ReadConfig() []*Prg {
 			line = strings.TrimSpace(line[len("cookie"):])
 			elts := strings.Split(line, ";")
 			if len(elts) == 0 {
-				fmt.Printf("ERR: Invalid cookie '%v': '%v'\n", line)
+				pdbg("ERR: Invalid cookie '%v': '%v'\n", line)
 			}
-			// fmt.Printf("Cookies ELTS '%+v'\n", elts)
+			// pdbg("Cookies ELTS '%+v'\n", elts)
 			cookie := &http.Cookie{}
 			cookie.Name = elts[0]
 			if len(elts) > 1 {
 				cookie.Value = elts[1]
 			}
 			currentPrg.cookies = append(currentPrg.cookies, cookie)
-			// fmt.Printf("Cookies '%+v'\n", currentPrg.cookies)
+			// pdbg("Cookies '%+v'\n", currentPrg.cookies)
 			// os.Exit(0)
 			continue
 		}
@@ -1706,7 +1709,7 @@ func ReadConfig() []*Prg {
 		if len(m) == 0 {
 			continue
 		}
-		//fmt.Printf("line: '%v' => '%v'\n", line, m)
+		//pdbg("line: '%v' => '%v'\n", line, m)
 
 		variable := line[m[2]:m[3]]
 		extractor := line[m[4]:m[5]]
@@ -1722,22 +1725,22 @@ func ReadConfig() []*Prg {
 		case "replace":
 			datas := strings.Split(data, " with ")
 			if len(datas) != 2 {
-				fmt.Printf("ERR: Invalide replace with '%v'\n", data)
+				pdbg("ERR: Invalide replace with '%v'\n", data)
 			}
 			data := datas[1]
 			datarx := datas[0]
 			datargx, err := regexp.Compile(datarx)
 			if err != nil {
-				fmt.Printf("ERR: Invalid regexp in replace with '%v': '%v'\n", datarx, err)
+				pdbg("ERR: Invalid regexp in replace with '%v': '%v'\n", datarx, err)
 			}
 			e = NewExtractorReplace(data, datargx, currentPrg)
 		}
 		if e != nil {
 			if currentVariable != "" && variable == currentVariable {
-				fmt.Printf("Add '%v' to Next of '%v'\n", e, currentExtractor)
+				pdbg("Add '%v' to Next of '%v'\n", e, currentExtractor)
 				currentExtractor.SetNext(e)
 			} else {
-				fmt.Printf("New currentExtractor '%v'\n", e)
+				pdbg("New currentExtractor '%v'", e)
 				switch variable {
 				case "folder":
 					exts.extractFolder = e
@@ -1753,14 +1756,14 @@ func ReadConfig() []*Prg {
 	}
 	currentPrg.updatePortable()
 	res = append(res, currentPrg)
-	fmt.Printf("%v\n", res)
+	pdbg("%v\n", res)
 	return res
 }
 
 func (p *Path) Abs() *Path {
 	res, err := filepath.Abs(p.path)
 	if err != nil {
-		fmt.Printf("Unable to get full absollute path for '%v'\n%v\n", p.path, err)
+		pdbg("Unable to get full absollute path for '%v'\n%v\n", p.path, err)
 		return nil
 	}
 	if strings.HasSuffix(p.path, string(filepath.Separator)) {
@@ -1786,11 +1789,11 @@ func (p *Prg) checkLatest() {
 		junction(latest, full, p.GetName())
 	} else {
 		target := readJunction("latest", mainf, p.GetName())
-		fmt.Printf("Target='%v'\n", target)
+		pdbg("Target='%v'\n", target)
 		if target.String() != full.String() {
 			err := os.Remove(latest.String())
 			if err != nil {
-				fmt.Printf("Error removing LATEST '%v' in '%v': '%v'\n", latest, folderLatest, err)
+				pdbg("Error removing LATEST '%v' in '%v': '%v'\n", latest, folderLatest, err)
 				return
 			}
 			junction(latest, full, p.GetName())
@@ -1800,32 +1803,32 @@ func (p *Prg) checkLatest() {
 
 func junction(link, dst *Path, name string) {
 	cmd := "mklink /J " + link.String() + " " + dst.String()
-	fmt.Printf("junction: invoking for '%v': '%v'\n", name, cmd)
+	pdbg("junction: invoking for '%v': '%v'\n", name, cmd)
 	c := exec.Command("cmd", "/C", cmd)
 	if out, err := c.Output(); err != nil {
-		fmt.Printf("Error invoking '%v'\n''%v': %v'\n", cmd, string(out), err)
+		pdbg("Error invoking '%v'\n''%v': %v'\n", cmd, string(out), err)
 	}
 }
 
 func readJunction(link string, folder *Path, name string) *Path {
 	var junctionRx, _ = regexp.Compile(`N>\s+` + link + `\s+\[([^\]]*?)\]`)
 	cmd := "dir /A:L " + folder.String()
-	fmt.Printf("readJunction: invoking for '%v': '%v'\n", name, cmd)
+	pdbg("readJunction: invoking for '%v': '%v'\n", name, cmd)
 	c := exec.Command("cmd", "/C", cmd)
 	out, err := c.Output()
 	sout := string(out)
 	matches := junctionRx.FindAllStringSubmatchIndex(sout, -1)
-	fmt.Printf("matches OUT: '%v'\n", matches)
+	pdbg("matches OUT: '%v'\n", matches)
 	res := ""
 	if len(matches) >= 1 && len(matches[0]) >= 4 {
 		res = sout[matches[0][2]:matches[0][3]]
-		fmt.Printf("RES OUT='%v'\n", res)
+		pdbg("RES OUT='%v'\n", res)
 	}
 	if err != nil && res == "" {
-		fmt.Printf("Error invoking '%v'\n'%v':\nerr='%v'\n", cmd, sout, err)
+		pdbg("Error invoking '%v'\n'%v':\nerr='%v'\n", cmd, sout, err)
 		return nil
 	}
-	fmt.Printf("OUT ===> '%v'\n", sout)
+	pdbg("OUT ===> '%v'\n", sout)
 	return NewPathDir(res)
 }
 
@@ -1856,14 +1859,14 @@ func (p *Prg) updateDeps() {
 			p.deps = append(p.deps, prg)
 		}
 	}
-	fmt.Printf("~~~~~~~~~~~~~~~ %v %v\n", p.name, len(p.deps))
+	pdbg("~~~~~~~~~~~~~~~ %v %v\n", p.name, len(p.deps))
 }
 
 func (p *Prg) postInstall() bool {
-	fmt.Printf("PostInstall '%v': %v\n", p.name, p.deps)
+	pdbg("PostInstall '%v': %v\n", p.name, p.deps)
 	for _, dep := range p.deps {
 		if !dep.install() {
-			fmt.Printf("[postInstall] FAIL to install dep '%v'\n", dep.name)
+			pdbg("FAIL to install dep '%v'\n", dep.name)
 			return false
 		}
 	}
@@ -1878,7 +1881,7 @@ func (p *Prg) isInstalled() bool {
 	folderMain := NewPathDir("test/" + p.GetName())
 	folderFull := folderMain.AddP(folder)
 	test := folderFull.Add(p.test)
-	fmt.Printf("*** TEST='%+v'\n", test)
+	pdbg("*** TEST='%+v'\n", test)
 	return test.Exists()
 }
 
@@ -1894,35 +1897,35 @@ func (p *Prg) install() bool {
 		addToGitHub = false
 		p.updateDependOn()
 		if p.depOn == nil {
-			fmt.Printf("[install] ERR: '%v' depOn '%v' MISSING\n", p.name, p.GetName())
+			pdbg("ERR: '%v' depOn '%v' MISSING\n", p.name, p.GetName())
 			return false
 		}
 		if !p.depOn.isInstalled() {
-			fmt.Printf("[install] ERR: '%v' depOn '%v' not installed yet\n", p.name, p.depOn.name)
+			pdbg("ERR: '%v' depOn '%v' not installed yet\n", p.name, p.depOn.name)
 			return false
 		}
 	}
 	folder := p.GetFolder()
 	if folder == nil {
-		fmt.Printf("[install] ERR: no folder on '%v'\n", p.GetName())
+		pdbg("ERR: no folder on '%v'\n", p.GetName())
 		return false
 	}
 
 	folderMain := NewPathDir("test/" + p.GetName())
 	if !folderMain.Exists() && !folderMain.MkDirAll() {
-		fmt.Printf("[install] ERR: unable to create folder on '%v'\n", folderMain.String())
+		pdbg("ERR: unable to create folder on '%v'\n", folderMain.String())
 		return false
 	}
 	folderFull := folderMain.AddP(folder)
 
 	if p.isInstalled() {
-		fmt.Printf("No Need to install %v in '%v' per test\n", p.GetName(), folderFull)
+		pdbg("No Need to install %v in '%v' per test\n", p.GetName(), folderFull)
 		if p.depOn == nil {
 			return p.postInstall()
 		}
 		return true
 	}
-	fmt.Printf("TEST.... '%v' (for '%v')\n", false, folderFull.Add(p.test))
+	pdbg("TEST.... '%v' (for '%v')\n", false, folderFull.Add(p.test))
 
 	var archive *Path
 	if p.depOn != nil && p.depOn.isInstalled() {
@@ -1934,13 +1937,13 @@ func (p *Prg) install() bool {
 	if archive == nil {
 		archive = p.GetArchive()
 	}
-	fmt.Printf("[install] GetArchive()='%v'\n", archive)
+	pdbg("GetArchive()='%v'\n", archive)
 	if archive == nil {
-		fmt.Printf("[install] ERR: no archive on '%v'\n", p.GetName())
+		pdbg("ERR: no archive on '%v'\n", p.GetName())
 		return false
 	}
 
-	fmt.Printf("folderFull (%v): '%v'\narchive '%v'\n", p.GetName(), folderFull, archive)
+	pdbg("folderFull (%v): '%v'\narchive '%v'\n", p.GetName(), folderFull, archive)
 
 	folderTmp := folderMain.Add("tmp/")
 	if !folderTmp.Exists() && !folderTmp.MkDirAll() {
@@ -1955,33 +1958,33 @@ func (p *Prg) install() bool {
 			installJDK(folderFull, archive)
 		}*/
 	if p.invoke == "" {
-		fmt.Printf("[install] Unknown command for installing '%v'\n", archive)
+		pdbg("Unknown command for installing '%v'\n", archive)
 		return false
 	}
 
 	dst := folderFull.Abs()
-	fmt.Printf("Dst='%+v'\n", dst)
+	pdbg("Dst='%+v'\n", dst)
 
 	if isEmpty(dst) {
 		return false
 	}
 
-	fmt.Printf("============ '%v'\n", p.invoke)
+	pdbg("============ '%v'\n", p.invoke)
 
 	if strings.HasPrefix(p.invoke, "go:") {
 		methodName := strings.TrimSpace(p.invoke[len("go:"):])
 		if !p.callFunc(methodName, dst, archive) {
-			fmt.Printf("[install] Unable to install '%v' invoke '%v'\n", p.name, archive)
+			pdbg("Unable to install '%v' invoke '%v'\n", p.name, archive)
 			return false
 		}
 	} else {
 		cmd := p.invoke
 		cmd = strings.Replace(cmd, "@FILE@", archive.String(), -1)
 		cmd = strings.Replace(cmd, "@DEST@", dst.String(), -1)
-		fmt.Printf("invoking for '%v': '%v'\n", p.GetName(), cmd)
+		pdbg("invoking for '%v': '%v'\n", p.GetName(), cmd)
 		c := exec.Command("cmd", "/C", cmd)
 		if out, err := c.Output(); err != nil {
-			fmt.Printf("Error invoking '%v'\n''%v': %v'\n", cmd, string(out), err)
+			pdbg("Error invoking '%v'\n''%v': %v'\n", cmd, string(out), err)
 		}
 	}
 	return p.postInstall()
@@ -1991,7 +1994,7 @@ type Invoke struct {
 }
 
 func (p *Prg) callFunc(methodName string, folder, archive *Path) bool {
-	fmt.Printf("methodName '%v'\n", methodName)
+	pdbg("methodName '%v'\n", methodName)
 	// http://groups.google.com/forum/#!topic/golang-nuts/-J17cxJnmss
 	// http://stackoverflow.com/questions/8103617/call-a-struct-and-its-method-by-name-in-go
 	inputs := make([]reflect.Value, 2)
@@ -2004,8 +2007,8 @@ func (p *Prg) callFunc(methodName string, folder, archive *Path) bool {
 }
 
 func (i Invoke) InstallJDKsrc(folder, archive *Path) bool {
-	fmt.Printf("[installJDKsrc] folder='%v'\n", folder)
-	fmt.Printf("[installJDKsrc] archive='%v'\n", archive)
+	pdbg("folder='%v'\n", folder)
+	pdbg("archive='%v'\n", archive)
 
 	if !archive.isZip() && archive.HasTar() {
 		archiveTar := archive.Tar()
@@ -2015,17 +2018,17 @@ func (i Invoke) InstallJDKsrc(folder, archive *Path) bool {
 		archive = archiveTar
 	}
 	if !archive.Exists() {
-		fmt.Printf("[installJDKsrc] unable to access archive '%v'\n", archive)
+		pdbg("unable to access archive '%v'\n", archive)
 		return false
 	}
 
 	l := list7z(archive, "src.zip")
 	rx, _ := regexp.Compile(`(?m).*\s((?:\S+\\)?src.zip).*$`)
 	matches := rx.FindAllStringSubmatchIndex(l, -1)
-	fmt.Printf("matches: '%v'\n", matches)
+	pdbg("matches: '%v'\n", matches)
 
 	if len(matches) < 4 {
-		fmt.Printf("[installJDKsrc] unable to find src.zip in archive '%v'\n", archive)
+		pdbg("unable to find src.zip in archive '%v'\n", archive)
 		return false
 	}
 
@@ -2036,8 +2039,8 @@ func (i Invoke) InstallJDKsrc(folder, archive *Path) bool {
 }
 
 func (i Invoke) InstallJDK(folder *Path, archive *Path) bool {
-	fmt.Printf("folder='%v'\n", folder)
-	fmt.Printf("archive='%v'\n", archive)
+	pdbg("folder='%v'\n", folder)
+	pdbg("archive='%v'\n", archive)
 
 	archiveTools := archive
 	archiveTar := folder.Add(archive.Tar().Base())
@@ -2050,9 +2053,9 @@ func (i Invoke) InstallJDK(folder *Path, archive *Path) bool {
 		archiveTools = archiveTar
 	}
 
-	fmt.Printf("folder='%+v', ", folder)
+	pdbg("folder='%+v', ", folder)
 	tools := folder.Add("tools.zip")
-	fmt.Printf("tools='%+v', ", tools)
+	pdbg("tools='%+v', ", tools)
 
 	if !tools.Exists() {
 		uncompress7z(archiveTools, folder, NewPath("tools.zip"), "Extract tools.zip", true)
@@ -2063,7 +2066,7 @@ func (i Invoke) InstallJDK(folder *Path, archive *Path) bool {
 
 	unpack := folder.Add("bin/unpack200.exe")
 	if !unpack.Exists() {
-		fmt.Printf("Error bin/unpack200.exe not found in '%v'\n", folder)
+		pdbg("Error bin/unpack200.exe not found in '%v'\n", folder)
 		return false
 	}
 	files := []string{}
@@ -2074,17 +2077,17 @@ func (i Invoke) InstallJDK(folder *Path, archive *Path) bool {
 		return nil
 	})
 	if err != nil {
-		fmt.Printf("[installJDK] ERR during walk for pack: '%v'\n", err)
+		pdbg("ERR during walk for pack: '%v'\n", err)
 	}
-	fmt.Printf("files '%+v'\n", files)
+	pdbg("files '%+v'\n", files)
 	for _, file := range files {
 		nopack := NewPath(file[:len(file)-len(".pack")] + ".jar")
 		if !nopack.Exists() {
 			cmd := fmt.Sprintf("%v %v %v", unpack.String(), file, nopack.String())
-			fmt.Printf("%v '%v' => '%v'...\n", unpack, file, nopack)
+			pdbg("%v '%v' => '%v'...\n", unpack, file, nopack)
 			c := exec.Command("cmd", "/C", cmd)
 			if _, err := c.Output(); err != nil {
-				fmt.Printf("Error invoking '%v' on '%v'\n'%v'\n", unpack, file, err)
+				pdbg("Error invoking '%v' on '%v'\n'%v'\n", unpack, file, err)
 			}
 		}
 	}
@@ -2139,18 +2142,18 @@ func (i Invoke) BuildZipJDK(folder *Path, archive *Path) bool {
 	if !archive.isExe() && archive.HasTar() {
 		return false
 	}
-	fmt.Printf("[BuildZipJDK] folder='%v'\n", folder)
+	pdbg("folder='%v'\n", folder)
 	archiveTar := archive.Tar()
-	fmt.Printf("[BuildZipJDK] archive='%v'\n", archiveTar)
+	pdbg("archive='%v'\n", archiveTar)
 	if !archiveTar.Exists() {
 		tools := folder.Add("tools.zip")
 		if !tools.Exists() {
-			fmt.Printf("[BuildZipJDK] tools.zip not found at '%v'\n", tools)
+			pdbg("tools.zip not found at '%v'\n", tools)
 			return false
 		}
 		src := folder.Add("src.zip")
 		if !src.Exists() {
-			fmt.Printf("[BuildZipJDK] src.zip not found at '%v'\n", src)
+			pdbg("src.zip not found at '%v'\n", src)
 			return false
 		}
 		os.Exit(0)
@@ -2244,7 +2247,7 @@ func cmd7z() string {
 		var err error
 		fcmd, err = filepath.Abs(filepath.FromSlash(cmd))
 		if err != nil {
-			fmt.Printf("7z: Unable to get full path for cmd: '%v'\n%v", cmd, err)
+			pdbg("7z: Unable to get full path for cmd: '%v'\n%v", cmd, err)
 			return ""
 		}
 		cmd = fcmd
@@ -2266,15 +2269,15 @@ func list7z(archive *Path, file string) string {
 		argFile = " -- " + file
 	}
 	cmd = fmt.Sprintf("%v l -r %v%v", cmd, farchive.String(), argFile)
-	fmt.Printf("'%v'%v => 7zL...\n%v\n", archive, argFile, cmd)
+	pdbg("'%v'%v => 7zL...\n%v\n", archive, argFile, cmd)
 	c := exec.Command("cmd", "/C", cmd)
 	res := ""
 	if out, err := c.Output(); err != nil {
-		fmt.Printf("Error invoking 7ZL '%v'\n'%v' %v'\n", cmd, string(out), err)
+		pdbg("Error invoking 7ZL '%v'\n'%v' %v'\n", cmd, string(out), err)
 	} else {
 		res = string(out)
 	}
-	fmt.Printf("'%v'%v => 7zL... DONE\n'%v'\n", archive, argFile, res)
+	pdbg("'%v'%v => 7zL... DONE\n'%v'\n", archive, argFile, res)
 	return res
 }
 
@@ -2304,14 +2307,14 @@ func uncompress7z(archive, folder, file *Path, msg string, extract bool) bool {
 		extractCmd = "e"
 	}
 	cmd = fmt.Sprintf("%v %v -aos -o%v -pdefault -sccUTF-8 %v%v", cmd, extractCmd, ffolder.String(), farchive.String(), argFile)
-	fmt.Printf("%v'%v'%v => 7zU...\n%v\n", msg, archive, argFile, cmd)
+	pdbg("%v'%v'%v => 7zU...\n%v\n", msg, archive, argFile, cmd)
 
 	c := exec.Command("cmd", "/C", cmd)
 	if out, err := c.Output(); err != nil {
-		fmt.Printf("Error invoking 7ZU '%v'\n''%v' %v'\n%v\n", cmd, string(out), err, cmd)
+		pdbg("Error invoking 7ZU '%v'\n''%v' %v'\n%v\n", cmd, string(out), err, cmd)
 		return false
 	}
-	fmt.Printf("%v'%v'%v => 7zU... DONE\n", msg, archive, argFile)
+	pdbg("%v'%v'%v => 7zU... DONE\n", msg, archive, argFile)
 	return true
 }
 
@@ -2349,10 +2352,10 @@ func compress7z(archive, folder, file *Path, msg, format string) bool {
 	os.Exit(0)
 	c := exec.Command("cmd", "/C", cmd)
 	if out, err := c.Output(); err != nil {
-		fmt.Printf("Error invoking 7zC '%v'\nout='%v' => err='%v'\n", cmd, string(out), err)
+		pdbg("Error invoking 7zC '%v'\nout='%v' => err='%v'\n", cmd, string(out), err)
 		return false
 	}
-	fmt.Printf("%v'%v'%v => 7zC... DONE\n", msg, archive, argFile)
+	pdbg("%v'%v'%v => 7zC... DONE\n", msg, archive, argFile)
 	return true
 }
 
@@ -2364,17 +2367,17 @@ func (p *Prg) invokeUnZip() bool {
 	folderFull := folderMain.AddP(folder)
 	t := getLastModifiedFile(folderTmp, ".*")
 	if t == "" {
-		fmt.Printf("Need to uncompress '%v' in '%v'\n", archive, folderTmp)
+		pdbg("Need to uncompress '%v' in '%v'\n", archive, folderTmp)
 		if !unzip(archive, folderTmp) {
 			return false
 		}
 	}
 	folderToMove := folderTmp.AddP(folder)
 	if folderToMove.Exists() {
-		fmt.Printf("Need to move %v in '%v'\n", folderToMove, folderFull)
+		pdbg("Need to move %v in '%v'\n", folderToMove, folderFull)
 		err := os.Rename(folderToMove.String(), folderFull.String())
 		if err != nil {
-			fmt.Printf("Error moving tmp folder '%v' to '%v': '%v'\n", folderTmp, folderFull, err)
+			pdbg("Error moving tmp folder '%v' to '%v': '%v'\n", folderTmp, folderFull, err)
 			return false
 		}
 	}
@@ -2387,9 +2390,9 @@ func (p *Prg) GetFolder() *Path {
 		return p.folder
 	}
 	if p.exts != nil {
-		fmt.Printf("Get folder for %v", p.name)
+		pdbg("Get folder for %v", p.name)
 		p.folder = get(p.folder, p.exts.extractFolder, true)
-		fmt.Printf("DONE Get folder for %v\n", p.folder)
+		pdbg("DONE Get folder for %v\n", p.folder)
 		if !isEmpty(p.folder) && p.depOn != nil {
 			p.depOn.folder = p.folder
 		}
@@ -2412,14 +2415,14 @@ func (p *Prg) GetArchive() *Path {
 	}
 	var archiveName *Path
 	if p.exts != nil {
-		fmt.Printf("Get archive for %v", p.GetName())
+		pdbg("Get archive for %v", p.GetName())
 		archiveName = get(nil, p.exts.extractArchive, false)
 		if archiveName.EndsWithSeparator() {
-			fmt.Printf("[Prg.GetArchive] No archive found for '%v'\n", p.name)
+			pdbg("No archive found for '%v'\n", p.name)
 			return nil
 		}
 	}
-	fmt.Printf("***** Prg name '%v': isexe %v for depOn %v len %v\n", p.name, archiveName.isExe(), p.depOn, len(p.deps))
+	pdbg("***** Prg name '%v': isexe %v for depOn %v len %v\n", p.name, archiveName.isExe(), p.depOn, len(p.deps))
 	//debug.PrintStack()
 	if archiveName != nil && archiveName.isExe() && p.depOn == nil {
 		pext := ".zip"
@@ -2433,7 +2436,7 @@ func (p *Prg) GetArchive() *Path {
 		}
 	}
 	if p.archive == nil && archiveName != nil && p.exts != nil {
-		fmt.Printf("Get url for %v(%v) on '%v'\n", p.GetName(), p.name, archiveName)
+		pdbg("Get url for %v(%v) on '%v'\n", p.GetName(), p.name, archiveName)
 		url := p.GetURL()
 		p.archive = cache.GetArchive(archiveName, url, p.GetName(), p.cookies)
 	}
@@ -2446,13 +2449,13 @@ func (p *Prg) GetURL() *url.URL {
 		return p.url
 	}
 	if p.exts != nil {
-		fmt.Printf("Get url for %v", p.GetName())
+		pdbg("Get url for %v", p.GetName())
 		rawurl := get(nil, p.exts.extractURL, false)
-		fmt.Printf("URL '%+v'\n", rawurl)
+		pdbg("URL '%+v'\n", rawurl)
 		if anurl, err := url.ParseRequestURI(rawurl.String()); err == nil {
 			p.url = anurl
 		} else {
-			fmt.Printf("Unable to parse url '%v' because '%v'", rawurl, err)
+			pdbg("Unable to parse url '%v' because '%v'", rawurl, err)
 			p.url = nil
 		}
 	}
@@ -2475,7 +2478,7 @@ func get(iniValue *Path, ext Extractor, underscore bool) *Path {
 	if underscore {
 		res = strings.Replace(res, " ", "_", -1)
 	}
-	fmt.Printf("get == '%v'\n", res)
+	pdbg("get == '%v'\n", res)
 	return NewPath(res)
 }
 
@@ -2490,7 +2493,7 @@ func (p Path) Exists() bool {
 	if os.IsNotExist(err) {
 		return false
 	}
-	fmt.Printf("[exists] Error while checking if '%v' exists: '%v'\n", path, err)
+	pdbg("Error while checking if '%v' exists: '%v'\n", path, err)
 	return false
 }
 
@@ -2528,15 +2531,15 @@ func (f byDate) Swap(i, j int) {
 }
 
 func getLastModifiedFile(dir *Path, pattern string) string {
-	fmt.Printf("Look in '%v' for '%v'\n", dir, pattern)
+	pdbg("Look in '%v' for '%v'\n", dir, pattern)
 	f, err := os.Open(dir.String())
 	if err != nil {
-		fmt.Printf("Error while opening dir '%v': '%v'\n", dir, err)
+		pdbg("Error while opening dir '%v': '%v'\n", dir, err)
 		return ""
 	}
 	list, err := f.Readdir(-1)
 	if err != nil {
-		fmt.Printf("Error while reading dir '%v': '%v'\n", dir, err)
+		pdbg("Error while reading dir '%v': '%v'\n", dir, err)
 		return ""
 	}
 	if len(list) == 0 {
@@ -2550,12 +2553,12 @@ func getLastModifiedFile(dir *Path, pattern string) string {
 		}
 	}
 	if len(filteredList) == 0 {
-		fmt.Printf("NO FILE in '%v' for '%v'\n", dir, pattern)
+		pdbg("NO FILE in '%v' for '%v'\n", dir, pattern)
 		return ""
 	}
-	// fmt.Printf("t: '%v' => '%v'\n", filteredList, filteredList[0])
+	// pdbg("t: '%v' => '%v'\n", filteredList, filteredList[0])
 	sort.Sort(byDate(filteredList))
-	// fmt.Printf("t: '%v' => '%v'\n", filteredList, filteredList[0])
+	// pdbg("t: '%v' => '%v'\n", filteredList, filteredList[0])
 	return filteredList[0].Name()
 }
 
@@ -2598,7 +2601,7 @@ func cloneZipItem(f *zip.File, dest *Path) bool {
 	// Clone if item is a file
 	rc, err := f.Open()
 	if err != nil {
-		fmt.Printf("Error while checking if zip element is a file: '%v'\n", f)
+		pdbg("Error while checking if zip element is a file: '%v'\n", f)
 		return false
 	}
 	defer rc.Close()
@@ -2606,13 +2609,13 @@ func cloneZipItem(f *zip.File, dest *Path) bool {
 		// Use os.Create() since Zip don't store file permissions.
 		fileCopy, err := os.Create(path.String())
 		if err != nil {
-			fmt.Printf("Error while creating zip element to '%v' from '%v'\n", path, f)
+			pdbg("Error while creating zip element to '%v' from '%v'\n", path, f)
 			return false
 		}
 		_, err = io.Copy(fileCopy, rc)
 		fileCopy.Close()
 		if err != nil {
-			fmt.Printf("Error while copying zip element to '%v' from '%v'\n", fileCopy, rc)
+			pdbg("Error while copying zip element to '%v' from '%v'\n", fileCopy, rc)
 			return false
 		}
 	}
@@ -2622,7 +2625,7 @@ func cloneZipItem(f *zip.File, dest *Path) bool {
 func unzip(zipPath, dest *Path) bool {
 	r, err := zip.OpenReader(zipPath.String())
 	if err != nil {
-		fmt.Printf("Error while opening zip '%v' for '%v'\n'%v'\n", zipPath, dest, err)
+		pdbg("Error while opening zip '%v' for '%v'\n'%v'\n", zipPath, dest, err)
 		return false
 	}
 	defer r.Close()
