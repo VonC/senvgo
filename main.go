@@ -1078,7 +1078,6 @@ func (c *CacheDisk) GetPage(url *url.URL, name string) *Path {
 	pdbg("'%v' for '%v' from '%v'", url, name, c)
 	filepath := c.getFile(url, name)
 	pn := pdbg("filepatht '%v'\n", filepath)
-	panic(pn)
 	wasNotFound := true
 	if c.next != nil {
 		if filepath == nil {
@@ -1088,8 +1087,8 @@ func (c *CacheDisk) GetPage(url *url.URL, name string) *Path {
 			c.Next().UpdatePage(filepath, name)
 		}
 	}
-	pdbg("c.last '%v' %v\n", filepath, wasNotFound)
-	os.Exit(0)
+	pn = pdbg("filepath '%v' %v\n", filepath, wasNotFound)
+	panic(pn)
 	if filepath == nil || wasNotFound || updatePage {
 		sha := c.getResourceName(url, name)
 		t := time.Now()
