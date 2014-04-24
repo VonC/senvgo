@@ -106,28 +106,24 @@ var defaultConfig = `
 
 // Prg is a Program to be installed
 type Prg struct {
-	name        string
-	dir         *Path
-	folder      *Path
-	archive     *Path
-	url         *url.URL
-	invoke      string
-	exts        *Extractors
-	portableExt *Extractors
-	cache       Cache
-	arch        *Arch
-	cookies     []*http.Cookie
-	test        string
-	buildZip    string
-	deps        []*Prg
-	depOn       *Prg
+	name     string
+	dir      *Path
+	folder   *Path
+	archive  *Path
+	url      *url.URL
+	invoke   string
+	exts     *Extractors
+	cache    Cache
+	arch     *Arch
+	cookies  []*http.Cookie
+	test     string
+	buildZip string
+	deps     []*Prg
+	depOn    *Prg
 }
 
 func (p *Prg) String() string {
 	res := fmt.Sprintf("Prg '%v' ['%v']\n  Folder='%v', archive='%v'\n  %v,  Arc '%v'>\n  Exts : '%v'\n", p.name, p.GetName(), p.folder, p.archive, p.cache, p.arch, p.exts)
-	if p.portableExt != nil {
-		res = res + fmt.Sprintf("pexts: '%v'\n", p.portableExt)
-	}
 	return res
 }
 
@@ -1586,29 +1582,6 @@ func (er *ExtractorReplace) ExtractFrom(data string) string {
 	return res
 }
 
-func (p *Prg) updatePortable() {
-	if p.portableExt == nil {
-		return
-	}
-	if p.portableExt.extractFolder.Nb() == 1 {
-		p.portableExt.extractFolder.SetNext(p.exts.extractFolder.Next())
-	}
-	if p.portableExt.extractURL == nil {
-		if strings.HasSuffix(reflect.TypeOf(p.exts.extractURL).Name(), "ExtractorGet") {
-			p.portableExt.extractURL = p.exts.extractURL.Next()
-		} else {
-			p.portableExt.extractURL = p.exts.extractURL
-		}
-	}
-	if p.portableExt.extractArchive == nil {
-		if strings.HasSuffix(reflect.TypeOf(p.exts.extractArchive).Name(), "ExtractorGet") {
-			p.portableExt.extractArchive = p.exts.extractArchive.Next()
-		} else {
-			p.portableExt.extractArchive = p.exts.extractArchive
-		}
-	}
-}
-
 var cfgRx, _ = regexp.Compile(`^([^\.]+)\.([^\.\s]+)\s+(.*?)$`)
 
 func NewCacheDisk(id string, root *Path) *CacheDisk {
@@ -1639,7 +1612,6 @@ func ReadConfig() []*Prg {
 		if strings.HasPrefix(line, "[") {
 			if currentPrg != nil {
 				pdbg("End of config for prg '%v'\n", currentPrg.GetName())
-				currentPrg.updatePortable()
 				res = append(res, currentPrg)
 				currentPrg = nil
 			}
@@ -1763,7 +1735,6 @@ func ReadConfig() []*Prg {
 			currentVariable = variable
 		}
 	}
-	currentPrg.updatePortable()
 	res = append(res, currentPrg)
 	pdbg("%v\n", res)
 	return res
