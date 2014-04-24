@@ -1088,7 +1088,6 @@ func (c *CacheDisk) GetPage(url *url.URL, name string) *Path {
 		}
 	}
 	pn = pdbg("filepath '%v' %v\n", filepath, wasNotFound)
-	panic(pn)
 	if filepath == nil || wasNotFound || updatePage {
 		sha := c.getResourceName(url, name)
 		t := time.Now()
@@ -1117,10 +1116,10 @@ func (c *CacheDisk) GetPage(url *url.URL, name string) *Path {
 				pdbg("UPDATE %v for URL %v\n", url, name)
 				filepath = newFilePath
 			}
-			pdbg("filepath DONE '%v' %v\n", filepath, wasNotFound)
+			pn = pdbg("filepath DONE '%v' %v\n", filepath, wasNotFound)
 		}
 		if filepath != nil {
-			pdbg("Get '%v' has downloaded in '%v' for '%v'\n", c.id, filepath, url)
+			pdbg("Get '%v' has downloaded in '%v' for '%v' (%v)", c.id, filepath, url, len(pn))
 			c.RegisterPath(name, filepath)
 		}
 		if c.next != nil && filepath != nil {
@@ -1352,9 +1351,6 @@ func do(req *http.Request) (*http.Response, error) {
 	pdbg("(do) -------\n")
 	//resp, err := mainHttpClient.Get(req.URL.String())
 
-	debug.PrintStack()
-	os.Exit(0)
-
 	resp, err := getClient().Do(req)
 	if err != nil {
 		pdbg("Error : %s\n", err)
@@ -1510,10 +1506,11 @@ func NewExtractorMatch(rx string, p PrgData) *ExtractorMatch {
 
 // ExtractFrom returns matched content from a regexp
 func (em *ExtractorMatch) ExtractFrom(content string) string {
-	pdbg("=====> ExtractorMatch.ExtractFrom '%v'\n", len(content))
-	if len(content) < 200 {
-		pdbg("   ==> ExtractorMatch.ExtractFrom '%v'\n", content)
+	c := content
+	if len(content) > 200 {
+		c = fmt.Sprintf("%v", len(content))
 	}
+	pdbg("=====> ExtractorMatch.ExtractFrom (%v) '%v'\n", len(content), c)
 	rx := em.Regexp()
 	pdbg("Rx for '%v' (%v): '%v'\n", em.p.GetName(), len(content), rx)
 	matches := rx.FindAllStringSubmatchIndex(content, -1)
@@ -1522,6 +1519,9 @@ func (em *ExtractorMatch) ExtractFrom(content string) string {
 	if len(matches) >= 1 && len(matches[0]) >= 4 {
 		res = content[matches[0][2]:matches[0][3]]
 		pdbg(" RES='%v'\n", res)
+	} else {
+		pn := pdbg("[Err] Rx '%v' applied to '%v': NO MATCH", rx, c)
+		panic(pn)
 	}
 	return res
 }
