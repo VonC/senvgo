@@ -989,6 +989,39 @@ var updatePage = true
 var rxDbgLine, _ = regexp.Compile(`^.*VonC/senvgo/main.go:(\d+)\s`)
 var rxDbgFnct, _ = regexp.Compile(`^\s+com/VonC/senvgo(?:\.\(([^\)]+)\))?\.([^:]+)`)
 
+func pdbgInc(scanner *bufio.Scanner, line string) string {
+	m := rxDbgLine.FindSubmatchIndex([]byte(line))
+	if len(m) == 0 {
+		return ""
+	}
+	dbgLine := line[m[2]:m[3]]
+	// fmt.Printf("line '%v', m '%+v'\n", line, m)
+	scanner.Scan()
+	line = scanner.Text()
+	mf := rxDbgFnct.FindSubmatchIndex([]byte(line))
+	// fmt.Printf("lineF '%v', mf '%+v'\n", line, mf)
+	if len(mf) == 0 {
+		return ""
+	}
+	dbgFnct := ""
+	if mf[2] > -1 {
+		dbgFnct = line[mf[2]:mf[3]]
+	}
+	if dbgFnct != "" {
+		dbgFnct = dbgFnct + "."
+	}
+	dbgFnct = dbgFnct + line[mf[4]:mf[5]]
+
+	return dbgFnct + ":" + dbgLine
+}
+
+func pdbgExcluded(dbg string) bool {
+	if strings.Contains(dbg, "ReadConfig:") {
+		return true
+	}
+	return false
+}
+
 func pdbg(format string, args ...interface{}) {
 	msg := fmt.Sprintf(format+"\n", args...)
 	msg = strings.TrimSpace(msg)
@@ -1006,29 +1039,23 @@ func pdbg(format string, args ...interface{}) {
 		if len(m) == 0 {
 			continue
 		}
-		if pmsg == "" && depth == 1 {
-			dbgLine := line[m[2]:m[3]]
-			// fmt.Printf("line '%v', m '%+v'\n", line, m)
-			scanner.Scan()
-			line = scanner.Text()
-			mf := rxDbgFnct.FindSubmatchIndex([]byte(line))
-			// fmt.Printf("lineF '%v', mf '%+v'\n", line, mf)
-			if len(mf) == 0 {
+		if depth > 0 && depth < 4 {
+			dbg := pdbgInc(scanner, line)
+			if dbg == "" {
 				continue
 			}
-			dbgFnct := ""
-			if mf[2] > -1 {
-				dbgFnct = line[mf[2]:mf[3]]
+			if depth == 1 {
+				if pdbgExcluded(dbg) {
+					return
+				}
+				pmsg = "[" + dbg + "]"
+			} else {
+				pmsg = pmsg + " (" + dbg + ")"
 			}
-			if dbgFnct != "" {
-				dbgFnct = dbgFnct + "."
-			}
-			dbgFnct = dbgFnct + line[mf[4]:mf[5]]
-			pmsg = pmsg + "[" + dbgFnct + ":" + dbgLine + "]"
 		}
 		depth = depth + 1
 	}
-	spaces := strings.Repeat(" ", depth)
+	spaces := strings.Repeat(" ", depth-2)
 	pmsg = spaces + pmsg
 	msg = pmsg + "\n" + spaces + "  " + msg + "\n"
 	// fmt.Printf("MSG '%v'\n", msg)
