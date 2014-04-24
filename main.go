@@ -19,6 +19,7 @@ import (
 	"reflect"
 	"regexp"
 	"runtime"
+	"runtime/debug"
 	"sort"
 	"strings"
 	"sync"
@@ -999,6 +1000,7 @@ func (c *CacheDisk) GetPage(url *url.URL, name string) *Path {
 		}
 	}
 	fmt.Printf("c.last '%v' %v\n", filepath, wasNotFound)
+	os.Exit(0)
 	if filepath == nil || wasNotFound || updatePage {
 		sha := c.getResourceName(url, name)
 		t := time.Now()
@@ -1261,6 +1263,10 @@ func do(req *http.Request) (*http.Response, error) {
 	fmt.Printf("(do) Sent body: '%+v'\n", req.Body)
 	fmt.Printf("(do) -------\n")
 	//resp, err := mainHttpClient.Get(req.URL.String())
+
+	debug.PrintStack()
+	os.Exit(0)
+
 	resp, err := getClient().Do(req)
 	if err != nil {
 		fmt.Printf("Error : %s\n", err)
