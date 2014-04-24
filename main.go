@@ -2298,7 +2298,7 @@ func (p *Prg) invokeUnZip() bool {
 	return true
 }
 
-// GetFolder returns full folder path ofr a program
+// GetFolder returns full folder path for a program
 func (p *Prg) GetFolder() *Path {
 	if isEmpty(p.folder) == false {
 		return p.folder
@@ -2309,6 +2309,13 @@ func (p *Prg) GetFolder() *Path {
 		fmt.Printf("DONE Get folder for %v\n", p.folder)
 		if !isEmpty(p.folder) && p.depOn != nil {
 			p.depOn.folder = p.folder
+		}
+	}
+	if isEmpty(p.folder) == false {
+		for _, prg := range prgs {
+			if prg.GetName() == p.name && prg.GetName() != prg.name {
+				prg.folder = p.folder
+			}
 		}
 	}
 	return p.folder
