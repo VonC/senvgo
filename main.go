@@ -2328,14 +2328,13 @@ func (p *Prg) GetArchive() *Path {
 		return p.archive
 	}
 	var archiveName *Path
-	savePath := cache.Last()
 	if p.exts != nil {
 		fmt.Printf("Get archive for %v", p.GetName())
-		archiveName = get(p.archive, p.exts.extractArchive, false)
+		archiveName = get(nil, p.exts.extractArchive, false)
 		if archiveName.EndsWithSeparator() {
-			archiveName = nil
+			fmt.Printf("[Prg.GetArchive] No archive found for '%v'\n", p.name)
+			return nil
 		}
-		savePath = cache.Last()
 	}
 	fmt.Printf("***** Prg name '%v': isexe %v for depOn %v len %v\n", p.name, archiveName.isExe(), p.depOn, len(p.deps))
 	//debug.PrintStack()
@@ -2351,8 +2350,7 @@ func (p *Prg) GetArchive() *Path {
 		}
 	}
 	if p.archive == nil && archiveName != nil && p.exts != nil {
-		cache.last = savePath
-		fmt.Printf("Get url for %v on '%v'\n", p.GetName(), cache.Last())
+		fmt.Printf("Get url for %v(%v) on '%v'\n", p.GetName(), p.name, archiveName)
 		url := p.GetURL()
 		p.archive = cache.GetArchive(archiveName, url, p.GetName(), p.cookies)
 	}
