@@ -34,6 +34,7 @@ import (
 var prgs []*Prg
 
 func main() {
+	defer rec()
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	pdbg("MAIN")
 	prgs = ReadConfig()
@@ -43,6 +44,12 @@ func main() {
 		} else {
 			pdbg("FAILED INSTALLED '%v'\n", p)
 		}
+	}
+}
+
+func rec() {
+	if r := recover(); r != nil {
+		fmt.Printf("Recovered from '%+v'\n", r)
 	}
 }
 
@@ -1023,7 +1030,7 @@ func pdbgExcluded(dbg string) bool {
 	return false
 }
 
-func pdbg(format string, args ...interface{}) {
+func pdbg(format string, args ...interface{}) string {
 	msg := fmt.Sprintf(format+"\n", args...)
 	msg = strings.TrimSpace(msg)
 	bstack := bytes.NewBuffer(debug.Stack())
@@ -1047,7 +1054,7 @@ func pdbg(format string, args ...interface{}) {
 			}
 			if depth == 1 {
 				if pdbgExcluded(dbg) {
-					return
+					return ""
 				}
 				pmsg = "[" + dbg + "]"
 			} else {
@@ -1057,10 +1064,12 @@ func pdbg(format string, args ...interface{}) {
 		depth = depth + 1
 	}
 	spaces := strings.Repeat(" ", depth-2)
+	res := pmsg
 	pmsg = spaces + pmsg
 	msg = pmsg + "\n" + spaces + "  " + msg + "\n"
 	// fmt.Printf("MSG '%v'\n", msg)
 	fmt.Fprintf(os.Stderr, fmt.Sprintf(msg))
+	return res
 }
 
 // Get will get either an url or an archive extension (exe, zip, tar.gz, ...)
@@ -1068,8 +1077,8 @@ func (c *CacheDisk) GetPage(url *url.URL, name string) *Path {
 	//debug.PrintStack()
 	pdbg("'%v' for '%v' from '%v'", url, name, c)
 	filepath := c.getFile(url, name)
-	pdbg("filepatht '%v'\n", filepath)
-	os.Exit(0)
+	pn := pdbg("filepatht '%v'\n", filepath)
+	panic(pn)
 	wasNotFound := true
 	if c.next != nil {
 		if filepath == nil {
@@ -2463,11 +2472,6 @@ func (p *Prg) GetURL() *url.URL {
 }
 
 func get(iniValue *Path, ext Extractor, underscore bool) *Path {
-	fmt.Println(" ")
-	fmt.Println(" ")
-	fmt.Println(" ")
-	fmt.Println("-----")
-	fmt.Println(" ")
 	if iniValue != nil {
 		return iniValue
 	}
