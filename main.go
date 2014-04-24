@@ -3,6 +3,7 @@ package main
 import (
 	"archive/zip"
 	"bufio"
+	"bytes"
 	"crypto/sha1"
 	"crypto/tls"
 	"encoding/base64"
@@ -984,6 +985,55 @@ func (c *CacheGitHub) GetPage(url *url.URL, name string) *Path {
 }
 
 var updatePage = true
+
+var rxDbgLine, _ = regexp.Compile(`^.*VonC/senvgo/main.go:(\d+)\s`)
+var rxDbgFnct, _ = regexp.Compile(`^\s+com/VonC/senvgo(?:\.\(([^\)]+)\))?\.([^:]+)`)
+
+func pdbg(format string, args ...interface{}) {
+	msg := fmt.Sprintf(format+"\n", args...)
+	msg = strings.TrimSpace(msg)
+	bstack := bytes.NewBuffer(debug.Stack())
+
+	scanner := bufio.NewScanner(bstack)
+	pmsg := ""
+	depth := 0
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.Contains(line, "smartystreets") {
+			break
+		}
+		m := rxDbgLine.FindSubmatchIndex([]byte(line))
+		if len(m) == 0 {
+			continue
+		}
+		if pmsg == "" && depth == 1 {
+			dbgLine := line[m[2]:m[3]]
+			// fmt.Printf("line '%v', m '%+v'\n", line, m)
+			scanner.Scan()
+			line = scanner.Text()
+			mf := rxDbgFnct.FindSubmatchIndex([]byte(line))
+			// fmt.Printf("lineF '%v', mf '%+v'\n", line, mf)
+			if len(mf) == 0 {
+				continue
+			}
+			dbgFnct := ""
+			if mf[2] > -1 {
+				dbgFnct = line[mf[2]:mf[3]]
+			}
+			if dbgFnct != "" {
+				dbgFnct = dbgFnct + "."
+			}
+			dbgFnct = dbgFnct + line[mf[4]:mf[5]]
+			pmsg = pmsg + "[" + dbgFnct + ":" + dbgLine + "]"
+		}
+		depth = depth + 1
+	}
+	spaces := strings.Repeat(" ", depth)
+	pmsg = spaces + pmsg
+	msg = pmsg + "\n" + spaces + "  " + msg + "\n"
+	// fmt.Printf("MSG '%v'\n", msg)
+	fmt.Fprintf(os.Stderr, fmt.Sprintf(msg))
+}
 
 // Get will get either an url or an archive extension (exe, zip, tar.gz, ...)
 func (c *CacheDisk) GetPage(url *url.URL, name string) *Path {
