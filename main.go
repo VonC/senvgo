@@ -79,6 +79,7 @@ var defaultConfig = `
 	test			src.zip
 	folder.get		http://www.oracle.com/technetwork/java/javase/downloads/index.html?ssSourceSiteId=otnjp
 	folder.rx		>(Java SE 8(?:u\d*)?)<
+	name.get		http://www.oracle.com/technetwork/java/javase/downloads/index.html?ssSourceSiteId=otnjp
 	name.rx			href="(/technetwork/java/javase/downloads/jdk8-downloads-\d+.html)"
 	name.prepend    http://www.oracle.com
 	name.get		_
