@@ -182,7 +182,7 @@ type fextract func(str string) string
 // Extractor knows how to extract, and can be linked
 type Extractor interface {
 	ExtractFrom(data string) string
-	Extract() string
+	Extract(data string) string
 	Next() Extractor
 	SetNext(e Extractor)
 	Self() Extractor
@@ -282,15 +282,13 @@ type Cache interface {
 	Nb() int
 	Add(cache Cache)
 	IsGitHub() bool
-	GetPath(name string, p *Path) *Path
-	RegisterPath(name string, p *Path)
 }
 
 // CacheData has common data between different types od cache
 type CacheData struct {
 	id    string
 	next  Cache
-	paths map[string]*Path
+	paths map[string][]*Path
 }
 
 func (c *CacheData) GetPath(name string, p *Path) *Path {
@@ -302,20 +300,49 @@ func (c *CacheData) GetPath(name string, p *Path) *Path {
 		pdbg("[CacheData.GetPath] INVALID path for id '%v', name '%v', path '%v'\n", c.id, name, p)
 		return nil
 	}
-	key := name + "~" + p.Base()
+	pdbg("name '%v' path '%v'", name, p)
 	if c.paths == nil {
-		c.paths = make(map[string]*Path)
+		c.paths = make(map[string][]*Path)
 		return nil
 	}
-	return c.paths[key]
+	key := name
+	paths := c.paths[key]
+	var res *Path
+	for _, path := range paths {
+		if path.Base() == p.Base() {
+			res = p
+		}
+	}
+	return res
 }
 
-func (c *CacheData) RegisterPath(name string, p *Path) {
+func (c *CacheDisk) RegisterPath(name string, p *Path) {
 	if c.paths == nil {
-		c.paths = make(map[string]*Path)
+		c.paths = make(map[string][]*Path)
 	}
-	key := name + "~" + p.Base()
-	c.paths[key] = p
+	key := name
+	pdbg("Register key '%v' value '%v'", key, p)
+	paths := c.paths[key]
+	if paths == nil {
+		paths = []*Path{}
+	}
+	var foundPath *Path
+	i := 0
+	for _, path := range paths {
+		if path.Base() == p.Base() {
+			foundPath = path
+			break
+		}
+		i = i + 1
+	}
+	if foundPath == nil {
+		pdbg("Actually Register key '%v' value '%v'", key, p)
+		paths = append(paths, p)
+		c.paths[key] = paths
+	} else if foundPath.Dir().String() != c.Folder(name).String() {
+		pdbg("Actually Update key '%v' value '%v' from old '%v'", key, p, foundPath)
+		paths[i] = p
+	}
 }
 
 func (c *CacheData) String() string {
@@ -578,7 +605,6 @@ func (c *CacheGitHub) UpdateArchive(p *Path, name string) {
 		asset = c.getAsset(release, repo, p.release())
 	}
 	if asset != nil {
-		c.RegisterPath(name, p)
 		pdbg("UPDARC Github '%v' for '%v' from '%v': nothing to do\n", p, name, c)
 		// debug.PrintStack()
 		return
@@ -1094,6 +1120,15 @@ func (c *CacheDisk) GetPage(url *url.URL, name string) *Path {
 	if c.next != nil {
 		if filepath == nil {
 			filepath = c.Next().GetPage(url, name)
+			if filepath != nil {
+				f := c.Folder(name).Add(filepath.Base())
+				if !f.Exists() {
+					pdbg("Copy filepath '%v' to local cache path '%v'", filepath, f)
+					copy(f, filepath)
+					c.RegisterPath(name, f)
+					filepath = f
+				}
+			}
 		} else {
 			wasNotFound = false
 			c.Next().UpdatePage(filepath, name)
@@ -1141,6 +1176,7 @@ func (c *CacheDisk) GetPage(url *url.URL, name string) *Path {
 			c.next.UpdatePage(filepath, name)
 		}
 	}
+	pdbg("GetPage '%v': return '%v'", c.id, filepath)
 	return filepath
 }
 
@@ -1265,9 +1301,12 @@ func (e *Extractable) Next() Extractor {
 }
 
 // Extract extracts from its data
-func (e *Extractable) Extract() string {
+func (e *Extractable) Extract(data string) string {
 	ext := e.self
 	res := e.data
+	if data != "" {
+		res = data
+	}
 	for ext != nil {
 		pdbg("### Calling ExtractFrom on %v\n", ext)
 		res = ext.ExtractFrom(res)
@@ -2382,6 +2421,25 @@ func (p *Prg) invokeUnZip() bool {
 	return true
 }
 
+func (p *Prg) getIniData(ext Extractor) string {
+	data := ""
+	if _, ok := ext.(*ExtractorGet); !ok {
+		paths := cache.paths[p.GetName()]
+		pdbg("paths '%v' for '%v'", paths, p.GetName())
+		var pathData *Path
+		for _, path := range paths {
+			if path.NoExt().String() == path.String() {
+				pathData = path
+			}
+		}
+		if pathData != nil {
+			data = pathData.fileContent()
+			pdbg("Not a getter, so get content of '%v'", p)
+		}
+	}
+	return data
+}
+
 // GetFolder returns full folder path for a program
 func (p *Prg) GetFolder() *Path {
 	if isEmpty(p.folder) == false {
@@ -2389,7 +2447,9 @@ func (p *Prg) GetFolder() *Path {
 	}
 	if p.exts != nil {
 		pdbg("Get folder for %v", p.name)
-		p.folder = get(p.folder, p.exts.extractFolder, true)
+		ext := p.exts.extractFolder
+		data := p.getIniData(ext)
+		p.folder = get(p.folder, ext, true, data)
 		pdbg("DONE Get folder for %v\n", p.folder)
 		if !isEmpty(p.folder) && p.depOn != nil {
 			p.depOn.folder = p.folder
@@ -2414,7 +2474,9 @@ func (p *Prg) GetArchive() *Path {
 	var archiveName *Path
 	if p.exts != nil {
 		pdbg("Get archive for %v", p.GetName())
-		archiveName = get(nil, p.exts.extractArchive, false)
+		ext := p.exts.extractArchive
+		data := p.getIniData(ext)
+		archiveName = get(nil, ext, false, data)
 		if archiveName.EndsWithSeparator() {
 			pdbg("No archive found for '%v'\n", p.name)
 			return nil
@@ -2448,7 +2510,9 @@ func (p *Prg) GetURL() *url.URL {
 	}
 	if p.exts != nil {
 		pdbg("Get url for %v", p.GetName())
-		rawurl := get(nil, p.exts.extractURL, false)
+		ext := p.exts.extractURL
+		data := p.getIniData(ext)
+		rawurl := get(nil, p.exts.extractURL, false, data)
 		pdbg("URL '%+v'\n", rawurl)
 		if anurl, err := url.ParseRequestURI(rawurl.String()); err == nil {
 			p.url = anurl
@@ -2460,14 +2524,14 @@ func (p *Prg) GetURL() *url.URL {
 	return p.url
 }
 
-func get(iniValue *Path, ext Extractor, underscore bool) *Path {
+func get(iniValue *Path, ext Extractor, underscore bool, data string) *Path {
 	if iniValue != nil {
 		return iniValue
 	}
 	if ext == nil {
 		return nil
 	}
-	res := ext.Extract()
+	res := ext.Extract(data)
 	if underscore {
 		res = strings.Replace(res, " ", "_", -1)
 	}
