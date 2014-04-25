@@ -1070,6 +1070,20 @@ func pdbg(format string, args ...interface{}) string {
 	return res
 }
 
+var downloadedUrl = []*url.URL{}
+
+func alreadyDownloaded(u *url.URL) bool {
+	if u == nil {
+		return true
+	}
+	for _, uu := range downloadedUrl {
+		if uu.String() == u.String() {
+			return true
+		}
+	}
+	return false
+}
+
 // Get will get either an url or an archive extension (exe, zip, tar.gz, ...)
 func (c *CacheDisk) GetPage(url *url.URL, name string) *Path {
 	//debug.PrintStack()
@@ -1093,6 +1107,7 @@ func (c *CacheDisk) GetPage(url *url.URL, name string) *Path {
 		pdbg("Get '%v' downloads '%v' for '%v'\n", c.id, filename, url)
 		if filepath == nil {
 			filepath = download(url, filename, 0, nil)
+			downloadedUrl = append(downloadedUrl, url)
 		} else if wasNotFound {
 			filename = c.Folder(name).Add(filepath.Base())
 			if copy(filename, filepath) {
@@ -1101,10 +1116,12 @@ func (c *CacheDisk) GetPage(url *url.URL, name string) *Path {
 				pdbg("COPY FAILED '%v' for '%v' from '%v' => filepath '%v'\n", filename, name, c, filepath)
 				return nil
 			}
-		} else {
+		} else if !alreadyDownloaded(url) {
 			// forcing download eventhough filepath is not nil
 			newFilePath := download(url, filename, 0, nil)
+			downloadedUrl = append(downloadedUrl, url)
 			if filepath.SameContentAs(newFilePath) {
+				pdbg("SAME CONTENT for '%v' => going with older '%v'", url, filepath)
 				err := os.Remove(newFilePath.String())
 				if err != nil {
 					pdbg("Error removing newFilePath '%v': '%v'\n", newFilePath, err)
