@@ -2064,7 +2064,7 @@ func (i Invoke) InstallJDKsrc(folder, archive *Path) bool {
 	matches := rx.FindAllStringSubmatchIndex(l, -1)
 	pdbg("matches: '%v'\n", matches)
 
-	if len(matches) < 4 {
+	if len(matches) != 1 && len(matches[0]) < 4 {
 		pdbg("unable to find src.zip in archive '%v'\n", archive)
 		return false
 	}
