@@ -1956,7 +1956,7 @@ func (p *Prg) install() bool {
 	folderFull := folderMain.AddP(folder)
 
 	if p.isInstalled() {
-		pdbg("No Need to install %v in '%v' per test\n", p.GetName(), folderFull)
+		pdbg("No Need to install %v in '%v' per test\n", p.name, folderFull)
 		if p.depOn == nil {
 			return p.postInstall()
 		}
@@ -2193,7 +2193,6 @@ func (i Invoke) BuildZipJDK(folder *Path, archive *Path) bool {
 			pdbg("src.zip not found at '%v'\n", src)
 			return false
 		}
-		os.Exit(0)
 		compress7z(archiveTar, nil, folder.Add("tools.zip").Dot(), "Add tools.zip", "tar")
 		compress7z(archiveTar, nil, folder.Add("src.zip").Dot(), "Add src.zip", "tar")
 	}
@@ -2386,7 +2385,6 @@ func compress7z(archive, folder, file *Path, msg, format string) bool {
 	cmd = fmt.Sprintf("%v a -t%v%v -mmt=on -mx5 -w %v %v%v", cmd, format, deflate, farchive, ffolder, argFile)
 	is := fmt.Sprintf("%v'%v'%v => 7zC...\n%v\n", msg, archive, argFile, cmd)
 	fmt.Println(is)
-	os.Exit(0)
 	c := exec.Command("cmd", "/C", cmd)
 	if out, err := c.Output(); err != nil {
 		pdbg("Error invoking 7zC '%v'\nout='%v' => err='%v'\n", cmd, string(out), err)
