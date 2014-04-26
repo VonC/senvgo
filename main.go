@@ -22,6 +22,7 @@ import (
 	"runtime"
 	"runtime/debug"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -103,6 +104,7 @@ var defaultConfig = `
 	cookie			oraclelicense;accept-securebackup-cookie
 	invoke			go: InstallJDK
 	buildZip		go: BuildZipJDK
+	cache_github	1
 `
 
 // Prg is a Program to be installed
@@ -282,6 +284,8 @@ type Cache interface {
 	Nb() int
 	Add(cache Cache)
 	IsGitHub() bool
+	SetLimit(limit int, id string)
+	GetLimit() int
 }
 
 // CacheData has common data between different types od cache
@@ -289,6 +293,32 @@ type CacheData struct {
 	id    string
 	next  Cache
 	paths map[string][]*Path
+	limit int
+}
+
+func (c *CacheData) SetLimit(limit int, id string) {
+	if c.id == id {
+		c.limit = limit
+	} else if c.Next() != nil {
+		c.Next().SetLimit(limit, id)
+	}
+}
+
+func (c *CacheDisk) GetLimit() int {
+	if c.limit != 0 {
+		return c.limit
+	}
+	if c.id == "main" {
+		return 5
+	}
+	return 3
+}
+
+func (c *CacheGitHub) GetLimit() int {
+	if c.limit != 0 {
+		return c.limit
+	}
+	return 3
 }
 
 func (c *CacheData) GetPath(name string, p *Path) *Path {
@@ -1745,6 +1775,20 @@ func ReadConfig() []*Prg {
 		}
 		m := cfgRx.FindSubmatchIndex([]byte(line))
 		if len(m) == 0 {
+			continue
+		}
+		if strings.HasPrefix(line, "cache_") {
+			line2 := line[len("cache_"):]
+			scl := regexp.MustCompile(`\s+`).Split(line2, 2)
+			cid := strings.TrimSpace(scl[0])
+			if cid == "" {
+				panic("Empty cache id name for " + line)
+			}
+			cl, serr := strconv.Atoi(scl[1])
+			if serr != nil {
+				panic(serr)
+			}
+			cache.SetLimit(cl, cid)
 			continue
 		}
 		//pdbg("line: '%v' => '%v'\n", line, m)
