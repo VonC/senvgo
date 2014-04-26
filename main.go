@@ -298,7 +298,7 @@ type CacheData struct {
 }
 
 func (c *CacheData) SetLimit(limit int, id string, name string) {
-	if c.id == id {
+	if c.id == id || (id == "github" && strings.HasPrefix(c.id, id)) {
 		if name == "" {
 			c.limit = limit
 		} else {
