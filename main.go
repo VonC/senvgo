@@ -1096,7 +1096,7 @@ func pdbgInc(scanner *bufio.Scanner, line string) string {
 
 func pdbgExcluded(dbg string) bool {
 	if strings.Contains(dbg, "ReadConfig:") {
-		return true
+		return false
 	}
 	return false
 }
@@ -1790,11 +1790,8 @@ func ReadConfig() []*Prg {
 			currentCache = &CacheGitHub{CacheData: CacheData{id: currentCacheName, limits: make(map[string]int)}, owner: line}
 			continue
 		}
-		m := cfgRx.FindSubmatchIndex([]byte(line))
-		if len(m) == 0 {
-			continue
-		}
 		if strings.HasPrefix(line, "cache_") {
+			pdbg("cache '%v'", line)
 			line2 := line[len("cache_"):]
 			scl := regexp.MustCompile(`\s+`).Split(line2, 2)
 			cid := strings.TrimSpace(scl[0])
@@ -1810,6 +1807,10 @@ func ReadConfig() []*Prg {
 				clname = currentPrg.GetName()
 			}
 			cache.SetLimit(cl, cid, clname)
+			continue
+		}
+		m := cfgRx.FindSubmatchIndex([]byte(line))
+		if len(m) == 0 {
 			continue
 		}
 		//pdbg("line: '%v' => '%v'\n", line, m)
