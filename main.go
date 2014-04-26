@@ -511,11 +511,46 @@ func (p *Path) release() string {
 	return f
 }
 
+func (c *CacheGitHub) trimReleases(name string, repo *github.Repository) {
+	releases := c.getReleases(repo)
+	limit := c.GetLimit(name)
+	pdbg("trimReleases cache id '%v', name '%v', limit '%v', releases '%+v'", c.id, name, limit, len(releases))
+	l := len(releases)
+	for i, release := range releases {
+		if i > limit-1 {
+			assets := c.getAssets(&release, repo)
+			pdbg("trim pos '%v'(%v) release '%+v' nbAssets %v", i, l, *release.ID, len(assets))
+			for j, asset := range assets {
+				pdbg("Asset (%v) '%+v'", j, asset)
+				if !c.deleteAsset(&asset, repo) {
+					pdbg("[ERR] not able to delete asset '%+v'", asset)
+				}
+			}
+		}
+	}
+}
+
+func (c *CacheGitHub) deleteAsset(asset *github.ReleaseAsset, repo *github.Repository) bool {
+
+	client := c.getClient()
+	repos := client.Repositories
+	repoName := *repo.Name
+	assetID := *asset.ID
+	assetName := *asset.Name
+	_, err := repos.DeleteReleaseAsset(c.owner, repoName, assetID)
+	if err != nil {
+		pdbg("Error while DELETING asset '%v'(%v): '%v'\n", assetName, assetID, err)
+		return false
+	}
+	return true
+}
+
 func (c *CacheGitHub) getFileFromGitHub(p *Path, name string) *Path {
 	repo := c.getRepo(name)
 	if repo == nil {
 		return nil
 	}
+	c.trimReleases(name, repo)
 	releaseName := p.releaseName()
 	release := c.getRelease(repo, releaseName)
 	if release == nil {
@@ -555,7 +590,7 @@ func (c *CacheGitHub) getFileFromGitHub(p *Path, name string) *Path {
 	return p
 }
 
-func (c *CacheGitHub) getAsset(release *github.RepositoryRelease, repo *github.Repository, name string) *github.ReleaseAsset {
+func (c *CacheGitHub) getAssets(release *github.RepositoryRelease, repo *github.Repository) []github.ReleaseAsset {
 	client := c.getClient()
 	repos := client.Repositories
 	repoName := *repo.Name
@@ -564,6 +599,14 @@ func (c *CacheGitHub) getAsset(release *github.RepositoryRelease, repo *github.R
 	assets, _, err := repos.ListReleaseAssets(c.owner, repoName, releaseID)
 	if err != nil {
 		pdbg("Error while getting assets from release '%v'(%v): '%v'\n", releaseName, releaseID, err)
+		return nil
+	}
+	return assets
+}
+
+func (c *CacheGitHub) getAsset(release *github.RepositoryRelease, repo *github.Repository, name string) *github.ReleaseAsset {
+	assets := c.getAssets(release, repo)
+	if assets == nil {
 		return nil
 	}
 
@@ -581,13 +624,21 @@ func (c *CacheGitHub) getAsset(release *github.RepositoryRelease, repo *github.R
 	return nil
 }
 
-func (c *CacheGitHub) getRelease(repo *github.Repository, name string) *github.RepositoryRelease {
+func (c *CacheGitHub) getReleases(repo *github.Repository) []github.RepositoryRelease {
 	client := c.getClient()
 	repos := client.Repositories
 	repoName := *repo.Name
 	releases, _, err := repos.ListReleases(c.owner, repoName)
 	if err != nil {
 		pdbg("Error while getting releasesfrom repo %v/'%v': '%v'\n", c.owner, repoName, err)
+		return nil
+	}
+	return releases
+}
+
+func (c *CacheGitHub) getRelease(repo *github.Repository, name string) *github.RepositoryRelease {
+	releases := c.getReleases(repo)
+	if releases == nil {
 		return nil
 	}
 	var rel github.RepositoryRelease
