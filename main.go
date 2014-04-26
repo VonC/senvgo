@@ -2702,20 +2702,21 @@ func (f byDate) Swap(i, j int) {
 	f[i], f[j] = f[j], f[i]
 }
 
-func getLastModifiedFile(dir *Path, pattern string) string {
+func getDateOrderedFiles(dir *Path, pattern string) []os.FileInfo {
 	pdbg("Look in '%v' for '%v'\n", dir, pattern)
+	res := []os.FileInfo{}
 	f, err := os.Open(dir.String())
 	if err != nil {
 		pdbg("Error while opening dir '%v': '%v'\n", dir, err)
-		return ""
+		return nil
 	}
 	list, err := f.Readdir(-1)
 	if err != nil {
 		pdbg("Error while reading dir '%v': '%v'\n", dir, err)
-		return ""
+		return nil
 	}
 	if len(list) == 0 {
-		return ""
+		return res
 	}
 	filteredList := []os.FileInfo{}
 	rx := regexp.MustCompile(pattern)
@@ -2726,10 +2727,26 @@ func getLastModifiedFile(dir *Path, pattern string) string {
 	}
 	if len(filteredList) == 0 {
 		pdbg("NO FILE in '%v' for '%v'\n", dir, pattern)
-		return ""
+		return res
 	}
 	// pdbg("t: '%v' => '%v'\n", filteredList, filteredList[0])
 	sort.Sort(byDate(filteredList))
+	// pdbg("t: '%v' => '%v'\n", filteredList, filteredList[0])
+	res = filteredList
+	return res
+}
+
+func getLastModifiedFile(dir *Path, pattern string) string {
+	pdbg("Look in '%v' for '%v'\n", dir, pattern)
+	filteredList := getDateOrderedFiles(dir, pattern)
+	if filteredList == nil {
+		pdbg("Error while accessing dir '%v'\n", dir)
+		return ""
+	}
+	if len(filteredList) == 0 {
+		pdbg("NO FILE in '%v' for '%v'\n", dir, pattern)
+		return ""
+	}
 	// pdbg("t: '%v' => '%v'\n", filteredList, filteredList[0])
 	return filteredList[0].Name()
 }
