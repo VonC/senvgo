@@ -70,8 +70,11 @@ func rec() {
   invoke         @FILE@ /S /D=@DEST@
 */
 var defaultConfig = `
+[cache]
+  cache 1
 [cache id secondary]
   root test/_secondary
+  cache 1
 [cache id githubvonc]
   owner VonC
 [jdk8src]
@@ -286,6 +289,7 @@ type Cache interface {
 	IsGitHub() bool
 	SetLimit(limit int, id string, name string)
 	GetLimit(name string) int
+	Id() string
 }
 
 // CacheData has common data between different types od cache
@@ -297,10 +301,16 @@ type CacheData struct {
 	limits map[string]int
 }
 
+func (c *CacheData) Id() string {
+	return c.id
+}
+
 func (c *CacheData) SetLimit(limit int, id string, name string) {
+	pdbg("limit %v, id '%v', name '%v' for c.id '%v'", limit, id, name, c.id)
 	if c.id == id || (id == "github" && strings.HasPrefix(c.id, id)) {
 		if name == "" {
 			c.limit = limit
+			pdbg("Set generic limit %v on '%v'", limit, c.id)
 		} else {
 			c.limits[name] = limit
 		}
@@ -310,11 +320,11 @@ func (c *CacheData) SetLimit(limit int, id string, name string) {
 }
 
 func (c *CacheData) getLimitName(name string) int {
-	if c.limit != 0 && name == "" {
-		return c.limit
-	}
 	if name != "" && c.limits[name] != 0 {
 		return c.limits[name]
+	}
+	if c.limit != 0 {
+		return c.limit
 	}
 	return 0
 }
@@ -1009,6 +1019,7 @@ func (c *CacheDisk) GetArchive(p *Path, url *url.URL, name string, cookies []*ht
 		pdbg("[CacheDisk.GetArchive][%v]: no file for '%v': it is a Dir.\n", c.id, p)
 		return nil
 	}
+	os.Exit(0)
 	filepath := c.GetPath(name, p)
 	if filepath != nil {
 		pdbg("'%v' for '%v' from '%v': already there\n", p, name, c)
@@ -1309,6 +1320,16 @@ func (p *Path) MkDirAll() bool {
 	return true
 }
 
+func (c *CacheDisk) trimFiles(pattern string, name string) {
+	files := getDateOrderedFiles(c.Folder(name), pattern)
+	pdbg("%v files found for id '%v', name '%v', limit %v", len(files), c.id, name, c.GetLimit(name))
+	for i, f := range files {
+		if i+1 > c.GetLimit(name) {
+			pdbg("TRIM (id %v, name %v) file '%+v'", c.id, name, f)
+		}
+	}
+}
+
 func (c *CacheDisk) getFile(url *url.URL, name string) *Path {
 	dir := c.Folder(name)
 	if !dir.MkDirAll() {
@@ -1316,6 +1337,11 @@ func (c *CacheDisk) getFile(url *url.URL, name string) *Path {
 	}
 	rsc := c.getResourceName(url, name)
 	pattern := name + "_" + rsc + "_.*"
+	// if c.id == "secondary" {
+	pdbg("pattern '%v' for limit %v on cache id '%v'", pattern, c.GetLimit(""), c.Id())
+	c.trimFiles(pattern, name)
+	os.Exit(0)
+	// }
 	filepath := dir.Add(getLastModifiedFile(dir, pattern))
 	if filepath.String() == dir.String() {
 		return nil
@@ -1770,13 +1796,18 @@ func ReadConfig() []*Prg {
 				res = append(res, currentPrg)
 				currentPrg = nil
 			}
-			cache.Add(currentCache)
+			if currentCache != cache {
+				cache.Add(currentCache)
+			}
 			currentCache = nil
 			currentCacheName = ""
 			if !strings.Contains(line, "[cache") {
 				name := line[1 : len(line)-1]
 				exts = &Extractors{}
 				currentPrg = &Prg{name: name, cache: cache, exts: exts}
+			} else if line == "[cache]" {
+				currentCache = cache
+				currentCacheName = "main"
 			} else {
 				currentCacheName = strings.TrimSpace(line[len("[cache id "):])
 				currentCacheName = strings.TrimSpace(currentCacheName[0 : len(currentCacheName)-1])
@@ -1858,6 +1889,17 @@ func ReadConfig() []*Prg {
 				clname = currentPrg.GetName()
 			}
 			cache.SetLimit(cl, cid, clname)
+			continue
+		}
+		if strings.HasPrefix(line, "cache") && currentCache != nil {
+			pdbg("cache CACHE '%v'", line)
+			scl := strings.TrimSpace(line[len("cache"):])
+			cl, serr := strconv.Atoi(scl)
+			if serr != nil {
+				panic(serr)
+			}
+			cid := currentCache.Id()
+			cache.SetLimit(cl, cid, "")
 			continue
 		}
 		m := cfgRx.FindSubmatchIndex([]byte(line))
