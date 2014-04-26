@@ -284,29 +284,45 @@ type Cache interface {
 	Nb() int
 	Add(cache Cache)
 	IsGitHub() bool
-	SetLimit(limit int, id string)
-	GetLimit() int
+	SetLimit(limit int, id string, name string)
+	GetLimit(name string) int
 }
 
 // CacheData has common data between different types od cache
 type CacheData struct {
-	id    string
-	next  Cache
-	paths map[string][]*Path
-	limit int
+	id     string
+	next   Cache
+	paths  map[string][]*Path
+	limit  int
+	limits map[string]int
 }
 
-func (c *CacheData) SetLimit(limit int, id string) {
+func (c *CacheData) SetLimit(limit int, id string, name string) {
 	if c.id == id {
-		c.limit = limit
+		if name == "" {
+			c.limit = limit
+		} else {
+			c.limits[name] = limit
+		}
 	} else if c.Next() != nil {
-		c.Next().SetLimit(limit, id)
+		c.Next().SetLimit(limit, id, name)
 	}
 }
 
-func (c *CacheDisk) GetLimit() int {
-	if c.limit != 0 {
+func (c *CacheData) getLimitName(name string) int {
+	if c.limit != 0 && name == "" {
 		return c.limit
+	}
+	if name != "" && c.limits[name] != 0 {
+		return c.limits[name]
+	}
+	return 0
+}
+
+func (c *CacheDisk) GetLimit(name string) int {
+	l := c.getLimitName(name)
+	if l != 0 {
+		return l
 	}
 	if c.id == "main" {
 		return 5
@@ -314,9 +330,10 @@ func (c *CacheDisk) GetLimit() int {
 	return 3
 }
 
-func (c *CacheGitHub) GetLimit() int {
-	if c.limit != 0 {
-		return c.limit
+func (c *CacheGitHub) GetLimit(name string) int {
+	l := c.getLimitName(name)
+	if l != 0 {
+		return l
 	}
 	return 3
 }
@@ -1672,7 +1689,7 @@ func (er *ExtractorReplace) ExtractFrom(data string) string {
 var cfgRx, _ = regexp.Compile(`^([^\.]+)\.([^\.\s]+)\s+(.*?)$`)
 
 func NewCacheDisk(id string, root *Path) *CacheDisk {
-	cache := &CacheDisk{CacheData: &CacheData{id: id}, root: root}
+	cache := &CacheDisk{CacheData: &CacheData{id: id, limits: make(map[string]int)}, root: root}
 	if !root.Exists() && !root.MkDirAll() {
 		return nil
 	}
@@ -1770,7 +1787,7 @@ func ReadConfig() []*Prg {
 		}
 		if strings.HasPrefix(line, "owner") && currentCacheName != "" {
 			line = strings.TrimSpace(line[len("owner"):])
-			currentCache = &CacheGitHub{CacheData: CacheData{id: currentCacheName}, owner: line}
+			currentCache = &CacheGitHub{CacheData: CacheData{id: currentCacheName, limits: make(map[string]int)}, owner: line}
 			continue
 		}
 		m := cfgRx.FindSubmatchIndex([]byte(line))
@@ -1788,7 +1805,11 @@ func ReadConfig() []*Prg {
 			if serr != nil {
 				panic(serr)
 			}
-			cache.SetLimit(cl, cid)
+			clname := ""
+			if currentPrg != nil {
+				clname = currentPrg.GetName()
+			}
+			cache.SetLimit(cl, cid, clname)
 			continue
 		}
 		//pdbg("line: '%v' => '%v'\n", line, m)
