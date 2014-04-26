@@ -1323,10 +1323,20 @@ func (p *Path) MkDirAll() bool {
 func (c *CacheDisk) trimFiles(pattern string, name string) {
 	files := getDateOrderedFiles(c.Folder(name), pattern)
 	pdbg("%v files found for id '%v', name '%v', limit %v", len(files), c.id, name, c.GetLimit(name))
+	trimed := false
 	for i, f := range files {
 		if i+1 > c.GetLimit(name) {
 			pdbg("TRIM (id %v, name %v) file '%+v'", c.id, name, f)
+			p := c.Folder(name).Add(f.Name())
+			err := os.Remove(p.String())
+			if err != nil {
+				pdbg("Error trimming '%v': '%v'\n", p.String(), err)
+			}
+			trimed = true
 		}
+	}
+	if trimed && c.Next() != nil && c.Next().IsGitHub() == false {
+		c.Next().(*CacheDisk).trimFiles(pattern, name)
 	}
 }
 
@@ -1340,7 +1350,6 @@ func (c *CacheDisk) getFile(url *url.URL, name string) *Path {
 	// if c.id == "secondary" {
 	pdbg("pattern '%v' for limit %v on cache id '%v'", pattern, c.GetLimit(""), c.Id())
 	c.trimFiles(pattern, name)
-	os.Exit(0)
 	// }
 	filepath := dir.Add(getLastModifiedFile(dir, pattern))
 	if filepath.String() == dir.String() {
@@ -1719,6 +1728,46 @@ func (em *ExtractorMatch) Regexp() *regexp.Regexp {
 		}
 	}
 	return em.regexp
+}
+
+func (em *ExtractorMatch) RxForName() *regexp.Regexp {
+	rx := em.data
+	arch := em.p.GetArch()
+	if arch != nil {
+		rx = strings.Replace(rx, "_$arch_", arch.Arch(), -1)
+	}
+	res := ""
+	seekOpen := true
+	d := 0
+	for i, c := range rx {
+		// pdbg("i %v, c %v", i, c)
+		if c != '(' && seekOpen {
+			continue
+		}
+		if c == '(' && rx[i+1] != '?' {
+			seekOpen = false
+			continue
+		}
+		if c == '(' {
+			d = d + 1
+		}
+		if c == ')' {
+			if d > 0 {
+				d = d - 1
+			} else {
+				break
+			}
+		}
+		res = res + string(c)
+	}
+	var err error
+	var rrx *regexp.Regexp
+	if rrx, err = regexp.Compile(res); err != nil {
+		rrx = nil
+		pdbg("Error compiling Regexp for NAME '%v': '%v' => err '%v'\n", em.p.GetName(), rx, err)
+	}
+	pdbg("done: rx='%v' => res='%v'", rx, rrx)
+	return rrx
 }
 
 // ExtractorPrepend is an Extractor which prepends data to content
@@ -2626,8 +2675,10 @@ func (p *Prg) GetFolder() *Path {
 func (p *Prg) GetArchive() *Path {
 	p.updateDeps()
 	if p.archive != nil {
+		pdbg("archive there %v", p.archive)
 		return p.archive
 	}
+	pdbg("GetArchive() ~~~~~~~~~~~~~~~~~~~ '%v'", p.exts)
 	var archiveName *Path
 	if p.exts != nil {
 		pdbg("Get archive for %v", p.GetName())
@@ -2637,6 +2688,30 @@ func (p *Prg) GetArchive() *Path {
 		if archiveName.EndsWithSeparator() {
 			pdbg("No archive found for '%v'\n", p.name)
 			return nil
+		}
+		aext := p.exts.extractArchive
+		var rxext *ExtractorMatch
+		for aext != nil {
+			pdbg("GetArchive() ########### '%v'", aext)
+			if rrxext, ok := aext.(*ExtractorMatch); ok {
+				pdbg("GetArchive() --------> '%v'", aext)
+				rxext = rrxext
+			}
+			aext = aext.Next()
+		}
+		pdbg("GetArchive() ~~~~~~~~~~~~~~~~~~~ '%v'", rxext)
+		if rxext != nil {
+			pdbg("Last rx detected '%+v'", rxext)
+			rx := rxext.RxForName()
+			c := cache
+			for c != nil {
+				files := getDateOrderedFiles(c.Folder(p.GetName()), rx.String())
+				pn := pdbg("files (limit %v) %v", c.GetLimit(p.GetName()), files)
+				panic(pn)
+				if c.Next() != nil && !c.IsGitHub() {
+					c = c.Next().(*CacheDisk)
+				}
+			}
 		}
 	}
 	pdbg("***** Prg name '%v': isexe %v for depOn %v len %v\n", p.name, archiveName.isExe(), p.depOn, len(p.deps))
