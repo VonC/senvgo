@@ -54,7 +54,14 @@ func rec() {
 	}
 }
 
-/*
+var defaultConfig = `
+[cache]
+  cache 1
+[cache id secondary]
+  root test/_secondary
+  cache 1
+[cache id githubvonc]
+  owner VonC
 [peazip]
   arch           WINDOWS,WIN64
   folder.get     http://peazip.sourceforge.net/peazip-portable.html
@@ -68,15 +75,6 @@ func rec() {
   url.prepend    https://github.com
   name.rx        /download/v.*?/(Gow-.*?.exe)
   invoke         @FILE@ /S /D=@DEST@
-*/
-var defaultConfig = `
-[cache]
-  cache 1
-[cache id secondary]
-  root test/_secondary
-  cache 1
-[cache id githubvonc]
-  owner VonC
 [jdk8src]
 	dir 			jdk8
 	arch			i586,x64
@@ -280,7 +278,7 @@ func (p *Path) String() string {
 // Cache gets or update a resource, can be linked, can retrieve last value cached
 type Cache interface {
 	GetPage(url *url.URL, name string) *Path
-	GetArchive(p *Path, url *url.URL, name string, cookies []*http.Cookie) *Path
+	GetArchive(p *Path, url *url.URL, name string, cookies []*http.Cookie, isExe bool) *Path
 	UpdateArchive(p *Path, name string)
 	UpdatePage(p *Path, name string)
 	Next() Cache
@@ -438,10 +436,14 @@ func (c *CacheGitHub) IsGitHub() bool {
 }
 
 // Get gets or download zip archives only from GitHub
-func (c *CacheGitHub) GetArchive(p *Path, url *url.URL, name string, cookies []*http.Cookie) *Path {
+func (c *CacheGitHub) GetArchive(p *Path, url *url.URL, name string, cookies []*http.Cookie, isExe bool) *Path {
 	pdbg("CacheGitHub.GetArchive '%v' for '%v' from '%v'\n", p, name, c)
 	if !p.isPortableCompressed() {
 		pdbg("GetArchive '%v' is not a .zip or tag.gz\n", p)
+		return nil
+	}
+	if !isExe {
+		pdbg("GetArchive '%v' doesn't come from an Exe\n", p)
 		return nil
 	}
 	res := c.getFileFromGitHub(p, name)
@@ -449,7 +451,7 @@ func (c *CacheGitHub) GetArchive(p *Path, url *url.URL, name string, cookies []*
 
 	if c.next != nil {
 		if res == nil {
-			res = c.Next().GetArchive(p, url, name, cookies)
+			res = c.Next().GetArchive(p, url, name, cookies, isExe)
 		} else {
 			c.Next().UpdateArchive(p, name)
 			res = p
@@ -1013,7 +1015,7 @@ func (c *CacheDisk) HasCacheDiskInNexts() bool {
 }
 
 // Get will get either an url or an archive extension (exe, zip, tar.gz, ...)
-func (c *CacheDisk) GetArchive(p *Path, url *url.URL, name string, cookies []*http.Cookie) *Path {
+func (c *CacheDisk) GetArchive(p *Path, url *url.URL, name string, cookies []*http.Cookie, isExe bool) *Path {
 	pdbg("[CacheDisk.GetArchive][%v]: '%v' for '%v' from '%v'\n", c.id, p, name, c)
 	if p.EndsWithSeparator() {
 		pdbg("[CacheDisk.GetArchive][%v]: no file for '%v': it is a Dir.\n", c.id, p)
@@ -1026,13 +1028,13 @@ func (c *CacheDisk) GetArchive(p *Path, url *url.URL, name string, cookies []*ht
 	}
 	folder := c.Folder(name)
 	filename := folder.Add(p.release())
-	filepath = c.checkArchive(filename, name)
+	filepath = c.checkArchive(filename, name, isExe)
 	if filepath != nil {
 		return filepath
 	}
 
 	if c.next != nil {
-		filepath = c.Next().GetArchive(filename, url, name, cookies)
+		filepath = c.Next().GetArchive(filename, url, name, cookies, isExe)
 		if filepath != nil {
 			if !c.Next().IsGitHub() {
 				if filepath.EndsWithSeparator() {
@@ -1059,7 +1061,7 @@ func (c *CacheDisk) GetArchive(p *Path, url *url.URL, name string, cookies []*ht
 	time.Sleep(time.Duration(5) * time.Second)
 	download(url, filename, 100000, cookies)
 	pdbg("CacheDisk.GetArchive[%v]: ... DONE download '%v' for '%v'\n", c.id, url, filename)
-	filepath = c.checkArchive(filename, name)
+	filepath = c.checkArchive(filename, name, isExe)
 	return filepath
 }
 
@@ -1067,12 +1069,16 @@ func isEmpty(p *Path) bool {
 	return p == nil || p.path == ""
 }
 
-func (c *CacheDisk) checkArchive(filename *Path, name string) *Path {
+func (c *CacheDisk) checkArchive(filename *Path, name string, isExe bool) *Path {
 	var filepath *Path
 	if filename.Exists() && !filename.EndsWithSeparator() {
 		filepath = filename
 		c.RegisterPath(name, filepath)
-		c.next.UpdateArchive(filepath, name)
+		if c.Next() != nil {
+			if !c.Next().IsGitHub() || isExe {
+				c.next.UpdateArchive(filepath, name)
+			}
+		}
 	}
 	return filepath
 }
@@ -2735,13 +2741,15 @@ func (p *Prg) GetArchive() *Path {
 	}
 	pdbg("***** Prg name '%v': isexe %v for depOn %v len %v\n", p.name, archiveName.isExe(), p.depOn, len(p.deps))
 	//debug.PrintStack()
+	isExe := false
 	if archiveName != nil && archiveName.isExe() && p.depOn == nil {
+		isExe = true
 		pext := ".zip"
 		if len(p.deps) > 0 {
 			pext = ".tar.gz"
 		}
 		pname := NewPath(archiveName.NoExt().String() + pext)
-		portableArchive := cache.GetArchive(pname, nil, p.GetName(), p.cookies)
+		portableArchive := cache.GetArchive(pname, nil, p.GetName(), p.cookies, isExe)
 		if portableArchive != nil {
 			p.archive = portableArchive
 		}
@@ -2749,7 +2757,7 @@ func (p *Prg) GetArchive() *Path {
 	if p.archive == nil && archiveName != nil && p.exts != nil {
 		pdbg("Get url for %v(%v) on '%v'\n", p.GetName(), p.name, archiveName)
 		url := p.GetURL()
-		p.archive = cache.GetArchive(archiveName, url, p.GetName(), p.cookies)
+		p.archive = cache.GetArchive(archiveName, url, p.GetName(), p.cookies, isExe)
 	}
 	return p.archive
 }
