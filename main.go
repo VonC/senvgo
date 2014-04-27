@@ -1019,7 +1019,6 @@ func (c *CacheDisk) GetArchive(p *Path, url *url.URL, name string, cookies []*ht
 		pdbg("[CacheDisk.GetArchive][%v]: no file for '%v': it is a Dir.\n", c.id, p)
 		return nil
 	}
-	os.Exit(0)
 	filepath := c.GetPath(name, p)
 	if filepath != nil {
 		pdbg("'%v' for '%v' from '%v': already there\n", p, name, c)
@@ -1948,7 +1947,7 @@ func ReadConfig() []*Prg {
 				panic(serr)
 			}
 			cid := currentCache.Id()
-			cache.SetLimit(cl, cid, "")
+			currentCache.SetLimit(cl, cid, "")
 			continue
 		}
 		m := cfgRx.FindSubmatchIndex([]byte(line))
@@ -2116,7 +2115,9 @@ func (p *Prg) postInstall() bool {
 		}
 	}
 	p.checkLatest()
-	return p.BuildZip()
+	b := p.BuildZip()
+	pdbg("res from BuildZip: '%v', for '%v'", b, p.name)
+	return b
 }
 func (p *Prg) isInstalled() bool {
 	if p.test == "" {
@@ -2671,6 +2672,26 @@ func (p *Prg) GetFolder() *Path {
 	return p.folder
 }
 
+func (c *CacheDisk) trimArchives(rx string, name string) {
+	pdbg("Trim in id %v for rx '%v'", c.id, rx)
+	files := getDateOrderedFiles(c.Folder(name), rx)
+	limit := c.GetLimit(name)
+	pdbg("files (limit %v) %v", limit, files)
+	for i, f := range files {
+		if i+1 > limit {
+			pdbg("TRIM ARCHIVE (id %v, name %v) file '%+v'", c.id, name, f)
+			p := c.Folder(name).Add(f.Name())
+			err := os.Remove(p.String())
+			if err != nil {
+				pdbg("Error trimming ARCHIVE '%v': '%v'\n", p.String(), err)
+			}
+		}
+	}
+	if c.Next() != nil && !c.IsGitHub() {
+		c.Next().(*CacheDisk).trimFiles(rx, name)
+	}
+}
+
 // GetArchive returns archive name
 func (p *Prg) GetArchive() *Path {
 	p.updateDeps()
@@ -2703,14 +2724,12 @@ func (p *Prg) GetArchive() *Path {
 		if rxext != nil {
 			pdbg("Last rx detected '%+v'", rxext)
 			rx := rxext.RxForName()
-			c := cache
-			for c != nil {
-				files := getDateOrderedFiles(c.Folder(p.GetName()), rx.String())
-				pn := pdbg("files (limit %v) %v", c.GetLimit(p.GetName()), files)
-				panic(pn)
-				if c.Next() != nil && !c.IsGitHub() {
-					c = c.Next().(*CacheDisk)
-				}
+			cache.trimFiles(rx.String(), p.GetName())
+			if archiveName.isExe() {
+				targzrx := strings.Replace(rx.String(), ".exe", ".tar.gz", -1)
+				cache.trimArchives(targzrx, p.GetName())
+				tarrx := strings.Replace(rx.String(), ".tar.gz", ".tar", -1)
+				cache.trimArchives(tarrx, p.GetName())
 			}
 		}
 	}
