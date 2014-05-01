@@ -75,6 +75,9 @@ var defaultConfig = `
   url.prepend    https://github.com
   name.rx        /download/v.*?/(Gow-.*?.exe)
   invoke         @FILE@ /S /D=@DEST@
+  `
+
+/*
 [jdk8src]
 	dir 			jdk8
 	arch			i586,x64
@@ -106,7 +109,7 @@ var defaultConfig = `
 	invoke			go: InstallJDK
 	buildZip		go: BuildZipJDK
 	cache_github	1
-`
+`*/
 
 // Prg is a Program to be installed
 type Prg struct {
@@ -279,7 +282,7 @@ func (p *Path) String() string {
 type Cache interface {
 	GetPage(url *url.URL, name string) *Path
 	GetArchive(p *Path, url *url.URL, name string, cookies []*http.Cookie, isExe bool) *Path
-	UpdateArchive(p *Path, name string)
+	UpdateArchive(p *Path, name string, isExe bool)
 	UpdatePage(p *Path, name string)
 	Next() Cache
 	Nb() int
@@ -453,7 +456,7 @@ func (c *CacheGitHub) GetArchive(p *Path, url *url.URL, name string, cookies []*
 		if res == nil {
 			res = c.Next().GetArchive(p, url, name, cookies, isExe)
 		} else {
-			c.Next().UpdateArchive(p, name)
+			c.Next().UpdateArchive(p, name, isExe)
 			res = p
 		}
 	}
@@ -680,10 +683,15 @@ func (c *CacheGitHub) getRepo(name string) *github.Repository {
 }
 
 // Update make sure the zip archive is uploaded on GitHub as a release
-func (c *CacheGitHub) UpdateArchive(p *Path, name string) {
+func (c *CacheGitHub) UpdateArchive(p *Path, name string, isExe bool) {
 	pdbg("UPDARC Github '%v' for '%v' from '%v'\n", p, name, c)
 	if !p.isPortableCompressed() {
 		pdbg("UPDARC Github '%v' for '%v' from '%v': no zip or tar gz\n", p, name, c)
+		return
+	}
+	pdbg("p '%v' name '%v' isExe '%v'", p, name, isExe)
+	if !isExe {
+		pdbg("UPDARC Github '%v' for '%v' from '%v': don't come from Exe\n", p, name, c)
 		return
 	}
 	if addToGitHub == false {
@@ -772,7 +780,7 @@ func (c *CacheGitHub) UpdateArchive(p *Path, name string) {
 		pdbg("UPDARC Github uploaded asset '%v' ID '%v'\n", *rela.Name, rid)
 	}
 	if c.next != nil {
-		c.Next().UpdateArchive(p, name)
+		c.Next().UpdateArchive(p, name, isExe)
 	}
 }
 
@@ -951,10 +959,10 @@ func (c *CacheDisk) IsGitHub() bool {
 }
 
 // Update updates c.last and all next caches c.last with content.
-func (c *CacheDisk) UpdateArchive(p *Path, name string) {
+func (c *CacheDisk) UpdateArchive(p *Path, name string, isExe bool) {
 	filepath := c.UpdateCache("[CacheDisk.UpdateArchive]", p, name)
 	if filepath != nil && c.next != nil {
-		c.Next().UpdateArchive(filepath, name)
+		c.Next().UpdateArchive(filepath, name, isExe)
 	}
 }
 
@@ -1076,7 +1084,8 @@ func (c *CacheDisk) checkArchive(filename *Path, name string, isExe bool) *Path 
 		c.RegisterPath(name, filepath)
 		if c.Next() != nil {
 			if !c.Next().IsGitHub() || isExe {
-				c.next.UpdateArchive(filepath, name)
+				pdbg("c.Next().IsGitHub() %v isExe %v", c.Next().IsGitHub(), isExe)
+				c.next.UpdateArchive(filepath, name, isExe)
 			}
 		}
 	}
@@ -2418,7 +2427,7 @@ func (i Invoke) BuildZipJDK(folder *Path, archive *Path) bool {
 	}
 	name := folder.Dir().Base()
 	fmt.Println(folder, name)
-	cache.UpdateArchive(archiveTarGz, name)
+	cache.UpdateArchive(archiveTarGz, name, true)
 	return true
 }
 
@@ -2743,6 +2752,7 @@ func (p *Prg) GetArchive() *Path {
 	//debug.PrintStack()
 	isExe := false
 	if archiveName != nil && archiveName.isExe() && p.depOn == nil {
+		pdbg("Set isExe to true archiveName '%v'", archiveName)
 		isExe = true
 		pext := ".zip"
 		if len(p.deps) > 0 {
