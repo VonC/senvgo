@@ -2137,6 +2137,10 @@ func (p *Prg) postInstall() bool {
 	p.checkLatest()
 	b := p.BuildZip()
 	pdbg("res from BuildZip: '%v', for '%v'", b, p.name)
+	folderTmp := NewPathDir("test/" + p.GetName()).AddP(NewPathDir("tmp"))
+	err := deleteFolderContent(folderTmp.String())
+	b = (err == nil)
+	pdbg("res from deleteFolderContent tmp: '%v', for '%v'", b, p.name)
 	return b
 }
 func (p *Prg) isInstalled() bool {
@@ -2942,7 +2946,12 @@ func deleteFolderContent(dir string) error {
 			return res
 		}
 	}
-	return res
+	err = os.RemoveAll(dir)
+	if err != nil {
+		res = fmt.Errorf("error removing dir '%v': '%v'\n", dir, err)
+		return res
+	}
+	return nil
 }
 
 // http://stackoverflow.com/questions/20357223/easy-way-to-unzip-file-with-golang
