@@ -2217,7 +2217,11 @@ func (p *Prg) install() bool {
 	}
 
 	if archive.isZip() && (p.invoke == "" || p.isExe()) {
-		return p.invokeUnZip()
+		if p.invokeUnZip() {
+			return p.postInstall()
+		} else {
+			return false
+		}
 	}
 	/*
 		if strings.Contains(folder, "Java_SE") {
@@ -2367,7 +2371,7 @@ func (p *Prg) BuildZip() bool {
 	}
 
 	archive := p.GetArchive()
-	if !archive.isExe() {
+	if !archive.isExe() || !p.isExe() {
 		return true
 	}
 
