@@ -113,25 +113,30 @@ var defaultConfig = `
 
 // Prg is a Program to be installed
 type Prg struct {
-	name     string
-	dir      *Path
-	folder   *Path
-	archive  *Path
-	url      *url.URL
-	invoke   string
-	exts     *Extractors
-	cache    Cache
-	arch     *Arch
-	cookies  []*http.Cookie
-	test     string
-	buildZip string
-	deps     []*Prg
-	depOn    *Prg
+	name         string
+	dir          *Path
+	folder       *Path
+	archive      *Path
+	url          *url.URL
+	invoke       string
+	exts         *Extractors
+	cache        Cache
+	arch         *Arch
+	cookies      []*http.Cookie
+	test         string
+	buildZip     string
+	deps         []*Prg
+	depOn        *Prg
+	archiveIsExe bool
 }
 
 func (p *Prg) String() string {
 	res := fmt.Sprintf("Prg '%v' ['%v']\n  Folder='%v', archive='%v'\n  %v,  Arc '%v'>\n  Exts : '%v'\n", p.name, p.GetName(), p.folder, p.archive, p.cache, p.arch, p.exts)
 	return res
+}
+
+func (p *Prg) isExe() bool {
+	return p.archiveIsExe
 }
 
 // PrgData is a Program as seen by an Extractable
@@ -2210,9 +2215,9 @@ func (p *Prg) install() bool {
 	if !folderTmp.Exists() && !folderTmp.MkDirAll() {
 		return false
 	}
-	if archive.isZip() && p.invoke == "" {
-		p.invokeUnZip()
-		return true
+
+	if archive.isZip() && (p.invoke == "" || p.isExe()) {
+		return p.invokeUnZip()
 	}
 	/*
 		if strings.Contains(folder, "Java_SE") {
@@ -2750,16 +2755,16 @@ func (p *Prg) GetArchive() *Path {
 	}
 	pdbg("***** Prg name '%v': isexe %v for depOn %v len %v\n", p.name, archiveName.isExe(), p.depOn, len(p.deps))
 	//debug.PrintStack()
-	isExe := false
+	p.archiveIsExe = false
 	if archiveName != nil && archiveName.isExe() && p.depOn == nil {
 		pdbg("Set isExe to true archiveName '%v'", archiveName)
-		isExe = true
+		p.archiveIsExe = true
 		pext := ".zip"
 		if len(p.deps) > 0 {
 			pext = ".tar.gz"
 		}
 		pname := NewPath(archiveName.NoExt().String() + pext)
-		portableArchive := cache.GetArchive(pname, nil, p.GetName(), p.cookies, isExe)
+		portableArchive := cache.GetArchive(pname, nil, p.GetName(), p.cookies, p.isExe())
 		if portableArchive != nil {
 			p.archive = portableArchive
 		}
@@ -2767,7 +2772,7 @@ func (p *Prg) GetArchive() *Path {
 	if p.archive == nil && archiveName != nil && p.exts != nil {
 		pdbg("Get url for %v(%v) on '%v'\n", p.GetName(), p.name, archiveName)
 		url := p.GetURL()
-		p.archive = cache.GetArchive(archiveName, url, p.GetName(), p.cookies, isExe)
+		p.archive = cache.GetArchive(archiveName, url, p.GetName(), p.cookies, p.isExe())
 	}
 	return p.archive
 }
