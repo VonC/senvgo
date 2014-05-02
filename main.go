@@ -1094,6 +1094,8 @@ func (c *CacheDisk) GetArchive(p *Path, url *url.URL, name string, cookies []*ht
 	}
 	pdbg("CacheDisk.GetArchive[%v]: ... MUST download '%v' for '%v'\n", c.id, url, filename)
 	time.Sleep(time.Duration(5) * time.Second)
+
+	record(fmt.Sprint("[DOWN] for '%v': '%v'", name, filename))
 	download(url, filename, 100000, cookies)
 	pdbg("CacheDisk.GetArchive[%v]: ... DONE download '%v' for '%v'\n", c.id, url, filename)
 	filepath = c.checkArchive(filename, name, isExe)
@@ -2244,6 +2246,7 @@ func (p *Prg) install() bool {
 
 	if archive.isZip() && (p.invoke == "" || p.isExe()) {
 		if p.invokeUnZip() {
+			record(fmt.Sprintf("[INST] '%v' unziped in '%v'\n", p.name, folder))
 			return p.postInstall()
 		} else {
 			return false
@@ -2273,6 +2276,7 @@ func (p *Prg) install() bool {
 			pdbg("Unable to install '%v' invoke '%v'\n", p.name, archive)
 			return false
 		}
+		record(fmt.Sprintf("[INST] '%v' custom installed in '%v'\n", p.name, folder))
 	} else {
 		cmd := p.invoke
 		cmd = strings.Replace(cmd, "@FILE@", archive.String(), -1)
@@ -2281,6 +2285,8 @@ func (p *Prg) install() bool {
 		c := exec.Command("cmd", "/C", cmd)
 		if out, err := c.Output(); err != nil {
 			pdbg("Error invoking '%v'\n''%v': %v'\n", cmd, string(out), err)
+		} else {
+			record(fmt.Sprintf("[INST] '%v' invoked in '%v'\n", p.name, folder))
 		}
 	}
 	return p.postInstall()
