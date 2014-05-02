@@ -39,7 +39,12 @@ func main() {
 	defer rec()
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	pdbg("MAIN")
-	flog, err := os.OpenFile("test/log", os.O_APPEND|os.O_WRONLY, 0600)
+	var err error
+	if NewPath("test/log").Exists() {
+		flog, err = os.OpenFile("test/log", os.O_APPEND|os.O_WRONLY, 0600)
+	} else {
+		flog, err = os.OpenFile("test/log", os.O_CREATE|os.O_WRONLY, 0600)
+	}
 	if err != nil {
 		panic(err)
 	}
@@ -59,6 +64,17 @@ func rec() {
 		fmt.Printf("Recovered from '%+v'\n", r)
 	}
 }
+
+func record(text string) {
+	// http://stackoverflow.com/questions/7151261/append-to-a-file-in-go
+	t := time.Now()
+	st := "[" + t.Format("2006/01/02") + " " + t.Format("15:04:05") + "] "
+	text = st + text
+	if _, err := flog.WriteString(text); err != nil {
+		panic(err)
+	}
+}
+
 
 var defaultConfig = `
 [cache]
