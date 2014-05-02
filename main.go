@@ -2505,6 +2505,11 @@ func (p *Path) RemoveExtension() *Path {
 
 var fcmd = ""
 
+func has7z() bool {
+	p := NewPath("test/peazip/latest/res/7z/7z.exe")
+	return p.Exists()
+}
+
 func cmd7z() string {
 	cmd := fcmd
 	if fcmd == "" {
@@ -2971,6 +2976,9 @@ func cloneZipItem(f *zip.File, dest *Path) bool {
 }
 
 func unzip(zipPath, dest *Path) bool {
+	if has7z() {
+		return uncompress7z(zipPath, dest, nil, "Unzip", true)
+	}
 	r, err := zip.OpenReader(zipPath.String())
 	if err != nil {
 		pdbg("Error while opening zip '%v' for '%v'\n'%v'\n", zipPath, dest, err)
