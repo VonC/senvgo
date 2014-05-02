@@ -33,11 +33,17 @@ import (
 )
 
 var prgs []*Prg
+var flog *os.File
 
 func main() {
 	defer rec()
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	pdbg("MAIN")
+	flog, err := os.OpenFile("test/log", os.O_APPEND|os.O_WRONLY, 0600)
+	if err != nil {
+		panic(err)
+	}
+	defer flog.Close()
 	prgs = ReadConfig()
 	for _, p := range prgs {
 		if p.install() {
