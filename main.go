@@ -75,6 +75,16 @@ func record(text string) {
 	}
 }
 
+/*
+[gow]
+  test           bin/awk.exe
+  folder.get     https://github.com/bmatzelle/gow/releases
+  folder.rx      /download/v.*?/(Gow-.*?).exe
+  url.rx         (/bmatzelle/gow/releases/download/v.*?/Gow-.*?.exe)
+  url.prepend    https://github.com
+  name.rx        /download/v.*?/(Gow-.*?.exe)
+  invoke         @FILE@ /S /D=@DEST@
+*/
 
 var defaultConfig = `
 [cache]
@@ -86,18 +96,12 @@ var defaultConfig = `
   owner VonC
 [peazip]
   arch           WINDOWS,WIN64
+  test			 res/7z/7z.exe
   folder.get     http://peazip.sourceforge.net/peazip-portable.html
   folder.rx      /(peazip_portable-.*?\._$arch_).zip/download
   url.rx         (http.*portable-.*?\._$arch_\.zip/download)
   name.rx        /(peazip_portable-.*?\._$arch_.zip)/download
-[gow]
-  folder.get     https://github.com/bmatzelle/gow/releases
-  folder.rx      /download/v.*?/(Gow-.*?).exe
-  url.rx         (/bmatzelle/gow/releases/download/v.*?/Gow-.*?.exe)
-  url.prepend    https://github.com
-  name.rx        /download/v.*?/(Gow-.*?.exe)
-  invoke         @FILE@ /S /D=@DEST@
-  `
+`
 
 /*
 [jdk8src]
