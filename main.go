@@ -34,11 +34,21 @@ import (
 
 var prgs []*Prg
 var flog *os.File
+var prgsenv *Path
 
 func main() {
 	defer rec()
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	pdbg("MAIN")
+	prgse := os.Getenv("PRGS2")
+	if prgse == "" {
+		pdbg("[ERR] no PRGS env variable defined")
+		os.Exit(1)
+	} else {
+		prgsenv = NewPathDir(prgse)
+		pdbg("PRGS2='%v'", prgsenv)
+		os.Exit(0)
+	}
 	var err error
 	if NewPath("test/log").Exists() {
 		flog, err = os.OpenFile("test/log", os.O_APPEND|os.O_WRONLY, 0600)
