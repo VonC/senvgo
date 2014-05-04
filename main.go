@@ -1109,7 +1109,7 @@ func (c *CacheDisk) GetArchive(p *Path, url *url.URL, name string, cookies []*ht
 	pdbg("CacheDisk.GetArchive[%v]: ... MUST download '%v' for '%v'\n", c.id, url, filename)
 	time.Sleep(time.Duration(5) * time.Second)
 
-	record(fmt.Sprint("[DOWN] for '%v': '%v'", name, filename))
+	record(fmt.Sprintf("[DOWN] for '%v': '%v'\n", name, filename))
 	download(url, filename, 100000, cookies)
 	pdbg("CacheDisk.GetArchive[%v]: ... DONE download '%v' for '%v'\n", c.id, url, filename)
 	filepath = c.checkArchive(filename, name, isExe)
