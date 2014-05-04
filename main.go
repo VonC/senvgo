@@ -47,13 +47,13 @@ func main() {
 	} else {
 		prgsenv = NewPathDir(prgse)
 		pdbg("PRGS2='%v'", prgsenv)
-		os.Exit(0)
 	}
 	var err error
-	if NewPath("test/log").Exists() {
-		flog, err = os.OpenFile("test/log", os.O_APPEND|os.O_WRONLY, 0600)
+	fplog := prgsenv.Add("log")
+	if fplog.Exists() {
+		flog, err = os.OpenFile(fplog.String(), os.O_APPEND|os.O_WRONLY, 0600)
 	} else {
-		flog, err = os.OpenFile("test/log", os.O_CREATE|os.O_WRONLY, 0600)
+		flog, err = os.OpenFile(fplog.String(), os.O_CREATE|os.O_WRONLY, 0600)
 	}
 	if err != nil {
 		panic(err)
