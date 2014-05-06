@@ -62,6 +62,12 @@ func main() {
 	defer flog.Close()
 
 	penvbat := prgsenv.Add("env.bat")
+	if penvbat.Exists() {
+		err = os.Remove(penvbat.String())
+		if err != nil {
+			panic(err)
+		}
+	}
 	fenvbat, err = os.OpenFile(penvbat.String(), os.O_CREATE|os.O_WRONLY, 0600)
 	if err != nil {
 		panic(err)
