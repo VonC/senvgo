@@ -35,6 +35,7 @@ import (
 var prgs []*Prg
 var flog *os.File
 var prgsenv *Path
+var fenvbat *os.File
 
 func main() {
 	defer rec()
@@ -59,6 +60,14 @@ func main() {
 		panic(err)
 	}
 	defer flog.Close()
+
+	penvbat := prgsenv.Add("env.bat")
+	fenvbat, err = os.OpenFile(penvbat.String(), os.O_CREATE|os.O_WRONLY, 0600)
+	if err != nil {
+		panic(err)
+	}
+	defer fenvbat.Close()
+
 	prgs = ReadConfig()
 	for _, p := range prgs {
 		if p.install() {
