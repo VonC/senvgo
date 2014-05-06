@@ -1182,7 +1182,7 @@ func (c *CacheGitHub) GetPage(url *url.URL, name string) *Path {
 	return nil
 }
 
-var updatePage = true
+var updatePage = false
 
 var rxDbgLine, _ = regexp.Compile(`^.*VonC/senvgo/main.go:(\d+)\s`)
 var rxDbgFnct, _ = regexp.Compile(`^\s+com/VonC/senvgo(?:\.\(([^\)]+)\))?\.([^:]+)`)
