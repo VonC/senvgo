@@ -2430,12 +2430,12 @@ func (i Invoke) InstallJDK(folder *Path, archive *Path) bool {
 
 func (p *Prg) BuildZip() bool {
 
-	if p.depOn != nil {
+	if p.depOn != nil || !p.isExe() {
 		return true
 	}
 
 	archive := p.GetArchive()
-	if !archive.isExe() || !p.isExe() {
+	if !archive.isExe() {
 		return true
 	}
 
