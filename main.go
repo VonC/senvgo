@@ -1268,7 +1268,10 @@ func pdbg(format string, args ...interface{}) string {
 		}
 		depth = depth + 1
 	}
-	spaces := strings.Repeat(" ", depth-2)
+	spaces := ""
+	if depth > 2 {
+		spaces = strings.Repeat(" ", depth-2)
+	}
 	res := pmsg
 	pmsg = spaces + pmsg
 	msg = pmsg + "\n" + spaces + "  " + msg + "\n"
