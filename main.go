@@ -34,23 +34,15 @@ import (
 
 var prgs []*Prg
 var flog *os.File
-var prgsenv *Path
+var _prgsenv *Path
 var fenvbat *os.File
 
 func main() {
 	defer rec()
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	pdbg("MAIN")
-	prgse := os.Getenv("PRGS2")
-	if prgse == "" {
-		pdbg("[ERR] no PRGS env variable defined")
-		os.Exit(1)
-	} else {
-		prgsenv = NewPathDir(prgse)
-		pdbg("PRGS2='%v'", prgsenv)
-	}
 	var err error
-	fplog := prgsenv.Add("log")
+	fplog := prgsenv().Add("log")
 	if fplog.Exists() {
 		flog, err = os.OpenFile(fplog.String(), os.O_APPEND|os.O_WRONLY, 0600)
 	} else {
@@ -61,7 +53,7 @@ func main() {
 	}
 	defer flog.Close()
 
-	penvbat := prgsenv.Add("env.bat")
+	penvbat := prgsenv().Add("env.bat")
 	if penvbat.Exists() {
 		err = os.Remove(penvbat.String())
 		if err != nil {
@@ -82,6 +74,21 @@ func main() {
 			pdbg("FAILED INSTALLED '%v'\n", p)
 		}
 	}
+}
+
+func prgsenv() *Path {
+	if _prgsenv != nil {
+		return _prgsenv
+	}
+	prgse := os.Getenv("PRGS2")
+	if prgse == "" {
+		pdbg("[ERR] no PRGS env variable defined")
+		os.Exit(1)
+	} else {
+		_prgsenv = NewPathDir(prgse)
+		pdbg("PRGS2='%v'", _prgsenv)
+	}
+	return _prgsenv
 }
 
 func rec() {
@@ -1897,7 +1904,7 @@ func NewCacheDisk(id string, root *Path) *CacheDisk {
 	return cache
 }
 
-var cache = NewCacheDisk("main", NewPathDir("test/_cache"))
+var cache = NewCacheDisk("main", prgsenv().Add("_cache"))
 
 // ReadConfig reads config an build programs and extractors and caches
 func ReadConfig() []*Prg {
@@ -2094,7 +2101,7 @@ func (p *Path) Abs() *Path {
 
 func (p *Prg) checkLatest() {
 	folder := p.GetFolder()
-	folderMain := NewPathDir("test/" + p.GetName())
+	folderMain := prgsenv().Add(p.GetName())
 	folderFull := folderMain.AddP(folder)
 	folderLatest := folderMain.Add("latest")
 
@@ -2193,7 +2200,7 @@ func (p *Prg) postInstall() bool {
 	p.checkLatest()
 	b := p.BuildZip()
 	pdbg("res from BuildZip: '%v', for '%v'", b, p.name)
-	folderTmp := NewPathDir("test/" + p.GetName()).AddP(NewPathDir("tmp"))
+	folderTmp := prgsenv().Add(p.GetName()).AddP(NewPathDir("tmp"))
 	err := deleteFolderContent(folderTmp.String())
 	b = (err == nil)
 	pdbg("res from deleteFolderContent tmp: '%v', for '%v'", b, p.name)
@@ -2204,7 +2211,7 @@ func (p *Prg) isInstalled() bool {
 		return false
 	}
 	folder := p.GetFolder()
-	folderMain := NewPathDir("test/" + p.GetName())
+	folderMain := prgsenv().Add(p.GetName())
 	folderFull := folderMain.AddP(folder)
 	test := folderFull.Add(p.test)
 	pdbg("*** TEST='%+v'\n", test)
