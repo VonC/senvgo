@@ -120,7 +120,7 @@ func record(text string) {
 
 var defaultConfig = `
 [cache]
-  cache 1
+  cache 3
 [cache id secondary]
   root test/_secondary
   cache 1
