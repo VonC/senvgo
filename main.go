@@ -1361,11 +1361,13 @@ func (c *CacheDisk) GetPage(url *url.URL, name string) *Path {
 		}
 		if filepath != nil {
 			pdbg("Get '%v' has downloaded in '%v' for '%v' (%v)", c.id, filepath, url, len(pn))
-			c.RegisterPath(name, filepath)
 		}
 		if c.next != nil && filepath != nil {
 			c.next.UpdatePage(filepath, name)
 		}
+	}
+	if filepath != nil {
+		c.RegisterPath(name, filepath)
 	}
 	pdbg("GetPage '%v': return '%v'", c.id, filepath)
 	return filepath
