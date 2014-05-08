@@ -3028,8 +3028,8 @@ func deleteFolderContent(dir string) error {
 func cloneZipItem(f *zip.File, dest *Path) bool {
 	// Create full directory path
 	path := dest.Add(f.Name)
-	fmt.Println("Creating", path)
-	if !path.MkDirAll() {
+	pdbg("Creating '%v'", path)
+	if f.FileInfo().IsDir() && !path.MkDirAll() {
 		return false
 	}
 
@@ -3044,13 +3044,13 @@ func cloneZipItem(f *zip.File, dest *Path) bool {
 		// Use os.Create() since Zip don't store file permissions.
 		fileCopy, err := os.Create(path.String())
 		if err != nil {
-			pdbg("Error while creating zip element to '%v' from '%v'\n", path, f)
+			pdbg("Error while creating zip element to '%v' from '%v'\nerr='%v'\n", path, f, err)
 			return false
 		}
 		_, err = io.Copy(fileCopy, rc)
 		fileCopy.Close()
 		if err != nil {
-			pdbg("Error while copying zip element to '%v' from '%v'\n", fileCopy, rc)
+			pdbg("Error while copying zip element to '%v' from '%v'\nerr='%v'\n", fileCopy, rc, err)
 			return false
 		}
 	}
