@@ -68,7 +68,7 @@ func main() {
 
 	prgs = ReadConfig()
 	for _, p := range prgs {
-		if p.install() {
+		if p != nil && p.install() {
 			pdbg("INSTALLED '%v'\n", p)
 		} else {
 			pdbg("FAILED INSTALLED '%v'\n", p)
@@ -1932,7 +1932,12 @@ func ReadConfig() []*Prg {
 
 	res := []*Prg{}
 
-	config := strings.NewReader(defaultConfig)
+	sconfig := defaultConfig
+	pconfig := prgsenv().Add("config")
+	if pconfig.Exists() {
+		sconfig = pconfig.fileContent()
+	}
+	config := strings.NewReader(sconfig)
 	scanner := bufio.NewScanner(config)
 	var currentPrg *Prg
 	var currentCache Cache
