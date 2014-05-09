@@ -107,6 +107,14 @@ func record(text string) {
 	}
 }
 
+func doskey(id, cmd string) {
+	// http://stackoverflow.com/questions/7151261/append-to-a-file-in-go
+	st := fmt.Sprintf("doskey %v=%v ; doskey /exename=%v %v=%v", id, cmd, id, id, cmd)
+	if _, err := fenvbat.WriteString(st); err != nil {
+		panic(err)
+	}
+}
+
 /*
 [gow]
   test           bin/awk.exe
