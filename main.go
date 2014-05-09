@@ -141,6 +141,7 @@ var defaultConfig = `
   folder.rx      /(peazip_portable-.*?\._$arch_).zip/download
   url.rx         (http.*portable-.*?\._$arch_\.zip/download)
   name.rx        /(peazip_portable-.*?\._$arch_.zip)/download
+  doskey		 pzx=~res\7z\7z.exe x -aos -o"$2" -pdefault -sccUTF-8 "$1"
 `
 
 /*
