@@ -107,11 +107,20 @@ func record(text string) {
 	}
 }
 
-func doskey(id, cmd string) {
-	// http://stackoverflow.com/questions/7151261/append-to-a-file-in-go
-	st := fmt.Sprintf("doskey %v=%v ; doskey /exename=%v %v=%v", id, cmd, id, id, cmd)
-	if _, err := fenvbat.WriteString(st); err != nil {
-		panic(err)
+type doskey struct {
+	id  string
+	cmd string
+}
+
+func (p *Prg) writeDoskeys() {
+	for _, dk := range p.doskeys {
+		// http://stackoverflow.com/questions/7151261/append-to-a-file-in-go
+		st := fmt.Sprintf("doskey %v=%v ; doskey /exename=%v %v=%v", dk.id, dk.cmd, dk.id, dk.id, dk.cmd)
+		folderLatest := p.folderLatest()
+		st = strings.Replace(st, "~", folderLatest.String(), -1)
+		if _, err := fenvbat.WriteString(st); err != nil {
+			panic(err)
+		}
 	}
 }
 
@@ -195,6 +204,7 @@ type Prg struct {
 	deps         []*Prg
 	depOn        *Prg
 	archiveIsExe bool
+	doskeys      []*doskey
 }
 
 func (p *Prg) String() string {
@@ -1991,6 +2001,21 @@ func ReadConfig() []*Prg {
 			// os.Exit(0)
 			continue
 		}
+
+		if strings.HasPrefix(line, "doskey") && currentPrg != nil {
+			line = strings.TrimSpace(line[len("doskey"):])
+			elts := strings.Split(line, "=")
+			if len(elts) != 2 {
+				pdbg("ERR: Invalid doskey '%v': '%v'\n", line)
+				continue
+			}
+			// pdbg("Cookies ELTS '%+v'\n", elts)
+			dk := &doskey{}
+			dk.id = elts[0]
+			dk.cmd = elts[1]
+			currentPrg.doskeys = append(currentPrg.doskeys, dk)
+			continue
+		}
 		if strings.HasPrefix(line, "invoke") && currentPrg != nil {
 			line = strings.TrimSpace(line[len("invoke"):])
 			currentPrg.invoke = line
@@ -2110,6 +2135,12 @@ func (p *Path) Abs() *Path {
 	return NewPath(res)
 }
 
+func (p *Prg) folderLatest() *Path {
+	folderMain := prgsenv().Add(p.GetName())
+	folderLatest := folderMain.Add("latest")
+	return folderLatest
+}
+
 func (p *Prg) checkLatest() {
 	folder := p.GetFolder()
 	folderMain := prgsenv().Add(p.GetName())
@@ -2208,6 +2239,7 @@ func (p *Prg) postInstall() bool {
 			return false
 		}
 	}
+	p.writeDoskeys()
 	p.checkLatest()
 	b := p.BuildZip()
 	pdbg("res from BuildZip: '%v', for '%v'", b, p.name)
