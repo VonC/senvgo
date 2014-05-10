@@ -2027,7 +2027,7 @@ func readConfigFile(sconfig string) []*Prg {
 
 		if strings.HasPrefix(line, "doskey") && currentPrg != nil {
 			line = strings.TrimSpace(line[len("doskey"):])
-			elts := strings.Split(line, "=")
+			elts := strings.SplitN(line, "=", 2)
 			if len(elts) != 2 {
 				pdbg("ERR: Invalid doskey '%v': '%v'\n", line)
 				continue
