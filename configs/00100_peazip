@@ -6,3 +6,5 @@
   url.rx         (http.*portable-.*?\._$arch_\.zip/download)
   name.rx        /(peazip_portable-.*?\._$arch_.zip)/download
   doskey		 pzx=~res\7z\7z.exe x -aos -o"$2" -pdefault -sccUTF-8 "$1"
+  doskey		 pzc=~res\7z\7z.exe a -tzip -mm=Deflate -mmt=on -mx5 -w "$2" "$1"
+  doskey		 7z=~res\7z\7z.exe $*
