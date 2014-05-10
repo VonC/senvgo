@@ -1934,10 +1934,27 @@ func ReadConfig() []*Prg {
 	res := []*Prg{}
 
 	sconfig := defaultConfig
-	pconfig := prgsenv().Add("config")
+	pconfig := prgsenv().Add("configs")
+
 	if pconfig.Exists() {
-		sconfig = pconfig.fileContent()
+		sconfig = ""
+		files := getNameOrderedFiles(pconfig, "")
+		pdbg("Nb files: %v", len(files))
+		for _, file := range files {
+			pfile := pconfig.Add(file.Name())
+			// pdbg("File '%v'", pfile)
+			sconfig = sconfig + pfile.fileContent()
+		}
 	}
+	// pdbg("sconfig '%v'", sconfig)
+	res = readConfigFile(sconfig)
+	return res
+}
+
+// ReadConfig reads config an build programs and extractors and caches
+func readConfigFile(sconfig string) []*Prg {
+
+	res := []*Prg{}
 	config := strings.NewReader(sconfig)
 	scanner := bufio.NewScanner(config)
 	var currentPrg *Prg
