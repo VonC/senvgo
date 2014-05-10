@@ -1226,7 +1226,7 @@ func (c *CacheGitHub) GetPage(url *url.URL, name string) *Path {
 var updatePage = false
 
 var rxDbgLine, _ = regexp.Compile(`^.*VonC/senvgo/main.go:(\d+)\s`)
-var rxDbgFnct, _ = regexp.Compile(`^\s+com/VonC/senvgo(?:\.\(([^\)]+)\))?\.([^:]+)`)
+var rxDbgFnct, _ = regexp.Compile(`^\s+(?:com/VonC/senvgo)?(?:\.\(([^\)]+)\))?\.?([^:]+)`)
 
 func pdbgInc(scanner *bufio.Scanner, line string) string {
 	m := rxDbgLine.FindSubmatchIndex([]byte(line))
@@ -1265,6 +1265,7 @@ func pdbg(format string, args ...interface{}) string {
 	msg := fmt.Sprintf(format+"\n", args...)
 	msg = strings.TrimSpace(msg)
 	bstack := bytes.NewBuffer(debug.Stack())
+	// fmt.Printf("%+v", bstack)
 
 	scanner := bufio.NewScanner(bstack)
 	pmsg := ""
