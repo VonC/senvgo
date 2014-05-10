@@ -115,9 +115,9 @@ type doskey struct {
 func (p *Prg) writeDoskeys() {
 	for _, dk := range p.doskeys {
 		// http://stackoverflow.com/questions/7151261/append-to-a-file-in-go
-		st := fmt.Sprintf("doskey %v=%v ; doskey /exename=%v %v=%v", dk.id, dk.cmd, dk.id, dk.id, dk.cmd)
-		folderLatest := p.folderLatest()
-		st = strings.Replace(st, "~", folderLatest.String(), -1)
+		st := fmt.Sprintf("doskey %v=%v\ndoskey /exename=%v %v=%v\n", dk.id, dk.cmd, dk.id, dk.id, dk.cmd)
+		folderFull := p.folderFull()
+		st = strings.Replace(st, "~", folderFull.String(), -1)
 		if _, err := fenvbat.WriteString(st); err != nil {
 			panic(err)
 		}
