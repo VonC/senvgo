@@ -136,6 +136,9 @@ func (p *Prg) writeDoskeys() {
 */
 
 var defaultConfig = `
+`
+
+/*
 [cache]
   cache 3
 [cache id secondary]
@@ -151,9 +154,6 @@ var defaultConfig = `
   url.rx         (http.*portable-.*?\._$arch_\.zip/download)
   name.rx        /(peazip_portable-.*?\._$arch_.zip)/download
   doskey		 pzx=~res\7z\7z.exe x -aos -o"$2" -pdefault -sccUTF-8 "$1"
-`
-
-/*
 [jdk8src]
 	dir 			jdk8
 	arch			i586,x64
