@@ -1,0 +1,7 @@
+[cache]
+  cache 3
+[cache id secondary]
+  root test/_secondary
+  cache 1
+[cache id githubvonc]
+  owner VonC
