@@ -2164,11 +2164,22 @@ func (p *Prg) folderLatest() *Path {
 	return folderLatest
 }
 
-func (p *Prg) checkLatest() {
+func (p *Prg) folderFull() *Path {
 	folder := p.GetFolder()
 	folderMain := prgsenv().Add(p.GetName())
 	folderFull := folderMain.AddP(folder)
-	folderLatest := folderMain.Add("latest")
+	return folderFull
+}
+
+func (p *Prg) folderMain() *Path {
+	folderMain := prgsenv().Add(p.GetName())
+	return folderMain
+}
+
+func (p *Prg) checkLatest() {
+	folderMain := p.folderMain()
+	folderFull := p.folderFull()
+	folderLatest := p.folderLatest()
 
 	hasLatest := folderLatest.Exists()
 	mainf := folderMain.Abs()
