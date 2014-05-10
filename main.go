@@ -2993,33 +2993,21 @@ func (f byDate) Swap(i, j int) {
 func getDateOrderedFiles(dir *Path, pattern string) []os.FileInfo {
 	pdbg("Look in '%v' for '%v'\n", dir, pattern)
 	res := []os.FileInfo{}
-	f, err := os.Open(dir.String())
-	if err != nil {
-		pdbg("Error while opening dir '%v': '%v'\n", dir, err)
-		return nil
-	}
-	list, err := f.Readdir(-1)
-	if err != nil {
-		pdbg("Error while reading dir '%v': '%v'\n", dir, err)
-		return nil
-	}
-	if len(list) == 0 {
-		return res
-	}
-	filteredList := []os.FileInfo{}
-	rx := regexp.MustCompile(pattern)
-	for _, fi := range list {
-		if rx.MatchString(fi.Name()) {
-			filteredList = append(filteredList, fi)
-		}
-	}
-	if len(filteredList) == 0 {
-		pdbg("NO FILE in '%v' for '%v'\n", dir, pattern)
-		return res
-	}
+	filteredList := getFiles(dir, pattern)
 	// pdbg("t: '%v' => '%v'\n", filteredList, filteredList[0])
 	sort.Sort(byDate(filteredList))
 	// pdbg("t: '%v' => '%v'\n", filteredList, filteredList[0])
+	res = filteredList
+	return res
+}
+
+func getNameOrderedFiles(dir *Path, pattern string) []os.FileInfo {
+	pdbg("Look in '%v' for '%v'\n", dir, pattern)
+	res := []os.FileInfo{}
+	filteredList := getFiles(dir, pattern)
+	// pdbg("t: '%v' => '%v'\n", filteredList, filteredList[0])
+	//sort.Sort(byDate(filteredList))
+	// pdbg("t: '%+v' => '%v'\n", filteredList, filteredList[0])
 	res = filteredList
 	return res
 }
@@ -3037,6 +3025,37 @@ func getLastModifiedFile(dir *Path, pattern string) string {
 	}
 	// pdbg("t: '%v' => '%v'\n", filteredList, filteredList[0])
 	return filteredList[0].Name()
+}
+
+func getFiles(dir *Path, pattern string) []os.FileInfo {
+	pdbg("Look in '%v' for '%v'\n", dir, pattern)
+	res := []os.FileInfo{}
+	f, err := os.Open(dir.String())
+	if err != nil {
+		pdbg("Error while opening dir '%v': '%v'\n", dir, err)
+		return nil
+	}
+	list, err := f.Readdir(-1)
+	if err != nil {
+		pdbg("Error while reading dir '%v': '%v'\n", dir, err)
+		return nil
+	}
+	if len(list) == 0 {
+		return res
+	}
+	filteredList := []os.FileInfo{}
+	rx := regexp.MustCompile(pattern)
+	for _, fi := range list {
+		if pattern == "" || rx.MatchString(fi.Name()) {
+			filteredList = append(filteredList, fi)
+		}
+	}
+	if len(filteredList) == 0 {
+		pdbg("NO FILE in '%v' for '%v'\n", dir, pattern)
+		return res
+	}
+	res = filteredList
+	return res
 }
 
 func deleteFolderContent(dir string) error {
