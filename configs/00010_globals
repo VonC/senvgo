@@ -5,3 +5,6 @@
   cache 1
 [cache id githubvonc]
   owner VonC
+[paths]
+  delpaths jdk7
+  addpaths jdk8
