@@ -76,6 +76,7 @@ func main() {
 			pdbg("FAILED INSTALLED '%v'\n", p)
 		}
 	}
+	writePaths()
 }
 
 func prgsenv() *Path {
@@ -122,6 +123,32 @@ func (p *Prg) writeDoskeys() {
 		st = strings.Replace(st, "~", folderFull.String(), -1)
 		if _, err := fenvbat.WriteString(st); err != nil {
 			panic(err)
+		}
+	}
+}
+
+func prgFromName(pname string) *Prg {
+	for _, p := range prgs {
+		if p.GetName() == pname {
+			return p
+		}
+	}
+	return nil
+}
+
+func writePaths() {
+	for _, pname := range delpaths {
+		p := prgFromName(pname)
+		if p != nil {
+			pdbg("Del path from %v", p.name)
+		}
+	}
+	for _, pname := range addpaths {
+		p := prgFromName(pname)
+		if p != nil {
+			pdbg("Add path from %v", p.name)
+			rx := p.RxFolder()
+			pdbg("Remove '%v'", rx.String())
 		}
 	}
 }
@@ -1836,7 +1863,7 @@ func (em *ExtractorMatch) Regexp() *regexp.Regexp {
 	return em.regexp
 }
 
-func (em *ExtractorMatch) RxForName() *regexp.Regexp {
+func (em *ExtractorMatch) RxForName(spaces bool) *regexp.Regexp {
 	rx := em.data
 	arch := em.p.GetArch()
 	if arch != nil {
@@ -1865,6 +1892,9 @@ func (em *ExtractorMatch) RxForName() *regexp.Regexp {
 			}
 		}
 		res = res + string(c)
+	}
+	if !spaces {
+		res = strings.Replace(res, " ", "_", -1)
 	}
 	var err error
 	var rrx *regexp.Regexp
@@ -2300,6 +2330,7 @@ func (p *Prg) postInstall() bool {
 	pdbg("res from deleteFolderContent tmp: '%v', for '%v'", b, p.name)
 	return b
 }
+
 func (p *Prg) isInstalled() bool {
 	if p.test == "" {
 		return false
@@ -2886,6 +2917,29 @@ func (c *CacheDisk) trimArchives(rx string, name string) {
 	}
 }
 
+func (p *Prg) RxFolder() *regexp.Regexp {
+	var res *regexp.Regexp
+	if p.exts == nil {
+		return res
+	}
+	ext := p.exts.extractFolder
+	var rxext *ExtractorMatch
+	for ext != nil {
+		pdbg("RxFolder() ########### '%v'", ext)
+		if rrxext, ok := ext.(*ExtractorMatch); ok {
+			pdbg("RxFolder() --------> '%v'", ext)
+			rxext = rrxext
+		}
+		ext = ext.Next()
+	}
+	pdbg("RxFolder() ~~~~~~~~~~~~~~~~~~~ '%v'", rxext)
+	if rxext != nil {
+		pdbg("Last rx detected '%+v'", rxext)
+		res = rxext.RxForName(false)
+	}
+	return res
+}
+
 // GetArchive returns archive name
 func (p *Prg) GetArchive() *Path {
 	p.updateDeps()
@@ -2917,7 +2971,7 @@ func (p *Prg) GetArchive() *Path {
 		pdbg("GetArchive() ~~~~~~~~~~~~~~~~~~~ '%v'", rxext)
 		if rxext != nil {
 			pdbg("Last rx detected '%+v'", rxext)
-			rx := rxext.RxForName()
+			rx := rxext.RxForName(true)
 			cache.trimFiles(rx.String(), p.GetName())
 			if archiveName.isExe() {
 				targzrx := strings.Replace(rx.String(), ".exe", ".tar.gz", -1)
