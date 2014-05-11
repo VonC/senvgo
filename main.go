@@ -36,6 +36,8 @@ var prgs []*Prg
 var flog *os.File
 var _prgsenv *Path
 var fenvbat *os.File
+var addpaths []string
+var delpaths []string
 
 func main() {
 	defer rec()
@@ -1983,10 +1985,25 @@ func readConfigFile(sconfig string) []*Prg {
 			} else if line == "[cache]" {
 				currentCache = cache
 				currentCacheName = "main"
+			} else if line == "[paths]" {
+				addpaths = []string{}
+				delpaths = []string{}
 			} else {
 				currentCacheName = strings.TrimSpace(line[len("[cache id "):])
 				currentCacheName = strings.TrimSpace(currentCacheName[0 : len(currentCacheName)-1])
 			}
+			continue
+		}
+		if strings.HasPrefix(line, "addpaths") {
+			line = strings.TrimSpace(line[len("addpaths"):])
+			addpaths = strings.Split(line, " ")
+			pdbg("addpaths = %+v", addpaths)
+			continue
+		}
+		if strings.HasPrefix(line, "delpaths") {
+			line = strings.TrimSpace(line[len("delpaths"):])
+			delpaths = strings.Split(line, " ")
+			pdbg("delpaths = %+v", delpaths)
 			continue
 		}
 		if strings.HasPrefix(line, "arch") && currentPrg != nil {
