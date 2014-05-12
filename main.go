@@ -163,6 +163,20 @@ func (p *Prg) writeDoskeys() {
 	}
 }
 
+func (p *Prg) writeVarenvs() {
+	for _, ve := range p.varenvs {
+		// http://stackoverflow.com/questions/7151261/append-to-a-file-in-go
+		st := fmt.Sprintf("set %v=%v\n", ve.vr, ve.vl)
+		if strings.Contains(st, "_folderfull_") {
+			folderFull := p.folderFull()
+			st = strings.Replace(st, "_folderfull_", folderFull.NoSep().String(), -1)
+		}
+		if _, err := fenvbat.WriteString(st); err != nil {
+			panic(err)
+		}
+	}
+}
+
 func writePath() {
 	st := "set PATH="
 	first := true
@@ -2370,6 +2384,7 @@ func (p *Prg) postInstall() bool {
 		}
 	}
 	p.writeDoskeys()
+	p.writeVarenvs()
 	p.checkLatest()
 	b := p.BuildZip()
 	pdbg("res from BuildZip: '%v', for '%v'", b, p.name)
