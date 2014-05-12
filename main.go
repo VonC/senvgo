@@ -185,6 +185,7 @@ type Prg struct {
 	depOn        *Prg
 	archiveIsExe bool
 	doskeys      []*doskey
+	delfolders   []*regexp.Regexp
 }
 
 func (p *Prg) String() string {
@@ -2035,6 +2036,19 @@ func readConfigFile(sconfig string) []*Prg {
 			dk.id = elts[0]
 			dk.cmd = elts[1]
 			currentPrg.doskeys = append(currentPrg.doskeys, dk)
+			continue
+		}
+		if strings.HasPrefix(line, "delfolders") && currentPrg != nil {
+			line = strings.TrimSpace(line[len("delfolders"):])
+			elts := strings.SplitN(line, " ", -1)
+			for _, elt := range elts {
+				if currentPrg.GetArch() != nil {
+					elt = strings.Replace(elt, "_$arch_", currentPrg.GetArch().Arch(), -1)
+				}
+				delprx := regexp.MustCompile(elt)
+				pdbg("delfolders: append '%v'", delprx.String())
+				currentPrg.delfolders = append(currentPrg.delfolders, delprx)
+			}
 			continue
 		}
 		if strings.HasPrefix(line, "invoke") && currentPrg != nil {
