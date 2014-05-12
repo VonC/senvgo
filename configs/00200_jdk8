@@ -30,3 +30,4 @@
 	buildZip		go: BuildZipJDK
 	cache_github	1
 	path			bin
+	delfolders		jdk-\d(?:u\d+)?-windows-_$arch_
