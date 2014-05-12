@@ -146,6 +146,11 @@ type doskey struct {
 	cmd string
 }
 
+type varenv struct {
+	vr string
+	vl string
+}
+
 func (p *Prg) writeDoskeys() {
 	for _, dk := range p.doskeys {
 		// http://stackoverflow.com/questions/7151261/append-to-a-file-in-go
@@ -242,6 +247,7 @@ type Prg struct {
 	doskeys      []*doskey
 	delfolders   []*regexp.Regexp
 	path         *Path
+	varenvs      []*varenv
 }
 
 func (p *Prg) String() string {
@@ -2062,6 +2068,20 @@ func readConfigFile(sconfig string) []*Prg {
 			test := strings.TrimSpace(line[len("path"):])
 			currentPrg.path = NewPath(test)
 			pdbg("prg '%v' => path='%v'", currentPrg.name, currentPrg.path)
+			continue
+		}
+		if strings.HasPrefix(line, "env") && currentPrg != nil {
+			test := strings.TrimSpace(line[len("env"):])
+			elts := strings.SplitN(test, "=", 2)
+			if len(elts) != 2 {
+				pdbg("ERR: Invalid var env '%v': '%v'\n", line)
+				continue
+			}
+			// pdbg("Cookies ELTS '%+v'\n", elts)
+			ve := &varenv{}
+			ve.vr = strings.TrimSpace(elts[0])
+			ve.vl = strings.TrimSpace(elts[1])
+			currentPrg.varenvs = append(currentPrg.varenvs, ve)
 			continue
 		}
 		if strings.HasPrefix(line, "dir") && currentPrg != nil {
