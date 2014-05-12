@@ -189,6 +189,7 @@ type Prg struct {
 	archiveIsExe bool
 	doskeys      []*doskey
 	delfolders   []*regexp.Regexp
+	path         *Path
 }
 
 func (p *Prg) String() string {
@@ -2001,6 +2002,12 @@ func readConfigFile(sconfig string) []*Prg {
 		if strings.HasPrefix(line, "test") && currentPrg != nil {
 			test := strings.TrimSpace(line[len("test"):])
 			currentPrg.test = test
+			continue
+		}
+		if strings.HasPrefix(line, "path") && currentPrg != nil {
+			test := strings.TrimSpace(line[len("path"):])
+			currentPrg.path = NewPath(test)
+			pdbg("prg '%v' => path='%v'", currentPrg.name, currentPrg.path)
 			continue
 		}
 		if strings.HasPrefix(line, "dir") && currentPrg != nil {
