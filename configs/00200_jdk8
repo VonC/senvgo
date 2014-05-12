@@ -31,3 +31,4 @@
 	cache_github	1
 	path			bin
 	delfolders		jdk-\d(?:u\d+)?-windows-_$arch_
+	env				JAVA_HOME=_folderfull_
