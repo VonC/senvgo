@@ -148,7 +148,10 @@ func writePaths() {
 		if p != nil {
 			pdbg("Add path from %v", p.name)
 			rx := p.RxFolder()
-			pdbg("Remove '%v'", rx.String())
+			pdbg("Remove '%v' for pname '%v'", rx.String(), p.name)
+			for _, delprx := range p.delfolders {
+				pdbg("Remove del '%v'", delprx.String())
+			}
 		}
 	}
 }
