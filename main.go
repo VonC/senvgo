@@ -322,7 +322,9 @@ func (p *Path) NoSep() *Path {
 	for strings.HasSuffix(pp, string(filepath.Separator)) {
 		pp = pp[:len(pp)-1]
 	}
-	return NewPath(pp)
+	res := &Path{}
+	res.path = filepath.FromSlash(pp)
+	return res
 }
 
 func (p *Path) AddNoSep(s string) *Path {
