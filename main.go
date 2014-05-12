@@ -129,7 +129,7 @@ func (p *Prg) writeDoskeys() {
 
 func prgFromName(pname string) *Prg {
 	for _, p := range prgs {
-		if p.GetName() == pname {
+		if p.name == pname {
 			return p
 		}
 	}
