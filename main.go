@@ -38,6 +38,7 @@ var _prgsenv *Path
 var fenvbat *os.File
 var addpaths []string
 var delpaths []string
+var path []string
 
 func main() {
 	defer rec()
@@ -94,6 +95,36 @@ func prgsenv() *Path {
 	return _prgsenv
 }
 
+func cleanPath(rx *regexp.Regexp) {
+	newpath := []string{}
+	for _, p := range getPath() {
+		if !rx.MatchString(p) {
+			newpath = append(newpath, p)
+		}
+	}
+	path = newpath
+}
+
+func (p *Prg) addToPath() {
+	if p.path != nil {
+		ff := p.folderFull()
+		ff = ff.AddP(p.path)
+		ff = ff.NoSep()
+		newpath := getPath()
+		newpath = append(newpath, ff.String())
+		pdbg("Append path '%v'", ff)
+		path = newpath
+	}
+}
+
+func getPath() []string {
+	if path == nil {
+		p := os.Getenv("PATH")
+		path = strings.Split(p, ";")
+	}
+	return path
+}
+
 func rec() {
 	if r := recover(); r != nil {
 		fmt.Printf("Recovered from '%+v'\n", r)
@@ -127,6 +158,22 @@ func (p *Prg) writeDoskeys() {
 	}
 }
 
+func writePath() {
+	st := "set PATH="
+	first := true
+	for _, p := range path {
+		if !first {
+			st = st + ";"
+		}
+		first = false
+		st = st + p
+	}
+	st = st + "\n"
+	if _, err := fenvbat.WriteString(st); err != nil {
+		panic(err)
+	}
+}
+
 func prgFromName(pname string) *Prg {
 	for _, p := range prgs {
 		if p.name == pname {
@@ -149,11 +196,16 @@ func writePaths() {
 			pdbg("Add path from %v", p.name)
 			rx := p.RxFolder()
 			pdbg("Remove '%v' for pname '%v'", rx.String(), p.name)
+			cleanPath(rx)
 			for _, delprx := range p.delfolders {
 				pdbg("Remove del '%v'", delprx.String())
+				cleanPath(delprx)
 			}
+			p.addToPath()
 		}
 	}
+	pdbg("final path: '%v'", path)
+	writePath()
 }
 
 /*
