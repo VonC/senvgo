@@ -33,6 +33,7 @@ import (
 )
 
 var prgs []*Prg
+var prgnames []string
 var flog *os.File
 var _prgsenv *Path
 var fenvbat *os.File
@@ -2044,7 +2045,7 @@ func readConfigFile(sconfig string) []*Prg {
 			}
 			currentCache = nil
 			currentCacheName = ""
-			if !strings.Contains(line, "[cache") {
+			if !strings.Contains(line, "[cache") && !strings.HasPrefix(line, "[paths]") {
 				name := line[1 : len(line)-1]
 				exts = &Extractors{}
 				currentPrg = &Prg{name: name, cache: cache, exts: exts}
@@ -2054,11 +2055,23 @@ func readConfigFile(sconfig string) []*Prg {
 			} else if line == "[paths]" {
 				addpaths = []string{}
 				delpaths = []string{}
-			} else {
+			} else if strings.HasPrefix(line, "[cache ") {
 				currentCacheName = strings.TrimSpace(line[len("[cache id "):])
 				currentCacheName = strings.TrimSpace(currentCacheName[0 : len(currentCacheName)-1])
+			} else {
+				continue
 			}
-			continue
+		}
+		if strings.HasPrefix(line, "order=") {
+			// pdbg("currentprg='%v'", currentPrg)
+			line = strings.TrimSpace(line[len("order="):])
+			prgns := strings.Split(line, " ")
+			for _, pn := range prgns {
+				pn = strings.TrimSpace(pn)
+				if pn != "" {
+					prgnames = append(prgnames, pn)
+				}
+			}
 		}
 		if strings.HasPrefix(line, "addpaths") {
 			line = strings.TrimSpace(line[len("addpaths"):])
