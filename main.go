@@ -1997,6 +1997,7 @@ func ReadConfig() []*Prg {
 
 	sconfig := defaultConfig
 	pconfig := prgsenv().Add("configs")
+	global := ""
 
 	if pconfig.Exists() {
 		sconfig = ""
@@ -2005,8 +2006,13 @@ func ReadConfig() []*Prg {
 		for _, file := range files {
 			pfile := pconfig.Add(file.Name())
 			// pdbg("File '%v'", pfile)
-			sconfig = sconfig + pfile.fileContent()
+			if strings.HasSuffix(file.Name(), "globals") {
+				global = pfile.fileContent()
+			} else {
+				sconfig = sconfig + pfile.fileContent()
+			}
 		}
+		sconfig = global + sconfig
 	}
 	// pdbg("sconfig '%v'", sconfig)
 	res = readConfigFile(sconfig)
