@@ -71,6 +71,7 @@ func main() {
 	defer fenvbat.Close()
 
 	prgs = ReadConfig()
+	pdbg("prgnames='%v'\nprgs='%v'", prgnames, prgs)
 	for _, p := range prgs {
 		if p != nil && p.install() {
 			pdbg("INSTALLED '%v'\n", p)
