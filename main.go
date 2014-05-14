@@ -71,12 +71,20 @@ func main() {
 	defer fenvbat.Close()
 
 	prgs = ReadConfig()
-	pdbg("prgnames='%v'\nprgs='%v'", prgnames, prgs)
-	for _, p := range prgs {
-		if p != nil && p.install() {
-			pdbg("INSTALLED '%v'\n", p)
-		} else {
-			pdbg("FAILED INSTALLED '%v'\n", p)
+	pdbg("prgnames='%v'\nprgs='%v'", prgnames, len(prgs))
+	for _, prgname := range prgnames {
+		p := prgFromName(prgname)
+		if p != nil {
+			if p.isInstalled() {
+				pdbg("PRG '%v': already installed\n", p.name)
+			} else if p.hasFailed() {
+				pdbg("PRG '%v': already FAILED\n", p.name)
+			} else if p.install() {
+				pdbg("PRG '%v': INSTALLED\n", p.name)
+			} else {
+				p.fail = true
+				pdbg("PRG '%v': FAILED installation\n", p.name)
+			}
 		}
 	}
 	writePaths()
