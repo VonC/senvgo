@@ -8,4 +8,4 @@
 [paths]
   delpaths jdk7
   addpaths jdk8
-order=peazip gow git npp python hg bzr go sbt gpg procexp mc ag perl kitty wintab greenshot fastoneCapture zoomit filezilla winscp autoit iron firefox kdiff3 paint svn wiztree ss liteide gvim dexpot freeplane node npm ruby ads ontop 
+order=peazip gow git npp python hg bzr go sbt gpg procexp mc ag perl kitty wintab greenshot fastoneCapture zoomit filezilla winscp autoit iron firefox kdiff3 paint svn wiztree ss liteide gvim dexpot freeplane node npm ruby ads ontop jdk8
