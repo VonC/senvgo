@@ -264,6 +264,7 @@ type Prg struct {
 	delfolders   []*regexp.Regexp
 	path         *Path
 	varenvs      []*varenv
+	fail         bool
 }
 
 func (p *Prg) String() string {
@@ -2425,6 +2426,10 @@ func (p *Prg) isInstalled() bool {
 	test := folderFull.Add(p.test)
 	pdbg("*** TEST='%+v'\n", test)
 	return test.Exists()
+}
+
+func (p *Prg) hasFailed() bool {
+	return p.fail
 }
 
 func resetAddToGitHub() {
