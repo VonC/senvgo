@@ -2403,6 +2403,13 @@ func (p *Prg) updateDeps() {
 		return
 	}
 	p.deps = []*Prg{}
+	for _, prgname := range p.depnames {
+		for _, prg := range prgs {
+			if prg.name == prgname {
+				p.deps = append(p.deps, prg)
+			}
+		}
+	}
 	for _, prg := range prgs {
 		if prg.GetName() == p.name && prg.GetName() != prg.name {
 			p.deps = append(p.deps, prg)
