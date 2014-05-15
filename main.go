@@ -273,6 +273,7 @@ type Prg struct {
 	path         *Path
 	varenvs      []*varenv
 	fail         bool
+	depnames     []string
 }
 
 func (p *Prg) String() string {
@@ -2082,6 +2083,12 @@ func readConfigFile(sconfig string) []*Prg {
 					prgnames = append(prgnames, pn)
 				}
 			}
+		}
+		if strings.HasPrefix(line, "deps") && currentPrg != nil {
+			line = strings.TrimSpace(line[len("deps"):])
+			currentPrg.depnames = strings.Split(line, " ")
+			pdbg("currentPrg '%v': depnames = '%v'", currentPrg.name, currentPrg.depnames)
+			continue
 		}
 		if strings.HasPrefix(line, "addpaths") {
 			line = strings.TrimSpace(line[len("addpaths"):])
