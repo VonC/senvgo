@@ -1,9 +1,8 @@
 [gow]
-  test			 vin/xargs.exe
-  folder.get     https://github.com/bmatzelle/gow/releases
-  folder.rx      /(Gow-.*?).exe"
-  url.rx         (http.*portable-.*?\._$arch_\.zip/download)
-  name.rx        /(peazip_portable-.*?\._$arch_.zip)/download
-  doskey		 pzx=~res\7z\7z.exe x -aos -o"$2" -pdefault -sccUTF-8 "$1"
-  doskey		 pzc=~res\7z\7z.exe a -tzip -mm=Deflate -mmt=on -mx5 -w "$2" "$1"
-  doskey		 7z=~res\7z\7z.exe $*
+  test			 bin/xargs.exe
+  folder.get https://github.com/bmatzelle/gow/releases
+  folder.rx /download/v.*?/(Gow-.*?).exe
+  url.rx (/bmatzelle/gow/releases/download/v.*?/Gow-.*?.exe)
+  url.prepend https://github.com
+  name.rx /download/v.*?/(Gow-.*?.exe)
+  invoke @FILE@ /S /D=@DEST@
