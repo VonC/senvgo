@@ -1409,6 +1409,7 @@ func (c *CacheDisk) GetPage(url *url.URL, name string) *Path {
 					copy(f, filepath)
 					c.RegisterPath(name, f)
 					filepath = f
+					wasNotFound = false
 				}
 			}
 		} else {
@@ -1421,12 +1422,13 @@ func (c *CacheDisk) GetPage(url *url.URL, name string) *Path {
 		sha := c.getResourceName(url, name)
 		t := time.Now()
 		filename := c.Folder(name).Add(name + "_" + sha + "_" + t.Format("20060102") + "_" + t.Format("150405"))
-		pdbg("Get '%v' downloads '%v' for '%v'\n", c.id, filename, url)
+		pdbg("Get '%v' downloads '%v' for '%v' wasNotFound='%v'\n", c.id, filename, url, wasNotFound)
 		if filepath == nil {
 			filepath = download(url, filename, 0, nil)
 			downloadedUrl = append(downloadedUrl, url)
 		} else if wasNotFound {
 			filename = c.Folder(name).Add(filepath.Base())
+			pdbg("Copy filepath '%v' to filename='%v'", filepath, filename)
 			if copy(filename, filepath) {
 				filepath = filename
 			} else {
