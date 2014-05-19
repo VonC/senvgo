@@ -2434,9 +2434,11 @@ func (p *Prg) postInstall() bool {
 	b := p.BuildZip()
 	pdbg("res from BuildZip: '%v', for '%v'", b, p.name)
 	folderTmp := prgsenv().Add(p.GetName()).AddP(NewPathDir("tmp"))
-	err := deleteFolderContent(folderTmp.String())
-	b = (err == nil)
-	pdbg("res from deleteFolderContent tmp: '%v', for '%v'", b, p.name)
+	if folderTmp.Exists() {
+		err := deleteFolderContent(folderTmp.String())
+		b = (err == nil)
+		pdbg("res from deleteFolderContent tmp: '%v', for '%v'", b, p.name)
+	}
 	return b
 }
 
