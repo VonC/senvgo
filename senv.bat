@@ -6,17 +6,32 @@ if "%PRGS2%"=="" (
 pushd "%CD%"
 cd %~dp0
 rem http://stackoverflow.com/questions/15890856/difference-between-dp0-and
-C:\prgs\go\go1.2.1.windows-amd64\bin\go.exe build
-if ERRORLEVEL 1 (
-	echo.build failed
-	popd
-	goto ko
+set cpl=""
+if not exist senvgo.exe (
+	set cpl=true
 )
-echo.built
+REM http://stackoverflow.com/questions/1687014/how-do-i-compare-timestamps-of-files-in-a-dos-batch-script
+FOR /F %%i IN ('DIR /B /O:D senvgo.exe main.go') DO SET NEWEST=%%i
+REM echo.NEWEST %NEWEST%
+if "%NEWEST%"=="main.go" (
+	set cpl=true
+)
+REM echo.cpl %cpl%
+if "%cpl%"=="true" (
+	echo building
+	call go build
+	if ERRORLEVEL 1 (
+		echo.build failed
+		popd
+		goto ko
+	)
+	echo.built
+)
+echo.done check build
 call %~dp0\senvgo.exe
-call %PRGS2%\env.bat
+rem call %PRGS2%\env.bat
+type %PRGS2%\env.bat
 popd
-
 
 rem http://stackoverflow.com/questions/4632891/exiting-batch-with-exit-b-x-where-x-1-acts-as-if-command-completed-successfu
 :ok
