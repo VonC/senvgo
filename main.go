@@ -2895,7 +2895,7 @@ func uncompress7z(archive, folder, file *Path, msg string, extract bool) bool {
 	if extract {
 		extractCmd = "e"
 	}
-	cmd = fmt.Sprintf("%v %v -aos -o%v -pdefault -sccUTF-8 %v%v", cmd, extractCmd, ffolder.String(), farchive.String(), argFile)
+	cmd = fmt.Sprintf("%v %v -aoa -o%v -pdefault -sccUTF-8 %v%v", cmd, extractCmd, ffolder.String(), farchive.String(), argFile)
 	pdbg("%v'%v'%v => 7zU...\n%v\n", msg, archive, argFile, cmd)
 
 	c := exec.Command("cmd", "/C", cmd)
