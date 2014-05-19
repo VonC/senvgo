@@ -6,3 +6,7 @@
   url.prepend	https://github.com
   name.rx		/download/Git-.*?/(PortableGit-.*?.7z)
   path			bin
+  doskey		gl=git lg -20
+  doskey		gla=git lg -20 --all
+  doskey		glab=git lg -20 --all --branches
+  doskey		glba=git lg -20 --branches --all
