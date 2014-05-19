@@ -1,0 +1,8 @@
+[git]
+  test			bin/git.exe
+  folder.get	https://github.com/msysgit/msysgit/releases
+  folder.rx		/download/Git-.*?/(PortableGit-.*?).7z
+  url.rx		(/msysgit/msysgit/releases/download/Git-.*?/PortableGit-.*?.7z)
+  url.prepend	https://github.com
+  name.rx		/download/Git-.*?/(PortableGit-.*?.7z)
+  path			bin
