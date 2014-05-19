@@ -637,6 +637,10 @@ func (c *CacheGitHub) getClient() *github.Client {
 	return c.client
 }
 
+func (p *Path) isZipOr7z() bool {
+	return p.isZip() || p.is7z()
+}
+
 func (p *Path) isZip() bool {
 	return strings.HasSuffix(p.String(), ".zip")
 }
@@ -2523,9 +2527,9 @@ func (p *Prg) install() bool {
 		return false
 	}
 
-	if archive.isZip() && (p.invoke == "" || p.isExe()) {
-		if p.invokeUnZip() {
-			record(fmt.Sprintf("[INST] '%v' unziped in '%v'\n", p.name, folder))
+	if archive.isZipOr7z() && (p.invoke == "" || p.isExe()) {
+		if p.invokeUnZipOr7z() {
+			record(fmt.Sprintf("[INST] '%v' uncompressed in '%v'\n", p.name, folder))
 			return p.postInstall()
 		} else {
 			return false
@@ -2794,12 +2798,12 @@ func (p *Path) Gz() *Path {
 	return p.AddNoSep(".gz")
 }
 
-func (p *Path) isSz() bool {
+func (p *Path) is7z() bool {
 	return strings.HasSuffix(p.String(), ".7z")
 }
 
-func (p *Path) Sz() *Path {
-	if p.isSz() {
+func (p *Path) setExt7z() *Path {
+	if p.is7z() {
 		return p
 	}
 	return p.AddNoSep(".7z")
@@ -2943,7 +2947,7 @@ func compress7z(archive, folder, file *Path, msg, format string) bool {
 	return true
 }
 
-func (p *Prg) invokeUnZip() bool {
+func (p *Prg) invokeUnZipOr7z() bool {
 	folder := p.GetFolder()
 	archive := p.GetArchive()
 	folderMain := NewPathDir("test/" + p.GetName())
@@ -2952,7 +2956,10 @@ func (p *Prg) invokeUnZip() bool {
 	t := getLastModifiedFile(folderTmp, ".*")
 	if t == "" {
 		pdbg("Need to uncompress '%v' in '%v'\n", archive, folderTmp)
-		if !unzip(archive, folderTmp) {
+		if archive.isZip() && !unzip(archive, folderTmp) {
+			return false
+		}
+		if archive.is7z() && !uncompress7z(archive, folderTmp, nil, "Uncompress archive to tmp", false) {
 			return false
 		}
 	}
@@ -2961,7 +2968,14 @@ func (p *Prg) invokeUnZip() bool {
 		pdbg("Need to move %v in '%v'\n", folderToMove, folderFull)
 		err := os.Rename(folderToMove.String(), folderFull.String())
 		if err != nil {
-			pdbg("Error moving tmp folder '%v' to '%v': '%v'\n", folderTmp, folderFull, err)
+			pdbg("Error moving tmp folder '%v' to '%v': '%v'\n", folderToMove, folderFull, err)
+			return false
+		}
+	} else {
+		pdbg("Need to move content of %v to '%v'\n", folderTmp, folderFull)
+		err := os.Rename(folderTmp.String(), folderFull.String())
+		if err != nil {
+			pdbg("Error moving tmp folder content '%v' to '%v': '%v'\n", folderTmp, folderFull, err)
 			return false
 		}
 	}
