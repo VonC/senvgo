@@ -213,12 +213,14 @@ func prgFromName(pname string) *Prg {
 }
 
 func writePaths() {
+	pdbg("delpaths = '%+v'", delpaths)
 	for _, pname := range delpaths {
 		p := prgFromName(pname)
 		if p != nil {
 			pdbg("Del path from %v", p.name)
 		}
 	}
+	pdbg("addpaths = '%+v'", addpaths)
 	for _, pname := range addpaths {
 		p := prgFromName(pname)
 		if p != nil {
