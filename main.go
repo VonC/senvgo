@@ -74,16 +74,24 @@ func main() {
 	pdbg("prgnames='%v'\nprgs='%v'", prgnames, len(prgs))
 	for _, prgname := range prgnames {
 		p := prgFromName(prgname)
+		write := true
 		if p != nil {
 			if p.isInstalled() {
 				pdbg("PRG '%v': already installed\n", p.name)
 			} else if p.hasFailed() {
 				pdbg("PRG '%v': already FAILED\n", p.name)
+				write = false
 			} else if p.install() {
 				pdbg("PRG '%v': INSTALLED\n", p.name)
 			} else {
 				p.fail = true
 				pdbg("PRG '%v': FAILED installation\n", p.name)
+				write = false
+			}
+			if write {
+				pdbg("Write doskeys and varenvs for '%v'", p.name)
+				p.writeDoskeys()
+				p.writeVarenvs()
 			}
 		}
 	}
@@ -2434,8 +2442,6 @@ func (p *Prg) postInstall() bool {
 			return false
 		}
 	}
-	p.writeDoskeys()
-	p.writeVarenvs()
 	p.checkLatest()
 	b := p.BuildZip()
 	pdbg("res from BuildZip: '%v', for '%v'", b, p.name)
