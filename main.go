@@ -3361,7 +3361,7 @@ func cloneZipItem(f *zip.File, dest *Path) bool {
 
 func unzip(zipPath, dest *Path) bool {
 	if has7z() {
-		return uncompress7z(zipPath, dest, nil, "Unzip", true)
+		return uncompress7z(zipPath, dest, nil, "Unzip", false)
 	}
 	r, err := zip.OpenReader(zipPath.String())
 	if err != nil {
