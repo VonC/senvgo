@@ -1652,23 +1652,48 @@ type ExtractorGet struct {
 // ExtractFrom download an url content
 func (eg *ExtractorGet) ExtractFrom(data string) string {
 	pdbg("=====> ExtractorGet.ExtractFrom '%v'\n", data)
-	url, err := url.Parse(data)
-	if err != nil {
-		pdbg("ExtractorGet.ExtractFrom() error parsing url '%v': '%v'\n", data, err)
-		return ""
-	}
-	//fmt.Println("ok! " + url)
-	name := eg.p.GetName()
-	page := cache.GetPage(url, name)
-	if page == nil {
-		pdbg("Unable to download '%v'\n", url)
+	content := ""
+	if data != "_" {
+		url, err := url.Parse(data)
+		if err != nil {
+			pdbg("ExtractorGet.ExtractFrom() error parsing url '%v': '%v'\n", data, err)
+			return ""
+		}
+		//fmt.Println("ok! " + url)
+		name := eg.p.GetName()
+		page := cache.GetPage(url, name)
+		if page == nil {
+			pdbg("Unable to download '%v'\n", url)
+		} else {
+			pdbg("Got '%v' from cache\n", url)
+		}
+		content = page.fileContent()
 	} else {
-		pdbg("Got '%v' from cache\n", url)
+		switch currentData {
+		case "archive":
+			pdbg("Get last content from folder: %v", len(lastContent["folder"]))
+			content = lastContent["folder"]
+		case "url":
+			pdbg("Get last content from archive: %v", len(lastContent["archive"]))
+			content = lastContent["archive"]
+		default:
+			pdbg("Unknown content for '%v'", currentData)
+			return ""
+		}
 	}
-	content := page.fileContent()
 	fmt.Println(len(content))
+	pdbg("Register last content %v for '%v'", len(content), currentData)
+	registerLastContent(content)
 	return content
 }
+
+func registerLastContent(content string) {
+	lastContent[currentData] = content
+}
+
+var lastContent = map[string]string{}
+
+var currentData string
 
 // Just enough correctness for our redirect tests. Uses the URL.Host as the
 // scope of all cookies.
@@ -3018,6 +3043,7 @@ func (p *Prg) GetFolder() *Path {
 		pdbg("Get folder for %v", p.name)
 		ext := p.exts.extractFolder
 		data := p.getIniData(ext)
+		currentData = "folder"
 		p.folder = get(p.folder, ext, true, data)
 		pdbg("DONE Get folder for %v\n", p.folder)
 		if !isEmpty(p.folder) && p.depOn != nil {
@@ -3090,6 +3116,7 @@ func (p *Prg) GetArchive() *Path {
 		pdbg("Get archive for %v", p.GetName())
 		ext := p.exts.extractArchive
 		data := p.getIniData(ext)
+		currentData = "archive"
 		archiveName = get(nil, ext, false, data)
 		if archiveName.EndsWithSeparator() {
 			pdbg("No archive found for '%v'\n", p.name)
@@ -3151,6 +3178,7 @@ func (p *Prg) GetURL() *url.URL {
 		pdbg("Get url for %v", p.GetName())
 		ext := p.exts.extractURL
 		data := p.getIniData(ext)
+		currentData = "url"
 		rawurl := get(nil, p.exts.extractURL, false, data)
 		pdbg("URL '%+v'\n", rawurl)
 		if anurl, err := url.ParseRequestURI(rawurl.String()); err == nil {
