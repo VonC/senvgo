@@ -661,7 +661,7 @@ func (p *Path) isTarSz() bool {
 	return strings.HasSuffix(p.String(), ".tar.7z")
 }
 func (p *Path) isExe() bool {
-	return strings.HasSuffix(p.String(), ".exe")
+	return strings.HasSuffix(p.String(), ".exe") || strings.HasSuffix(p.String(), ".msi")
 }
 
 func (p *Path) NoExt() *Path {
