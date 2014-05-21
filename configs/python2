@@ -1,8 +1,10 @@
 [python2]
   test			        pythonw.exe
-  arch              \d\.msi,amd64.msi
-  folder.get        http://notepad-plus-plus.org/download/
-  folder.rx         (download/releases/2)
+  arch              \d,amd64
+  folder.get        https://www.python.org/downloads/
+  folder.rx         (/download/releases/2\.[^"]*?)"
   folder.prepend    https://www.python.org
   folder.get        _
-  folder.rx         /ftp/python/.*?/(python-2..*?_$arch_)"></a>
+  folder.rx         /ftp/python/.*?/(python-2..*?_$arch_)\.msi">
+  name.get          _
+  name.rx           /ftp/python/.*?/(python-2..*?_$arch_\.msi)">
