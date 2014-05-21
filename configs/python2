@@ -8,3 +8,8 @@
   folder.rx         /ftp/python/.*?/(python-2..*?_$arch_)\.msi">
   name.get          _
   name.rx           /ftp/python/.*?/(python-2..*?_$arch_\.msi)">
+  url.get           _
+  url.rx            (/ftp/python/.*?/python-2..*?_$arch_\.msi)">
+  url.prepend       https://www.python.org
+  invoke 		 	C:\WINDOWS\system32\msiexec.exe /i @FILE@ /l @DEST@.log TARGETDIR=@DEST@ ADDLOCAL=DefaultFeature,TclTk,Documentation,Tools,Testsuite /qn
+  doskey 			python=~python.exe $*
