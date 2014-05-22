@@ -672,6 +672,9 @@ func (p *Path) NoExt() *Path {
 	if strings.HasSuffix(f, ".exe") {
 		return NewPath(f[:len(f)-len(".exe")])
 	}
+	if strings.HasSuffix(f, ".msi") {
+		return NewPath(f[:len(f)-len(".msi")])
+	}
 	if strings.HasSuffix(f, ".zip") {
 		return NewPath(f[:len(f)-len(".zip")])
 	}
