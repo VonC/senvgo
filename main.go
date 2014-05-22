@@ -2745,7 +2745,8 @@ func (p *Prg) BuildZip() bool {
 		methodName := strings.TrimSpace(p.buildZip[len("go:"):])
 		return p.callFunc(methodName, folderFull, archive)
 	} else {
-		portableArchive := NewPath(strings.Replace(archive.String(), ".exe", ".zip", -1))
+		portableArchive := NewPath(archive.NoExt().String() + ".zip")
+		pdbg("portableArchive '%v' (%v)", portableArchive, portableArchive.Exists())
 		if !portableArchive.Exists() {
 			compress7z(portableArchive, folderFull, nil, fmt.Sprintf("Compress '%v' for '%v'", portableArchive, p.GetName()), "zip")
 		}
