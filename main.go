@@ -2988,7 +2988,8 @@ func compress7z(archive, folder, file *Path, msg, format string) bool {
 	if format == "gzip" {
 		deflate = ""
 	}
-	cmd = fmt.Sprintf("dir %v ; %v a -t%v -w %v %v%v", ffolder.String(), cmd, format, farchive.String(), ffolder.String(), argFile)
+	// C:\Users\vonc\prog\go\src\github.com\VonC\senvgo>"R:\test\peazip\peazip_portable-5.3.1.WIN64\res\7z\7z.exe" a -tzip -mm=Deflate -mmt=on -mx5 -mfb=32 -mpass=1 -sccUTF-8 -mem=AES256 "-wR:\test\python2\" "R:\test\python2\python-2.7.6.amd64.zip" "R:\test\python2\python-2.7.6.amd64"
+	cmd = fmt.Sprintf("cd %v && %v a -t%v -w%v %v %v", ffolder.String(), cmd, format, ffolder.String(), farchive.String(), argFile)
 	pdbg("msg '%v' for archive '%v' argFile '%v' format '%v', ffolder '%v', deflate '%v' => 7zC...\n'%v'", msg, archive, argFile, format, ffolder, deflate, cmd)
 	c := exec.Command("cmd", "/C", cmd)
 	if out, err := c.CombinedOutput(); err != nil {
