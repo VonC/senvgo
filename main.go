@@ -2987,15 +2987,16 @@ func compress7z(archive, folder, file *Path, msg, format string) bool {
 	if format == "gzip" {
 		deflate = ""
 	}
-	cmd = fmt.Sprintf("%v a -t%v%v -mmt=on -mx5 -w %v %v%v", cmd, format, deflate, farchive, ffolder, argFile)
-	is := fmt.Sprintf("%v'%v'%v => 7zC...\n%v\n", msg, archive, argFile, cmd)
-	fmt.Println(is)
+	cmd = fmt.Sprintf("dir %v ; %v a -t%v -w %v %v%v", ffolder.String(), cmd, format, farchive.String(), ffolder.String(), argFile)
+	pdbg("msg '%v' for archive '%v' argFile '%v' format '%v', ffolder '%v', deflate '%v' => 7zC...\n'%v'", msg, archive, argFile, format, ffolder, deflate, cmd)
 	c := exec.Command("cmd", "/C", cmd)
-	if out, err := c.Output(); err != nil {
+	if out, err := c.CombinedOutput(); err != nil {
 		pdbg("Error invoking 7zC '%v'\nout='%v' => err='%v'\n", cmd, string(out), err)
 		return false
+	} else {
+		pdbg("out '%v'", string(out))
 	}
-	pdbg("%v'%v'%v => 7zC... DONE\n", msg, archive, argFile)
+	pdbg("msg '%v' for archive '%v' argFile '%v' format '%v', ffolder '%v', deflate '%v' => 7zC... DONE\n'%v'", msg, archive, argFile, format, ffolder, deflate, cmd)
 	return true
 }
 
