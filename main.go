@@ -78,6 +78,9 @@ func main() {
 		if p != nil {
 			if p.isInstalled() {
 				pdbg("PRG '%v': already installed\n", p.name)
+				if p.GetArchive().isExe() {
+					p.BuildZip()
+				}
 			} else if p.hasFailed() {
 				pdbg("PRG '%v': already FAILED\n", p.name)
 				write = false
