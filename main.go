@@ -606,7 +606,7 @@ func (c *CacheGitHub) IsGitHub() bool {
 
 // Get gets or download zip archives only from GitHub
 func (c *CacheGitHub) GetArchive(p *Path, url *url.URL, name string, cookies []*http.Cookie, isExe bool) *Path {
-	pdbg("CacheGitHub.GetArchive '%v' for '%v' from '%v'\n", p, name, c)
+	pdbg("CacheGitHub.GetArchive '%v' for '%v' from '%v' (exe %v)\n", p, name, c, isExe)
 	if !p.isPortableCompressed() {
 		pdbg("GetArchive '%v' is not a .zip or tag.gz\n", p)
 		return nil
@@ -2729,17 +2729,21 @@ func (i Invoke) InstallJDK(folder *Path, archive *Path) bool {
 func (p *Prg) BuildZip() bool {
 
 	if p.depOn != nil || !p.isExe() {
+		pdbg("'%v' not an exe: nothing to do", p.name)
 		return true
 	}
 
 	archive := p.GetArchive()
 	if !archive.isExe() {
+		pdbg("'%v' archive '%v' not an exe: nothing to do", p.name, archive)
 		return true
 	}
+	pdbg("ok")
 
 	folder := p.GetFolder()
 	folderMain := prgsenv().Add(p.GetName())
 	folderFull := folderMain.AddP(folder)
+	pdbg("folderFull '%v'", folderFull)
 
 	if strings.HasPrefix(p.buildZip, "go:") {
 		methodName := strings.TrimSpace(p.buildZip[len("go:"):])
@@ -3171,6 +3175,7 @@ func (p *Prg) GetArchive() *Path {
 			pext = ".tar.gz"
 		}
 		pname := NewPath(archiveName.NoExt().String() + pext)
+		pdbg("pname '%v'", pname)
 		portableArchive := cache.GetArchive(pname, nil, p.GetName(), p.cookies, p.isExe())
 		if portableArchive != nil {
 			p.archive = portableArchive
