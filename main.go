@@ -959,6 +959,7 @@ func (c *CacheGitHub) UpdateArchive(p *Path, name string, isExe bool) {
 
 func (c *CacheGitHub) uploadAsset(authUser *github.User, rid int, p *Path, name string) *github.ReleaseAsset {
 	pdbg("Upload asset to release '%v'\n", p.releaseName())
+	os.Exit(0)
 	file, err := os.Open(p.String())
 	if err != nil {
 		pdbg("Error while opening release asset file '%v'(%v): '%v'\n", p, p.releaseName(), err)
