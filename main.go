@@ -2363,7 +2363,7 @@ func (p *Prg) folderMain() *Path {
 	return folderMain
 }
 
-func (p *Prg) checkLatest() {
+func (p *Prg) checkLatest() bool {
 	folderMain := p.folderMain()
 	folderFull := p.folderFull()
 	folderLatest := p.folderLatest()
@@ -2373,22 +2373,29 @@ func (p *Prg) checkLatest() {
 	latest := folderLatest.Abs()
 	full := folderFull.Abs()
 	if mainf == nil || latest == nil || full == nil {
-		return
+		return false
 	}
 	if !hasLatest {
+		if !folderFull.Exists() {
+			return false
+		}
 		junction(latest, full, p.GetName())
 	} else {
 		target := readJunction("latest", mainf, p.GetName())
 		pdbg("Target='%v'\n", target)
-		if target.String() != full.String() {
+		if target.String() != full.String() || !folderFull.Exists() {
 			err := os.Remove(latest.String())
 			if err != nil {
 				pdbg("Error removing LATEST '%v' in '%v': '%v'\n", latest, folderLatest, err)
-				return
+				return false
+			}
+			if !folderFull.Exists() {
+				return false
 			}
 			junction(latest, full, p.GetName())
 		}
 	}
+	return true
 }
 
 func junction(link, dst *Path, name string) {
@@ -2467,14 +2474,15 @@ func (p *Prg) postInstall() bool {
 			return false
 		}
 	}
-	p.checkLatest()
-	b := p.BuildZip()
+	b := p.checkLatest()
+	b = b && p.BuildZip()
 	pdbg("res from BuildZip: '%v', for '%v'", b, p.name)
 	folderTmp := prgsenv().Add(p.GetName()).AddP(NewPathDir("tmp"))
 	if folderTmp.Exists() {
 		err := deleteFolderContent(folderTmp.String())
-		b = (err == nil)
-		pdbg("res from deleteFolderContent tmp: '%v', for '%v'", b, p.name)
+		bb := (err == nil)
+		pdbg("res from deleteFolderContent tmp: '%v', for '%v'", bb, p.name)
+		b = b && bb
 	}
 	return b
 }
