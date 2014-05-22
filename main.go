@@ -2535,7 +2535,7 @@ func (p *Prg) install() bool {
 		return false
 	}
 
-	folderMain := NewPathDir("test/" + p.GetName())
+	folderMain := prgsenv().Add(p.GetName())
 	if !folderMain.Exists() && !folderMain.MkDirAll() {
 		pdbg("ERR: unable to create folder on '%v'\n", folderMain.String())
 		return false
@@ -2738,7 +2738,7 @@ func (p *Prg) BuildZip() bool {
 	}
 
 	folder := p.GetFolder()
-	folderMain := NewPathDir("test/" + p.GetName())
+	folderMain := prgsenv().Add(p.GetName())
 	folderFull := folderMain.AddP(folder)
 
 	if strings.HasPrefix(p.buildZip, "go:") {
@@ -2872,7 +2872,7 @@ func (p *Path) RemoveExtension() *Path {
 var fcmd = ""
 
 func has7z() bool {
-	p := NewPath("test/peazip/latest/res/7z/7z.exe")
+	p := prgsenv().Add("peazip/latest/res/7z/7z.exe")
 	return p.Exists()
 }
 
