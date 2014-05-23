@@ -959,7 +959,6 @@ func (c *CacheGitHub) UpdateArchive(p *Path, name string, isExe bool) {
 
 func (c *CacheGitHub) uploadAsset(authUser *github.User, rid int, p *Path, name string) *github.ReleaseAsset {
 	pdbg("Upload asset to release '%v'\n", p.releaseName())
-	os.Exit(0)
 	file, err := os.Open(p.String())
 	if err != nil {
 		pdbg("Error while opening release asset file '%v'(%v): '%v'\n", p, p.releaseName(), err)
@@ -2755,6 +2754,7 @@ func (p *Prg) BuildZip() bool {
 		if !portableArchive.Exists() {
 			compress7z(portableArchive, folderFull, nil, fmt.Sprintf("Compress '%v' for '%v'", portableArchive, p.GetName()), "zip")
 		}
+		cache.UpdateArchive(portableArchive, p.GetName(), true)
 	}
 	return true
 }
@@ -2972,36 +2972,40 @@ func compress7z(archive, folder, file *Path, msg, format string) bool {
 			return false
 		}
 	}
-	cmd := cmd7z()
-	if cmd == "" {
+	cmd7z := cmd7z()
+	if cmd7z == "" {
 		return false
 	}
-	argFile := ""
-	if !isEmpty(file) {
-		argFile = " -- " + file.String()
-	}
+	cmd := []string{"/C", cmd7z, "a", "-t" + format}
 	msg = strings.TrimSpace(msg)
 	if msg != "" {
 		msg = msg + ": "
 	}
-	deflate := " -mm=Deflate"
+	deflate := "-mm=Deflate"
 	if format == "gzip" {
 		deflate = ""
 	}
+	cmd = append(cmd, deflate)
+	cmd = append(cmd, "-mmt=on", "-mx5", "-mfb=32", "-mpass=1", "-sccUTF-8", "-mem=AES256")
 	parentfolder := ffolder.Dir()
+	cmd = append(cmd, fmt.Sprintf(`-w%s`, parentfolder), farchive.String(), ffolder.NoSep().String())
+	if !isEmpty(file) {
+		cmd = append(cmd, "--", file.String())
+	}
+	scmd := strings.Join(cmd, " ")
 	// C:\Users\vonc\prog\go\src\github.com\VonC\senvgo>
 	// "R:\test\peazip\peazip_portable-5.3.1.WIN64\res\7z\7z.exe" a -tzip -mm=Deflate -mmt=on -mx5 -mfb=32 -mpass=1 -sccUTF-8 -mem=AES256 "-wR:\test\python2\" "R:\test\python2\python-2.7.6.amd64.zip" "R:\test\python2\python-2.7.6.amd64"
 	// http://stackoverflow.com/questions/7845130/properly-pass-arguments-to-go-exec
-	cmd = fmt.Sprintf(`%v a -t%v%v -mmt=on -mx5 -mfb=32 -mpass=1 -sccUTF-8 -mem=AES256 -w%v %v %v%v`, cmd, format, deflate, parentfolder, farchive, ffolder.NoSep(), argFile)
-	pdbg("msg '%v' for archive '%v' argFile '%v' format '%v', ffolder '%v', deflate '%v' => 7zC...\n'%v'", msg, archive, argFile, format, ffolder, deflate, cmd)
-	c := exec.Command("cmd", "/C", cmd)
+	//cmd = fmt.Sprintf(`%v a -t%v%v -mmt=on -mx5 -mfb=32 -mpass=1 -sccUTF-8 -mem=AES256 -w%v %v %v%v`, cmd, format, deflate, parentfolder, farchive, ffolder.NoSep(), argFile)
+	pdbg("msg '%v' for archive '%v' argFile '%v' format '%v', ffolder '%v', deflate '%v' => 7zC...\n'%v'", msg, archive, file, format, ffolder, deflate, scmd)
+	c := exec.Command("cmd", cmd...)
 	if out, err := c.CombinedOutput(); err != nil {
 		pdbg("Error invoking 7zC '%v'\nout='%v' => err='%v'\n", cmd, string(out), err)
 		return false
 	} else {
 		pdbg("out '%v'", string(out))
 	}
-	pdbg("msg '%v' for archive '%v' argFile '%v' format '%v', ffolder '%v', deflate '%v' => 7zC... DONE\n'%v'", msg, archive, argFile, format, ffolder, deflate, cmd)
+	pdbg("msg '%v' for archive '%v' argFile '%v' format '%v', ffolder '%v', deflate '%v' => 7zC... DONE\n'%v'", msg, archive, file, format, ffolder, deflate, scmd)
 	return true
 }
 
