@@ -2988,8 +2988,11 @@ func compress7z(archive, folder, file *Path, msg, format string) bool {
 	if format == "gzip" {
 		deflate = ""
 	}
-	// C:\Users\vonc\prog\go\src\github.com\VonC\senvgo>"R:\test\peazip\peazip_portable-5.3.1.WIN64\res\7z\7z.exe" a -tzip -mm=Deflate -mmt=on -mx5 -mfb=32 -mpass=1 -sccUTF-8 -mem=AES256 "-wR:\test\python2\" "R:\test\python2\python-2.7.6.amd64.zip" "R:\test\python2\python-2.7.6.amd64"
-	cmd = fmt.Sprintf("cd %v && %v a -t%v -w%v %v %v", ffolder.String(), cmd, format, ffolder.String(), farchive.String(), argFile)
+	parentfolder := ffolder.Dir()
+	// C:\Users\vonc\prog\go\src\github.com\VonC\senvgo>
+	// "R:\test\peazip\peazip_portable-5.3.1.WIN64\res\7z\7z.exe" a -tzip -mm=Deflate -mmt=on -mx5 -mfb=32 -mpass=1 -sccUTF-8 -mem=AES256 "-wR:\test\python2\" "R:\test\python2\python-2.7.6.amd64.zip" "R:\test\python2\python-2.7.6.amd64"
+	// http://stackoverflow.com/questions/7845130/properly-pass-arguments-to-go-exec
+	cmd = fmt.Sprintf(`%v a -t%v%v -mmt=on -mx5 -mfb=32 -mpass=1 -sccUTF-8 -mem=AES256 -w%v %v %v%v`, cmd, format, deflate, parentfolder, farchive, ffolder.NoSep(), argFile)
 	pdbg("msg '%v' for archive '%v' argFile '%v' format '%v', ffolder '%v', deflate '%v' => 7zC...\n'%v'", msg, archive, argFile, format, ffolder, deflate, cmd)
 	c := exec.Command("cmd", "/C", cmd)
 	if out, err := c.CombinedOutput(); err != nil {
