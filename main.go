@@ -138,6 +138,16 @@ func (p *Prg) addToPath() {
 	}
 }
 
+func (p *Prg) delToPath() {
+	rx := p.RxFolder()
+	pdbg("Remove '%v' for pname '%v'", rx.String(), p.name)
+	cleanPath(rx)
+	for _, delprx := range p.delfolders {
+		pdbg("Remove del '%v'", delprx.String())
+		cleanPath(delprx)
+	}
+}
+
 func getPath() []string {
 	if path == nil {
 		p := os.Getenv("PATH")
@@ -201,7 +211,7 @@ func (p *Prg) writeVarenvs() {
 func writePath() {
 	st := "set PATH="
 	first := true
-	for _, p := range path {
+	for _, p := range getPath() {
 		if !first {
 			st = st + ";"
 		}
@@ -229,6 +239,7 @@ func writePaths() {
 		p := prgFromName(pname)
 		if p != nil {
 			pdbg("Del path from %v", p.name)
+			p.delToPath()
 		}
 	}
 	pdbg("addpaths = '%+v'", addpaths)
@@ -236,13 +247,7 @@ func writePaths() {
 		p := prgFromName(pname)
 		if p != nil {
 			pdbg("Add path from %v", p.name)
-			rx := p.RxFolder()
-			pdbg("Remove '%v' for pname '%v'", rx.String(), p.name)
-			cleanPath(rx)
-			for _, delprx := range p.delfolders {
-				pdbg("Remove del '%v'", delprx.String())
-				cleanPath(delprx)
-			}
+			p.delToPath()
 			p.addToPath()
 		}
 	}
