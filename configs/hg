@@ -1,0 +1,11 @@
+[hg]
+  test			  hg.exe
+  arch        \d,-x64
+  folder.get	http://mercurial.selenic.com/sources.js
+  folder.rx		/release/windows/(Mercurial-.*?_$arch_)\.exe"
+  name.get    _
+  name.rx     /release/windows/(Mercurial-.*?_$arch_\.exe)"
+  url.get     _
+  url.rx      "(http://.*?/release/windows/Mercurial-.*?_$arch_\.exe)"
+  invoke      @FILE@ /LOG=@DESTNS@.log /DIR=@DESTNS@ /NOICONS /VERYSILENT
+  path			  

@@ -1,0 +1,17 @@
+﻿2014-05-24 10:13:04.336   Log opened. (Time zone: UTC+02:00)
+2014-05-24 10:13:04.336   Setup version: Inno Setup version 5.5.3 (u)
+2014-05-24 10:13:04.336   Original Setup EXE: C:\Users\vonc\prog\go\src\github.com\VonC\senvgo\test\_cache\hg\Mercurial-3.0-x64.exe
+2014-05-24 10:13:04.336   Setup command line: /SL5="$20101A,8631258,116224,C:\Users\vonc\prog\go\src\github.com\VonC\senvgo\test\_cache\hg\Mercurial-3.0-x64.exe" /SPAWNWND=$B0FD0 /NOTIFYWND=$300C84 /LOG=@DESTNS@.log /DIR=R:\test\hg\Mercurial-3.0-x64 /NOICONS /VERYSILENT
+2014-05-24 10:13:04.336   Windows version: 6.2.9200  (NT platform: Yes)
+2014-05-24 10:13:04.336   64-bit Windows: Yes
+2014-05-24 10:13:04.336   Processor architecture: x64
+2014-05-24 10:13:04.336   User privileges: Administrative
+2014-05-24 10:13:04.338   64-bit install mode: Yes
+2014-05-24 10:13:04.339   Created temporary directory: C:\Users\vonc\AppData\Local\Temp\is-96E18.tmp
+2014-05-24 10:13:04.427   Message box (OK):
+                          The drive or UNC share you selected does not exist or is not accessible. Please select another.
+2014-05-24 10:13:06.866   User chose OK.
+2014-05-24 10:13:06.866   Failed to proceed to next wizard page; aborting.
+2014-05-24 10:13:06.866   Got EAbort exception.
+2014-05-24 10:13:06.866   Deinitializing Setup.
+2014-05-24 10:13:06.868   Log closed.

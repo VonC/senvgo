@@ -2616,6 +2616,7 @@ func (p *Prg) install() bool {
 		cmd := p.invoke
 		cmd = strings.Replace(cmd, "@FILE@", archive.String(), -1)
 		cmd = strings.Replace(cmd, "@DEST@", dst.String(), -1)
+		cmd = strings.Replace(cmd, "@DESTNS@", dst.NoSubst().String(), -1)
 		pdbg("invoking for '%v': '%v'\n", p.GetName(), cmd)
 		c := exec.Command("cmd", "/C", cmd)
 		if out, err := c.Output(); err != nil {
@@ -2762,6 +2763,48 @@ func (p *Prg) BuildZip() bool {
 		cache.UpdateArchive(portableArchive, p.GetName(), true)
 	}
 	return true
+}
+
+var subst map[string]string
+
+func getSubst() map[string]string {
+	if subst != nil {
+		return subst
+	}
+	subst = make(map[string]string)
+	var substRx, _ = regexp.Compile(`(?s)([A-Z]:\\): => ([A-Z]:.*?)$`)
+	pdbg("invoking subst")
+	c := exec.Command("cmd", "/C", "subst")
+	out, err := c.Output()
+	sout := string(out)
+	if err != nil {
+		pdbg("Error invoking subst\n'%v':\nerr='%v'\n", sout, err)
+		return nil
+	}
+	pdbg("subst='%v'", sout)
+	matches := substRx.FindAllStringSubmatchIndex(sout, -1)
+	pdbg("matches OUT: '%v'\n", matches)
+	for _, m := range matches {
+		drive := sout[m[2]:m[3]]
+		substPath := strings.TrimSpace(sout[m[4]:m[5]])
+		subst[drive] = substPath
+		pdbg("drive='%v', substPath='%v'", drive, substPath)
+	}
+	pdbg("subst = '%v'", subst)
+	return subst
+}
+func (p *Path) NoSubst() *Path {
+	if len(getSubst()) == 0 || p == nil || p.path == "" {
+		return p
+	}
+	for drive, sp := range getSubst() {
+		if strings.HasPrefix(p.path, drive) {
+			np := strings.Replace(p.path, drive, sp+"\\", -1)
+			pdbg("No subst from '%v' to '%v'", p.path, np)
+			p.path = np
+		}
+	}
+	return p
 }
 
 func (p *Path) Dir() *Path {

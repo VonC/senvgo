@@ -7,6 +7,7 @@
   owner VonC
 [paths]
   #delpaths jdk7 python2
-  #addpaths git jdk8 gow
-order=python2
-orde_r_=peazip gow git npp python2 hg bzr go sbt gpg procexp mc ag perl kitty wintab greenshot fastoneCapture zoomit filezilla winscp autoit iron firefox kdiff3 paint svn wiztree ss liteide gvim dexpot freeplane node npm ruby ads ontop jdk8
+  #addpaths git jdk8 gow hg
+  addpaths hg
+order=hg
+#order=peazip gow git npp python2 hg bzr go sbt gpg procexp mc ag perl kitty wintab greenshot fastoneCapture zoomit filezilla winscp autoit iron firefox kdiff3 paint svn wiztree ss liteide gvim dexpot freeplane node npm ruby ads ontop jdk8
