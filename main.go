@@ -81,11 +81,13 @@ func main() {
 				if p.GetArchive().isExe() {
 					p.BuildZip()
 				}
+				p.checkUninst()
 			} else if p.hasFailed() {
 				pdbg("PRG '%v': already FAILED\n", p.name)
 				write = false
 			} else if p.install() {
 				pdbg("PRG '%v': INSTALLED\n", p.name)
+				p.checkUninst()
 			} else {
 				p.fail = true
 				pdbg("PRG '%v': FAILED installation\n", p.name)
@@ -292,6 +294,8 @@ type Prg struct {
 	varenvs      []*varenv
 	fail         bool
 	depnames     []string
+	uninstexe    *Path
+	uninstcmd    string
 }
 
 func (p *Prg) String() string {
@@ -301,6 +305,38 @@ func (p *Prg) String() string {
 
 func (p *Prg) isExe() bool {
 	return p.archiveIsExe
+}
+
+func (p *Prg) checkUninst() {
+	if p.uninstexe == nil {
+		return
+	}
+	folderFull := p.folderFull()
+	uninst := folderFull.AddP(p.uninstexe)
+	if uninst.Exists() == false {
+		return
+	}
+	pdbg("Must invoke uninst for '%v'", p.name)
+	if p.uninstcmd == "" {
+		pdbg("No uninstcmd for '%v': impossible to uninstall", p.name)
+		return
+	}
+	cmd := p.uninstcmd
+	dst := folderFull.Abs()
+	cmd = strings.Replace(cmd, "@FILE@", uninst.String(), -1)
+	cmd = strings.Replace(cmd, "@DEST@", dst.String(), -1)
+	cmd = strings.Replace(cmd, "@DESTNS@", dst.NoSubst().String(), -1)
+	pdbg("invoking UNINST for '%v': '%v'\n", p.GetName(), cmd)
+	c := exec.Command("cmd", "/C", cmd)
+	if out, err := c.Output(); err != nil {
+		pdbg("Error invoking UNINST '%v'\n''%v': %v'\n", cmd, string(out), err)
+	} else {
+		record(fmt.Sprintf("[UNINST] '%v' invoked in '%v'\n", p.name, folderFull))
+		err := deleteFolderContent(folderFull.String())
+		if err != nil {
+			pdbg("Error removing UNINST folderFull '%v': '%v'\n", folderFull, err)
+		}
+	}
 }
 
 // PrgData is a Program as seen by an Extractable
@@ -2237,6 +2273,16 @@ func readConfigFile(sconfig string) []*Prg {
 			}
 			continue
 		}
+		if strings.HasPrefix(line, "uninstexe") && currentPrg != nil {
+			line = strings.TrimSpace(line[len("uninstexe"):])
+			currentPrg.uninstexe = NewPath(line)
+			continue
+		}
+		if strings.HasPrefix(line, "uninstcmd") && currentPrg != nil {
+			line = strings.TrimSpace(line[len("uninstcmd"):])
+			currentPrg.uninstcmd = line
+			continue
+		}
 		if strings.HasPrefix(line, "invoke") && currentPrg != nil {
 			line = strings.TrimSpace(line[len("invoke"):])
 			currentPrg.invoke = line
@@ -2582,6 +2628,13 @@ func (p *Prg) install() bool {
 	if archive.isZipOr7z() && (p.invoke == "" || p.isExe()) {
 		if p.invokeUnZipOr7z() {
 			record(fmt.Sprintf("[INST] '%v' uncompressed in '%v'\n", p.name, folder))
+			if p.uninstexe != nil {
+				uninst := folderFull.AddP(p.uninstexe)
+				err := os.Remove(uninst.String())
+				if err != nil {
+					pdbg("Error after unzip when removing UNINST '%v': '%v'\n", uninst, err)
+				}
+			}
 			return p.postInstall()
 		} else {
 			return false
