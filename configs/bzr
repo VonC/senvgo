@@ -1,0 +1,15 @@
+[bzr]
+  # http://www.jrsoftware.org/ishelp/index.php?topic=setupcmdline:
+  # bazzar is dead! (since mid-2012)
+  test			  bzr.exe
+  folder.get	http://wiki.bazaar.canonical.com/WindowsDownloads
+  folder.rx		download/(bzr-.*?)-setup.exe"
+  name.get    _
+  name.rx     download/(bzr-.*?-setup.exe)"
+  url.get     _
+  url.rx      "(https://.*?download/bzr-.*?-setup.exe)"
+  invoke      @FILENS@ /LOG=@DESTNS@.log /DIR=@DESTNS@ /NOICONS /VERYSILENT
+  uninstexe   unins000.exe
+  uninstcmd   @FILENS@ /LOG=@DESTNS@..\uninst.log /VERYSILENT /SUPPRESSMSGBOXES /NORESTART
+  delfolders  Bazaar.+
+  doskey      bzr=
