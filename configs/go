@@ -1,0 +1,14 @@
+[go]
+  arch        -386,-amd64
+  test			  bin/go.exe
+  folder.get	https://code.google.com/p/go/downloads/list?can=2&q=windows+zip&sort=-uploaded&colspec=Filename+Summary+Uploaded+ReleaseDate+Size+DownloadCount
+  folder.rx		name=(go.*?\.windows_$arch_)\.zip
+  name.get    _
+  name.rx     name=(go.*?\.windows_$arch_\.zip)
+  url.get     _
+  url.rx      name=(go.*?\.windows_$arch_\.zip)
+  url.prepend https://go.googlecode.com/files/
+  delfolders  go.+
+  doskey      go=
+  doskey      godoc=
+  doskey      gofmt=
