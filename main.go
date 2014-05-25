@@ -81,13 +81,13 @@ func main() {
 				if p.GetArchive().isExe() {
 					p.BuildZip()
 				}
-				p.checkUninst()
+				write = p.checkUninst()
 			} else if p.hasFailed() {
 				pdbg("PRG '%v': already FAILED\n", p.name)
 				write = false
 			} else if p.install() {
 				pdbg("PRG '%v': INSTALLED\n", p.name)
-				p.checkUninst()
+				write = p.checkUninst()
 			} else {
 				p.fail = true
 				pdbg("PRG '%v': FAILED installation\n", p.name)
@@ -307,36 +307,43 @@ func (p *Prg) isExe() bool {
 	return p.archiveIsExe
 }
 
-func (p *Prg) checkUninst() {
+func (p *Prg) checkUninst() bool {
 	if p.uninstexe == nil {
-		return
+		return true
 	}
 	folderFull := p.folderFull()
 	uninst := folderFull.AddP(p.uninstexe)
 	if uninst.Exists() == false {
-		return
+		return true
 	}
 	pdbg("Must invoke uninst for '%v'", p.name)
 	if p.uninstcmd == "" {
 		pdbg("No uninstcmd for '%v': impossible to uninstall", p.name)
-		return
+		return false
 	}
 	cmd := p.uninstcmd
 	dst := folderFull.Abs()
 	cmd = strings.Replace(cmd, "@FILE@", uninst.String(), -1)
+	cmd = strings.Replace(cmd, "@FILENS@", uninst.NoSubst().String(), -1)
 	cmd = strings.Replace(cmd, "@DEST@", dst.String(), -1)
 	cmd = strings.Replace(cmd, "@DESTNS@", dst.NoSubst().String(), -1)
 	pdbg("invoking UNINST for '%v': '%v'\n", p.GetName(), cmd)
 	c := exec.Command("cmd", "/C", cmd)
 	if out, err := c.Output(); err != nil {
 		pdbg("Error invoking UNINST '%v'\n''%v': %v'\n", cmd, string(out), err)
+		return false
 	} else {
 		record(fmt.Sprintf("[UNINST] '%v' invoked in '%v'\n", p.name, folderFull))
 		err := deleteFolderContent(folderFull.String())
 		if err != nil {
 			pdbg("Error removing UNINST folderFull '%v': '%v'\n", folderFull, err)
+			return false
+		}
+		if !p.isInstalled() {
+			return p.install()
 		}
 	}
+	return true
 }
 
 // PrgData is a Program as seen by an Extractable
@@ -1969,6 +1976,9 @@ func (em *ExtractorMatch) ExtractFrom(content string) string {
 	if len(matches) >= 1 && len(matches[0]) >= 4 {
 		res = content[matches[0][2]:matches[0][3]]
 		pdbg(" RES='%v'\n", res)
+		// for i, x := range matches {
+		// 	pdbg("res %d: '%v'", i, content[x[2]:x[3]])
+		// }
 	} else {
 		pn := pdbg("[Err] Rx '%v' applied to '%v': NO MATCH", rx, c)
 		panic(pn)
@@ -2668,6 +2678,7 @@ func (p *Prg) install() bool {
 	} else {
 		cmd := p.invoke
 		cmd = strings.Replace(cmd, "@FILE@", archive.String(), -1)
+		cmd = strings.Replace(cmd, "@FILENS@", archive.NoSubst().String(), -1)
 		cmd = strings.Replace(cmd, "@DEST@", dst.String(), -1)
 		cmd = strings.Replace(cmd, "@DESTNS@", dst.NoSubst().String(), -1)
 		pdbg("invoking for '%v': '%v'\n", p.GetName(), cmd)
