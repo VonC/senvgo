@@ -296,6 +296,7 @@ type Prg struct {
 	depnames     []string
 	uninstexe    *Path
 	uninstcmd    string
+	pages        map[string]string
 }
 
 func (p *Prg) String() string {
@@ -344,6 +345,13 @@ func (p *Prg) checkUninst() bool {
 		}
 	}
 	return true
+}
+
+func (p *Prg) RegisterUrl(id, url string) {
+	if p.pages == nil {
+		p.pages = make(map[string]string)
+	}
+	p.pages[id] = url
 }
 
 // PrgData is a Program as seen by an Extractable
@@ -2351,18 +2359,34 @@ func readConfigFile(sconfig string) []*Prg {
 			continue
 		}
 		//pdbg("line: '%v' => '%v'\n", line, m)
+		if strings.HasPrefix(line, "page.") && currentPrg != nil {
+			l := strings.SplitN(line, " ", 2)
+			pdbg("(%v) l='%+v'", currentPrg.name, l)
+			id := l[0][len("page."):]
+			url := strings.TrimSpace(l[1])
+			if pageidRx.MatchString(id) == false {
+				pdbg("Wrong id for page: '%v'", id)
+				return nil
+			}
+			if url == "" {
+				pdbg("Page url must not be empty")
+				return nil
+			}
+			pdbg("Register id '%v' for url '%v'", id, url)
+			currentPrg.RegisterUrl(id, url)
+		}
 
 		variable := line[m[2]:m[3]]
 		extractor := line[m[4]:m[5]]
 		data := line[m[6]:m[7]]
 		if !pageidRx.MatchString(data) {
-			pdbg("Wrong get id page '%v'", data)
+			pdbg("Wrong get id page '%v' in '%v'", data, currentPrg.name)
 			return nil
 		}
 		if strings.HasPrefix(data, "_") {
 			datar := data[1:]
-			if datar != "url" && datar != "folder" && datar != "name" {
-				pdbg("Wrong get id ref (should be 'url', 'folder' or 'name') '%v'", data)
+			if datar != "url" && datar != "folder" && datar != "name" && datar != "last" {
+				pdbg("Wrong get id ref (should be 'url', 'folder' or 'name' or 'last') '%v'", data)
 				return nil
 			}
 			if datar == variable {
