@@ -2359,6 +2359,17 @@ func readConfigFile(sconfig string) []*Prg {
 			pdbg("Wrong get id page '%v'", data)
 			return nil
 		}
+		if strings.HasPrefix(data, "_") {
+			datar := data[1:]
+			if datar != "url" && datar != "folder" && datar != "name" {
+				pdbg("Wrong get id ref (should be 'url', 'folder' or 'name') '%v'", data)
+				return nil
+			}
+			if datar == variable {
+				pdbg("Wrong get id ref (should be different from '%v') '%v'", datar)
+				return nil
+			}
+		}
 		var e Extractor
 		switch extractor {
 		case "get":
