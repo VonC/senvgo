@@ -2355,6 +2355,10 @@ func readConfigFile(sconfig string) []*Prg {
 		variable := line[m[2]:m[3]]
 		extractor := line[m[4]:m[5]]
 		data := line[m[6]:m[7]]
+		if !pageidRx.MatchString(data) {
+			pdbg("Wrong get id page '%v'", data)
+			return nil
+		}
 		var e Extractor
 		switch extractor {
 		case "get":
@@ -2399,6 +2403,8 @@ func readConfigFile(sconfig string) []*Prg {
 	pdbg("%v\n", res)
 	return res
 }
+
+var pageidRx = regexp.MustCompile(`_?[a-zA-Z0-9]+`)
 
 func (p *Path) Abs() *Path {
 	res, err := filepath.Abs(p.path)
