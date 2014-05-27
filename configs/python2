@@ -1,15 +1,16 @@
 [python2]
-  test			        pythonw.exe
-  arch              \d,amd64
-  folder.get        https://www.python.org/downloads/
-  folder.rx         (/download/releases/2\.[^"]*?)"
-  folder.prepend    https://www.python.org
-  folder.get        _
-  folder.rx         /ftp/python/.*?/(python-2..*?_$arch_)\.msi">
-  name.get          _
-  name.rx           /ftp/python/.*?/(python-2..*?_$arch_\.msi)">
-  url.get           _
-  url.rx            (/ftp/python/.*?/python-2..*?_$arch_\.msi)">
-  url.prepend       https://www.python.org
-  invoke 		 	C:\WINDOWS\system32\msiexec.exe /i @FILE@ /l @DEST@.log TARGETDIR=@DEST@ ADDLOCAL=DefaultFeature,TclTk,Documentation,Tools,Testsuite /qn
-  doskey 			python=~python.exe $*
+  test			      pythonw.exe
+  arch            \d,amd64
+  page.python     https://www.python.org/downloads/
+  url.get         python
+  url.rx          (/download/releases/2\.[^"]*?)"
+  url.prepend     https://www.python.org
+  url.get         dwnl
+  url.rx          (/ftp/python/.*?/python-2..*?_$arch_\.msi)">
+  url.prepend     https://www.python.org
+  name.get        _url
+  name.rx         /ftp/python/.*?/(python-2..*?_$arch_\.msi)
+  folder.get      _name
+  folder.rx       (python-2..*?_$arch_)\.msi
+  invoke          C:\WINDOWS\system32\msiexec.exe /i @FILE@ /l @DEST@.log TARGETDIR=@DEST@ ADDLOCAL=DefaultFeature,TclTk,Documentation,Tools,Testsuite /qn
+  doskey          python=~python.exe $*

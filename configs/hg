@@ -1,12 +1,13 @@
 [hg]
   test			  hg.exe
   arch        \d,-x64
-  folder.get	http://mercurial.selenic.com/sources.js
-  folder.rx		/release/windows/(Mercurial-.*?_$arch_)\.exe"
-  name.get    _
-  name.rx     /release/windows/(Mercurial-.*?_$arch_\.exe)"
-  url.get     _
+  page.src    http://mercurial.selenic.com/sources.js
+  url.get     src
   url.rx      "(http://.*?/release/windows/Mercurial-.*?_$arch_\.exe)"
+  name.get    _url
+  name.rx     /release/windows/(Mercurial-.*?_$arch_\.exe)
+  folder.get	_name
+  folder.rx		(Mercurial-.*?_$arch_)\.exe
   invoke      @FILE@ /LOG=@DESTNS@.log /DIR=@DESTNS@ /NOICONS /VERYSILENT
   path			  
   uninstexe   unins000.exe

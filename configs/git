@@ -1,12 +1,15 @@
 [git]
-  test			bin/git.exe
-  folder.get	https://github.com/msysgit/msysgit/releases
-  folder.rx		/download/Git-.*?/(PortableGit-.*?).7z
-  url.rx		(/msysgit/msysgit/releases/download/Git-.*?/PortableGit-.*?.7z)
-  url.prepend	https://github.com
-  name.rx		/download/Git-.*?/(PortableGit-.*?.7z)
-  path			bin
-  doskey		gl=git lg -20
-  doskey		gla=git lg -20 --all
-  doskey		glab=git lg -20 --all --branches
-  doskey		glba=git lg -20 --branches --all
+  test			  bin/git.exe
+  page.rel    https://github.com/msysgit/msysgit/releases
+  url.get     rel
+  url.rx      (/msysgit/msysgit/releases/download/Git-.*?/PortableGit-.*?.7z)
+  url.prepend https://github.com
+  name.get    _url
+  name.rx		  /download/Git-.*?/(PortableGit-.*?.7z)
+  folder.get  _name
+  folder.rx   (PortableGit-.*?).7z
+  path        bin
+  doskey      gl=git lg -20
+  doskey      gla=git lg -20 --all
+  doskey      glab=git lg -20 --all --branches
+  doskey      glba=git lg -20 --branches --all

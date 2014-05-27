@@ -1,7 +1,10 @@
 [npp]
   test			notepad++.exe
-  folder.get	http://notepad-plus-plus.org/download/
-  folder.rx		(npp\..*?\.bin).zip
+  page.dwnl     http://notepad-plus-plus.org/download/
+  url.get       dwnl
   url.rx		(http://.*?/npp\..*?\.bin.zip)
+  name.get      _url
   name.rx		(npp\..*?\.bin.zip)
+  folder.get    _name
+  folder.rx		(npp\..*?\.bin).zip
   doskey		npp=~notepad++.exe $*

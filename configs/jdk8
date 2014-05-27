@@ -2,29 +2,33 @@
 	dir 			jdk8
 	arch			i586,x64
 	test			src.zip
-	folder.get		http://www.oracle.com/technetwork/java/javase/downloads/index.html?ssSourceSiteId=otnjp
+	page.src        http://www.oracle.com/technetwork/java/javase/downloads/index.html?ssSourceSiteId=otnjp
+	folder.get		src
 	folder.rx		>(Java SE 8(?:u\d*)?)<
-	name.get		http://www.oracle.com/technetwork/java/javase/downloads/index.html?ssSourceSiteId=otnjp
-	name.rx			href="(/technetwork/java/javase/downloads/jdk8-downloads-\d+.html)"
-	name.prepend    http://www.oracle.com
-	name.get		_
-	name.rx			(jdk-\d(?:u\d+)?-linux-_$arch_.tar.gz)
+	url.get         src
+	url.rx          href="(/technetwork/java/javase/downloads/jdk8-downloads-\d+.html)"
+	url.prepend     http://www.oracle.com
+	url.get		    dwnl
 	url.rx			(http://download.oracle.com/[^"]+jdk-\d(?:u\d+)?-linux-_$arch_.tar.gz)
 	url.replace		^http://download with http://edelivery
+	name.get		_url
+	name.rx			(jdk-\d(?:u\d+)?-linux-_$arch_.tar.gz)
 	cookie			oraclelicense;accept-securebackup-cookie
 	invoke			go: InstallJDKsrc
 [jdk8]
 	arch			i586,x64
 	test			lib\tools.jar
-	folder.get		http://www.oracle.com/technetwork/java/javase/downloads/index.html?ssSourceSiteId=otnjp
+	page.src        http://www.oracle.com/technetwork/java/javase/downloads/index.html?ssSourceSiteId=otnjp
+	folder.get		src
 	folder.rx		>(Java SE 8(?:u\d*)?)<
-	name.get		http://www.oracle.com/technetwork/java/javase/downloads/index.html?ssSourceSiteId=otnjp
-	name.rx			href="(/technetwork/java/javase/downloads/jdk8-downloads-\d+.html)"
-	name.prepend    http://www.oracle.com
-	name.get		_
-	name.rx			(jdk-\d(?:u\d+)?-windows-_$arch_.exe)
+	url.get         src
+	url.rx          href="(/technetwork/java/javase/downloads/jdk8-downloads-\d+.html)"
+	url.prepend     http://www.oracle.com
+	url.get         dwnl
 	url.rx			(http://download.oracle.com/[^"]+jdk-\d(?:u\d+)?-windows-_$arch_.exe)
 	url.replace		^http://download with http://edelivery
+	name.get		_url
+	name.rx			(jdk-\d(?:u\d+)?-windows-_$arch_.exe)
 	cookie			oraclelicense;accept-securebackup-cookie
 	invoke			go: InstallJDK
 	buildZip		go: BuildZipJDK
