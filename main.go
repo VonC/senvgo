@@ -354,6 +354,13 @@ func (p *Prg) RegisterUrl(id, url string) {
 	p.pages[id] = url
 }
 
+func (p *Prg) UrlFromId(id string) string {
+	if p.pages != nil {
+		return p.pages[id]
+	}
+	return ""
+}
+
 // PrgData is a Program as seen by an Extractable
 // (since Program has Extractors which has interface Extractor)
 type PrgData interface {
@@ -361,6 +368,11 @@ type PrgData interface {
 	GetName() string
 	// If not nil, returns patterns for win32 or win64
 	GetArch() *Arch
+
+	GetArchive() *Path
+	GetURL() *url.URL
+	GetFolder() *Path
+	UrlFromId(id string) string
 }
 
 // GetName returns the name of the program to be installed, used for folder
