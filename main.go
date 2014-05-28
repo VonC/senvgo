@@ -1727,6 +1727,23 @@ type ExtractorGet struct {
 func (eg *ExtractorGet) ExtractFrom(data string) string {
 	pdbg("=====> ExtractorGet.ExtractFrom '%v'\n", data)
 	content := ""
+	if data == "_name" {
+		data = eg.Extractable.p.GetArchive().String()
+		pdbg("=====> ExtractorGet.ExtractFrom GetArchive data '%v'\n", data)
+		return data
+	} else if data == "_url" {
+		data = eg.Extractable.p.GetURL().String()
+		pdbg("=====> ExtractorGet.ExtractFrom GetURL data '%v'\n", data)
+		return data
+	} else if data == "_folder" {
+		data = eg.Extractable.p.GetFolder().String()
+		pdbg("=====> ExtractorGet.ExtractFrom GetFolder data '%v'\n", data)
+		return data
+	}
+	if strings.HasPrefix(data, "http") == false {
+		data = eg.Extractable.p.UrlFromId(data)
+		pdbg("=====> ExtractorGet.ExtractFrom UrlFromId data '%v'\n", data)
+	}
 	if data != "_" {
 		url, err := url.Parse(data)
 		if err != nil {
