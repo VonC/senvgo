@@ -6,9 +6,9 @@
   url.get     dwnl
   url.rx      "(https://.*?download/bzr-.*?-setup.exe)"
   name.get    _url
-  name.rx     download/(bzr-.*?-setup.exe)
+  name.rx     download/(bzr-.*?-setup.(?:exe|zip))
   folder.get	_name
-  folder.rx		(bzr-.*?)-setup.exe"
+  folder.rx		(bzr-.*?)-setup.(?:exe|zip)
   invoke      @FILENS@ /LOG=@DESTNS@.log /DIR=@DESTNS@ /NOICONS /VERYSILENT
   uninstexe   unins000.exe
   uninstcmd   @FILENS@ /LOG=@DESTNS@..\uninst.log /VERYSILENT /SUPPRESSMSGBOXES /NORESTART
