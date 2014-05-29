@@ -1384,7 +1384,7 @@ func (c *CacheGitHub) GetPage(url *url.URL, name string) *Path {
 
 var updatePage = false
 
-var rxDbgLine, _ = regexp.Compile(`^.*VonC/senvgo/main.go:(\d+)\s`)
+var rxDbgLine, _ = regexp.Compile(`^.*[Vv]on[Cc](?:/prog/git)?/senvgo/main.go:(\d+)\s`)
 var rxDbgFnct, _ = regexp.Compile(`^\s+(?:com/VonC/senvgo)?(?:\.\(([^\)]+)\))?\.?([^:]+)`)
 
 func pdbgInc(scanner *bufio.Scanner, line string) string {
@@ -3404,12 +3404,14 @@ func (p *Prg) GetURL() *url.URL {
 }
 
 func get(iniValue *Path, ext Extractor, underscore bool, data string) *Path {
+	pdbg("Call with initValue '%v' on ext '%v'", iniValue, ext)
 	if iniValue != nil {
 		return iniValue
 	}
 	if ext == nil {
 		return nil
 	}
+	pdbg("Call with data '%v' on ext '%v'", data, ext)
 	res := ext.Extract(data)
 	if underscore {
 		res = strings.Replace(res, " ", "_", -1)
