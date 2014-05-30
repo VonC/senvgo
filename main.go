@@ -2185,6 +2185,8 @@ func readConfigFile(sconfig string) []*Prg {
 				pdbg("End of config for prg '%v'\n", currentPrg.GetName())
 				res = append(res, currentPrg)
 				currentPrg = nil
+				currentVariable = ""
+				currentExtractor = nil
 			}
 			if currentCache != cache {
 				cache.Add(currentCache)
