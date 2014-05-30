@@ -1300,7 +1300,7 @@ func (c *CacheDisk) GetArchive(p *Path, url *url.URL, name string, cookies []*ht
 	}
 	if c.HasCacheDiskInNexts() {
 		pdbg("CacheDisk.GetArchive[%v]: no download for '%v': already attempted by secondary cache.\n", c.id, filename)
-		return nil
+		return filename
 	}
 	if url == nil || url.String() == "" {
 		pdbg("CacheDisk.GetArchive[%v]: NO URL '%v''\n", c.id, filename)
