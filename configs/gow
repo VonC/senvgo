@@ -5,8 +5,8 @@
   url.rx        (/bmatzelle/gow/releases/download/v.*?/Gow-.*?.exe)
   url.prepend   https://github.com
   name.get      _url
-  name.rx       /download/v.*?/(Gow-.*?.exe)
+  name.rx       (Gow-.*?.(?:exe|zip))
   folder.get    _name
-  folder.rx     (Gow-.*?).exe
+  folder.rx     (Gow-.*?).(?:exe|zip)
   invoke        @FILE@ /S /D=@DEST@
   path          bin
