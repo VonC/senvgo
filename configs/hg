@@ -7,7 +7,7 @@
   name.get    _url
   name.rx     /release/windows/(Mercurial-.*?_$arch_\.exe)
   folder.get	_name
-  folder.rx		(Mercurial-.*?_$arch_)\.exe
+  folder.rx		(Mercurial-.*?_$arch_)\.(?:exe|zip)
   invoke      @FILE@ /LOG=@DESTNS@.log /DIR=@DESTNS@ /NOICONS /VERYSILENT
   path			  
   uninstexe   unins000.exe
