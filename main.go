@@ -3376,7 +3376,7 @@ func (p *Prg) GetArchive() *Path {
 		}
 	}
 	if p.archive == nil && archiveName != nil && p.exts != nil {
-		pdbg("Get url for %v(%v) on '%v'\n", p.GetName(), p.name, archiveName)
+		pdbg("Get archive name for %v(%v) on '%v'\n", p.GetName(), p.name, archiveName)
 		url := p.GetURL()
 		p.archive = cache.GetArchive(archiveName, url, p.GetName(), p.cookies, p.isExe())
 	}
