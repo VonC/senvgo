@@ -6,9 +6,9 @@
   url.rx       name=(go.*?\.windows_$arch_\.zip)
   url.prepend  https://go.googlecode.com/files/
   name.get     _url
-  name.rx      (go.*?\.windows_$arch_\.zip)
+  name.rx      (go[^/\\].*?\.windows_$arch_\.zip)
   folder.get   _name
-  folder.rx    (go.*?\.windows_$arch_)\.zip
+  folder.rx    (go[^/\\].*?\.windows_$arch_)\.zip
   delfolders   go.+
   doskey       go=
   doskey       godoc=
