@@ -3197,8 +3197,10 @@ func (p *Prg) invokeUnZipOr7z() bool {
 	folder := p.GetFolder()
 	archive := p.GetArchive()
 	folderMain := NewPathDir("test/" + p.GetName())
+	pdbg("folderMain '%v'\n", folderMain)
 	folderTmp := folderMain.Add("tmp/")
 	folderFull := folderMain.AddP(folder)
+	pdbg("folderFull '%v'\n", folderFull)
 	t := getLastModifiedFile(folderTmp, ".*")
 	if t == "" {
 		pdbg("Need to uncompress '%v' in '%v'\n", archive, folderTmp)
@@ -3218,10 +3220,17 @@ func (p *Prg) invokeUnZipOr7z() bool {
 			return false
 		}
 	} else {
-		pdbg("Need to move content of %v to '%v'\n", folderTmp, folderFull)
-		err := os.Rename(folderTmp.String(), folderFull.String())
+		ftm := folderTmp
+		fi := getFiles(folderTmp, "")
+		if len(fi) == 1 {
+			if fi[0].IsDir() {
+				ftm = ftm.Add(fi[0].Name())
+			}
+		}
+		pdbg("Need to move content of %v to '%v'\n", ftm, folderFull)
+		err := os.Rename(ftm.String(), folderFull.String())
 		if err != nil {
-			pdbg("Error moving tmp folder content '%v' to '%v': '%v'\n", folderTmp, folderFull, err)
+			pdbg("Error moving tmp folder content '%v' to '%v': '%v'\n", ftm, folderFull, err)
 			return false
 		}
 	}
