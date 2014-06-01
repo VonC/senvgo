@@ -16,3 +16,5 @@
   addbin       go.bat=bin\go.exe %*
   addbin       godoc.bat=bin\godoc.exe %*
   addbin       gogofmt.bat=bin\gofmt.exe %*
+  env          GOROOT=_folderfull_
+  env          GOPATH=%PROG%\go
