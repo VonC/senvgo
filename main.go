@@ -56,6 +56,10 @@ func main() {
 		panic(err)
 	}
 	defer flog.Close()
+	bindir := prgsenv().Add("bin")
+	if !bindir.MkDirAll() {
+		panic("unable to create bin dir")
+	}
 
 	penvbat := prgsenv().Add("env.bat")
 	if penvbat.Exists() {
@@ -94,9 +98,10 @@ func main() {
 				write = false
 			}
 			if write {
-				pdbg("Write doskeys and varenvs for '%v'", p.name)
+				pdbg("Write doskeys and varenvs and addbins for '%v'", p.name)
 				p.writeDoskeys()
 				p.writeVarenvs()
+				p.writeAddBins()
 			}
 		}
 	}
@@ -177,6 +182,11 @@ func record(text string) {
 type doskey struct {
 	id  string
 	cmd string
+}
+
+type addbin struct {
+	name string
+	cmd  string
 }
 
 type varenv struct {
@@ -289,6 +299,7 @@ type Prg struct {
 	depOn        *Prg
 	archiveIsExe bool
 	doskeys      []*doskey
+	addbins      []*addbin
 	delfolders   []*regexp.Regexp
 	path         *Path
 	varenvs      []*varenv
@@ -386,6 +397,40 @@ func (p *Prg) GetName() string {
 // GetArch returns, if not nil, patterns for win32 or win64
 func (p *Prg) GetArch() *Arch {
 	return p.arch
+}
+
+func (p *Prg) writeAddBins() bool {
+	res := true
+	for _, ab := range p.addbins {
+		res = res && p.writeAddBin(ab.name, ab.cmd)
+	}
+	return res
+}
+
+func (p *Prg) writeAddBin(name, cmd string) bool {
+	dir := prgsenv().Add("bin")
+	pdbg("Addbin for prg '%v': name '%v' => cmd '%v'", p.name, name, cmd)
+	if name == "" || cmd == "" {
+		return false
+	}
+	filename := dir.Add(name)
+	pdbg("filname = '%v'", filename)
+	if filename.Exists() == false {
+		filebin, err := os.OpenFile(filename.String(), os.O_CREATE|os.O_WRONLY, 0600)
+		if err != nil {
+			pdbg("Fail opening addbin file '%v'\nerr='%v'", filename, err)
+			return false
+		}
+		defer filebin.Close()
+		st := "@echo off"
+		st = st + "\n"
+		st = st + p.folderLatest().String() + cmd
+		if _, err := filebin.WriteString(st); err != nil {
+			pdbg("Fail write in addbin file '%v'\nerr='%v'", filename, err)
+			return false
+		}
+	}
+	return true
 }
 
 // Extractors for folder, archive name and url extractions
@@ -2307,6 +2352,20 @@ func readConfigFile(sconfig string) []*Prg {
 			dk.id = elts[0]
 			dk.cmd = elts[1]
 			currentPrg.doskeys = append(currentPrg.doskeys, dk)
+			continue
+		}
+		if strings.HasPrefix(line, "addbin") && currentPrg != nil {
+			line = strings.TrimSpace(line[len("addbin"):])
+			elts := strings.SplitN(line, "=", 2)
+			if len(elts) != 2 {
+				pdbg("ERR: Invalid addbin '%v': '%v'\n", line)
+				continue
+			}
+			// pdbg("Cookies ELTS '%+v'\n", elts)
+			ab := &addbin{}
+			ab.name = elts[0]
+			ab.cmd = elts[1]
+			currentPrg.addbins = append(currentPrg.addbins, ab)
 			continue
 		}
 		if strings.HasPrefix(line, "delfolders") && currentPrg != nil {
