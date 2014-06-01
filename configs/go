@@ -13,3 +13,6 @@
   doskey       go=
   doskey       godoc=
   doskey       gofmt=
+  addbin       go.bat=bin\go.exe %*
+  addbin       godoc.bat=bin\godoc.exe %*
+  addbin       gogofmt.bat=bin\gofmt.exe %*

@@ -14,3 +14,4 @@
   uninstcmd   @FILENS@ /LOG=@DESTNS@..\uninst.log /VERYSILENT /SUPPRESSMSGBOXES /NORESTART
   delfolders  Bazaar.+
   doskey      bzr=
+  addbin      bzr.bat=bzr.exe %*
