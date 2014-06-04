@@ -3463,8 +3463,9 @@ func (p *Prg) GetURL() *url.URL {
 		currentData = "url"
 		rawurl := get(nil, p.exts.extractURL, false, data)
 		pdbg("URL '%+v'\n", rawurl)
-		if anurl, err := url.ParseRequestURI(rawurl.String()); err == nil {
+		if anurl, err := url.Parse(rawurl.String()); err == nil {
 			p.url = anurl
+			pdbg("url='%+v':\nstring='%b'\nPath='%s'", anurl, anurl.String(), anurl.Path)
 		} else {
 			pdbg("Unable to parse url '%v' because '%v'", rawurl, err)
 			p.url = nil
