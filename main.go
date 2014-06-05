@@ -1777,7 +1777,7 @@ func (eg *ExtractorGet) ExtractFrom(data string) string {
 		pdbg("=====> ExtractorGet.ExtractFrom GetArchive data '%v'\n", data)
 		return data
 	} else if data == "_url" {
-		data = eg.Extractable.p.GetURL().String()
+		data, _ = url.QueryUnescape(eg.Extractable.p.GetURL().String())
 		pdbg("=====> ExtractorGet.ExtractFrom GetURL data '%v'\n", data)
 		return data
 	} else if data == "_folder" {
@@ -3463,7 +3463,7 @@ func (p *Prg) GetURL() *url.URL {
 		currentData = "url"
 		rawurl := get(nil, p.exts.extractURL, false, data)
 		pdbg("URL '%+v'\n", rawurl)
-		if anurl, err := url.ParseRequestURI(rawurl.String()); err == nil {
+		if anurl, err := url.Parse(rawurl.String()); err == nil {
 			p.url = anurl
 		} else {
 			pdbg("Unable to parse url '%v' because '%v'", rawurl, err)
