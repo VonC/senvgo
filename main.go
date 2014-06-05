@@ -1778,7 +1778,7 @@ func (eg *ExtractorGet) ExtractFrom(data string) string {
 		return data
 	} else if data == "_url" {
 		data = eg.Extractable.p.GetURL().String()
-		pdbg("=====> ExtractorGet.ExtractFrom GetURL data '%v' vs. url '%+v'\n", data, eg.Extractable.p.GetURL())
+		pdbg("=====> ExtractorGet.ExtractFrom GetURL data '%v'\n", data)
 		return data
 	} else if data == "_folder" {
 		data = eg.Extractable.p.GetFolder().String()
