@@ -5,7 +5,7 @@
   url.get         sbt
   url.rx          (http[^"<]*?Sublime Text Build[^"<]*?_$arch_\.zip)"
   name.get        _url
-  name.rx         (Sublime Text Build.*?_$arch_)\.zip
+  name.rx         (Sublime Text Build.*?_$arch_\.zip)
   folder.get      _name
-  folder.rx       (Sublime Text Build.*?_$arch_\.zip)
+  folder.rx       (Sublime Text Build.*?_$arch_)\.zip
   doskey          sbt=start "Sublime Text 3" "~sublime_text.exe" $* 
