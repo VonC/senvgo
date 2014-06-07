@@ -3175,28 +3175,33 @@ func uncompress7z(archive, folder, file *Path, msg string, extract bool) bool {
 	if ffolder == nil {
 		return false
 	}
-	cmd := cmd7z()
-	if cmd == "" {
+	cmd7z := cmd7z()
+	if cmd7z == "" {
 		return false
-	}
-	argFile := ""
-	if !isEmpty(file) {
-		argFile = " -- " + file.String()
 	}
 	msg = strings.TrimSpace(msg)
 	if msg != "" {
 		msg = msg + ": "
 	}
+	argFile := ""
+	if !isEmpty(file) {
+		argFile = file.String()
+	}
 	extractCmd := "x"
 	if extract {
 		extractCmd = "e"
 	}
-	cmd = fmt.Sprintf("%v %v -aoa -o%v -pdefault -sccUTF-8 %v%v", cmd, extractCmd, ffolder.String(), farchive.String(), argFile)
-	pdbg("%v'%v'%v => 7zU...\n%v\n", msg, archive, argFile, cmd)
+	cmd := []string{"/C", cmd7z, extractCmd, "-aoa", "-o" + ffolder.String(), "-pdefault", "-sccUTF-8", farchive.String()}
+	if argFile != "" {
+		cmd = append(cmd, "--", argFile)
+	}
+	scmd := strings.Join(cmd, " ")
+	//cmd = fmt.Sprintf(`%v %v -aoa -o%v -pdefault -sccUTF-8 "%v"%v`, cmd, extractCmd, ffolder.String(), farchive.String(), argFile)
+	pdbg("%v'%v'%v => 7zU...\n%v\n", msg, archive, argFile, scmd)
 
-	c := exec.Command("cmd", "/C", cmd)
+	c := exec.Command("cmd", cmd...)
 	if out, err := c.Output(); err != nil {
-		pdbg("Error invoking 7ZU '%v'\n''%v' %v'\n%v\n", cmd, string(out), err, cmd)
+		pdbg("Error invoking 7ZU '%v'\n''%v' %v'\n%v\n", cmd, string(out), err, scmd)
 		return false
 	}
 	pdbg("%v'%v'%v => 7zU... DONE\n", msg, archive, argFile)
