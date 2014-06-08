@@ -295,7 +295,7 @@ func (p *Prg) checkCommondirs() bool {
 				return false
 			}
 		}
-		if psrc.Exists() && pdst.Exists() {
+		if psrc.Exists() && readJunction(commondir, p.folderFull(), p.name) == nil && pdst.Exists() {
 			pdst = psrc.AddNoSep(".ori")
 			pdbg("Need to rename %v in '%v'\n", psrc, pdst)
 			err := os.Rename(psrc.String(), pdst.String())
