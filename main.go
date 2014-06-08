@@ -2633,13 +2633,15 @@ func (p *Prg) checkLatest() bool {
 	return true
 }
 
-func junction(link, dst *Path, name string) {
+func junction(link, dst *Path, name string) bool {
 	cmd := "mklink /J " + link.String() + " " + dst.String()
 	pdbg("junction: invoking for '%v': '%v'\n", name, cmd)
 	c := exec.Command("cmd", "/C", cmd)
 	if out, err := c.Output(); err != nil {
 		pdbg("Error invoking '%v'\n''%v': %v'\n", cmd, string(out), err)
+		return false
 	}
+	return true
 }
 
 func readJunction(link string, folder *Path, name string) *Path {
