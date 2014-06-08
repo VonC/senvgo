@@ -9,3 +9,4 @@
   folder.get      _name
   folder.rx       (Sublime Text Build.*?_$arch_)\.zip
   doskey          sbt=start "Sublime Text 3" "~sublime_text.exe" $* 
+  commondirs      Data
