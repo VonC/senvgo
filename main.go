@@ -267,6 +267,36 @@ func writePaths() {
 	writePath()
 }
 
+func (p *Prg) checkCommondirs() bool {
+	for _, commondir := range p.commondirs {
+		pcommondir := NewPath(commondir)
+		psrc := p.folderFull().AddP(pcommondir)
+		pdst := p.folderMain().Add(pcommondir.Base())
+		pdbg("For prg '%v':\n  psrc='%v'\n  pdst='%v'", p.name, psrc, pdst)
+		if psrc.Exists() && !pdst.Exists() {
+			pdbg("Need to move %v in '%v'\n", psrc, pdst)
+			err := os.Rename(psrc.String(), pdst.String())
+			if err != nil {
+				pdbg("Error moving src folder '%v' to '%v': '%v'\n", psrc, pdst, err)
+				return false
+			}
+		}
+		if psrc.Exists() && pdst.Exists() {
+			pdst = psrc.AddNoSep(".ori")
+			pdbg("Need to rename %v in '%v'\n", psrc, pdst)
+			err := os.Rename(psrc.String(), pdst.String())
+			if err != nil {
+				pdbg("Error renaming src folder '%v' to '%v': '%v'\n", psrc, pdst, err)
+				return false
+			}
+		}
+		if !psrc.Exists() {
+			return junction(psrc, pdst, p.GetName())
+		}
+	}
+	return true
+}
+
 /*
 [gow]
   test           bin/awk.exe
@@ -308,6 +338,7 @@ type Prg struct {
 	uninstexe    *Path
 	uninstcmd    string
 	pages        map[string]string
+	commondirs   []string
 }
 
 func (p *Prg) String() string {
@@ -2270,6 +2301,12 @@ func readConfigFile(sconfig string) []*Prg {
 			line = strings.TrimSpace(line[len("deps"):])
 			currentPrg.depnames = strings.Split(line, " ")
 			pdbg("currentPrg '%v': depnames = '%v'", currentPrg.name, currentPrg.depnames)
+			continue
+		}
+		if strings.HasPrefix(line, "commondirs") && currentPrg != nil {
+			line = strings.TrimSpace(line[len("commondirs"):])
+			currentPrg.commondirs = strings.Split(line, ",")
+			pdbg("currentPrg '%v': commondirs = '%v'", currentPrg.name, currentPrg.commondirs)
 			continue
 		}
 		if strings.HasPrefix(line, "addpaths") {
