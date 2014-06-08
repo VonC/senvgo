@@ -102,7 +102,6 @@ func main() {
 				pdbg("Write doskeys and varenvs and addbins for '%v'", p.name)
 				p.writeDoskeys()
 				p.writeVarenvs()
-				res := true
 				res = res && p.writeAddBins()
 				if !res {
 					pdbg("Issue on writeAddBins for '%v'", p.name)
