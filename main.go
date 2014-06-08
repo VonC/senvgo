@@ -80,6 +80,7 @@ func main() {
 		p := prgFromName(prgname)
 		write := true
 		if p != nil {
+			res := true
 			if p.isInstalled() {
 				pdbg("PRG '%v': already installed\n", p.name)
 				if p.GetArchive().isExe() {
@@ -101,7 +102,21 @@ func main() {
 				pdbg("Write doskeys and varenvs and addbins for '%v'", p.name)
 				p.writeDoskeys()
 				p.writeVarenvs()
-				p.writeAddBins()
+				res := true
+				res = res && p.writeAddBins()
+				if !res {
+					pdbg("Issue on writeAddBins for '%v'", p.name)
+				}
+				rescd := p.checkCommondirs()
+				if !rescd {
+					pdbg("Issue on checkCommondirs for '%v'", p.name)
+				}
+				res = res && rescd
+			}
+			if res {
+				pdbg("prg OK full install '%v'", p.name)
+			} else {
+				pdbg("prg KO during install '%v'", p.name)
 			}
 		}
 	}
