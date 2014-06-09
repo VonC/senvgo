@@ -790,7 +790,9 @@ func (c *CacheGitHub) GetArchive(p *Path, url *url.URL, name string, cookies []*
 func (c *CacheGitHub) getClient() *github.Client {
 	if c.client == nil {
 		var cl *http.Client
-		contents, err := ioutil.ReadFile("../gh." + c.owner)
+		f := prgsenv().Add("../gh." + c.owner)
+		pdbg("read '%v'", f)
+		contents, err := ioutil.ReadFile(f.String())
 		if err != nil {
 			pdbg("Unable to access to GitHub authentication => anoymous access only\n'%v'\n", err)
 		} else if len(contents) < 20 {
