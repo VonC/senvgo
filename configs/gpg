@@ -1,0 +1,13 @@
+[gpg]
+  test			      gpg2.exe
+  page.gpg        http://files.gpg4win.org/?C=M;O=D
+  url.get         gpg
+  url.rx          (gpg4win-vanilla-.*\.exe)"
+  url.prepend     http://files.gpg4win.org/
+  name.get        _url
+  name.rx         (gpg4win-vanilla-.*\.(?:exe|zip))
+  folder.get      _name
+  folder.rx       (gpg4win-vanilla-.*)\.
+  invoke          @FILENS@ /S /D=@DESTNS@
+  uninstexe       gpg4win-uninstall.exe
+  uninstcmd       @FILENS@ /LOG=@DESTNS@..\uninst.log /VERYSILENT /SUPPRESSMSGBOXES /NORESTART
