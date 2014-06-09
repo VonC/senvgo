@@ -1388,7 +1388,7 @@ func (c *CacheDisk) GetArchive(p *Path, url *url.URL, name string, cookies []*ht
 			return filename
 		}
 	}
-	if c.HasCacheDiskInNexts() {
+	if c.HasCacheDiskInNexts() && filepath != nil {
 		pdbg("CacheDisk.GetArchive[%v]: no download for '%v': already attempted by secondary cache.\n", c.id, filename)
 		return filename
 	}
