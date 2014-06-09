@@ -3020,7 +3020,7 @@ func getSubst() map[string]string {
 		return subst
 	}
 	subst = make(map[string]string)
-	var substRx, _ = regexp.Compile(`(?s)([A-Z]:\\): => ([A-Z]:.*?)$`)
+	var substRx, _ = regexp.Compile(`(?ms)([A-Z]:\\): => ([A-Z]:.*?)$`)
 	pdbg("invoking subst")
 	c := exec.Command("cmd", "/C", "subst")
 	out, err := c.Output()
@@ -3045,7 +3045,9 @@ func (p *Path) NoSubst() *Path {
 	if len(getSubst()) == 0 || p == nil || p.path == "" {
 		return p
 	}
+	// pdbg("No subst on path '%v'", p)
 	for drive, sp := range getSubst() {
+		// pdbg("No subst drive='%v, sp='%v'", drive, sp)
 		if strings.HasPrefix(p.path, drive) {
 			np := strings.Replace(p.path, drive, sp+"\\", -1)
 			pdbg("No subst from '%v' to '%v'", p.path, np)
