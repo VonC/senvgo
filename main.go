@@ -2231,7 +2231,7 @@ func NewExtractorReplace(data string, rx *regexp.Regexp, p PrgData) *ExtractorRe
 
 // ExtractFrom replace data to content
 func (er *ExtractorReplace) ExtractFrom(data string) string {
-	pdbg("=====> ExtractorReplace.ExtractFrom '%v'\n", data)
+	pdbg("=====> ExtractorReplace.ExtractFrom '%v' for rx '%v' with '%v'\n", data, er.regexp, er.data)
 	res := string(er.regexp.ReplaceAll([]byte(data), []byte(er.data)))
 	pdbg("RES='%v'\n", res)
 	return res
@@ -2569,15 +2569,23 @@ func readConfigFile(sconfig string) []*Prg {
 			e = NewExtractorAppend(data, currentPrg)
 		case "replace":
 			datas := strings.Split(data, " with ")
-			if len(datas) != 2 {
+			data := ""
+			if len(datas) != 2 && len(datas) != 1 {
 				pdbg("ERR: Invalide replace with '%v'\n", data)
 			}
-			data := datas[1]
+			if len(datas) == 2 {
+				data = datas[1]
+			}
 			datarx := datas[0]
+			if len(datas) == 1 {
+				pdbg("datarx='%v'", datarx)
+				datarx = datarx[0 : len(datarx)-len(" with")]
+			}
 			datargx, err := regexp.Compile(datarx)
 			if err != nil {
 				pdbg("ERR: Invalid regexp in replace with '%v': '%v'\n", datarx, err)
 			}
+			pdbg("datarx='%v', data='%v'", datargx, data)
 			e = NewExtractorReplace(data, datargx, currentPrg)
 		}
 		if e != nil {
