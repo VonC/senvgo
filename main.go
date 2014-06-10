@@ -2195,6 +2195,26 @@ func (ep *ExtractorPrepend) ExtractFrom(data string) string {
 	return res
 }
 
+// ExtractorAppend is an Extractor which prepends data to content
+type ExtractorAppend struct {
+	Extractable
+}
+
+// NewExtractorAppend build an ExtractorAppend to prepend data
+func NewExtractorAppend(rx string, p PrgData) *ExtractorAppend {
+	res := &ExtractorAppend{Extractable{data: rx, p: p}}
+	res.self = res
+	return res
+}
+
+// ExtractFrom prepends data to content
+func (ep *ExtractorAppend) ExtractFrom(data string) string {
+	pdbg("=====> ExtractorAppend.ExtractFrom '%v'\n", data)
+	res := data + ep.data
+	pdbg("RES='%v'\n", res)
+	return res
+}
+
 // ExtractorReplace is an Extractor which replace data to content
 type ExtractorReplace struct {
 	Extractable
@@ -2545,6 +2565,8 @@ func readConfigFile(sconfig string) []*Prg {
 			e = NewExtractorMatch(data, currentPrg)
 		case "prepend":
 			e = NewExtractorPrepend(data, currentPrg)
+		case "append":
+			e = NewExtractorAppend(data, currentPrg)
 		case "replace":
 			datas := strings.Split(data, " with ")
 			if len(datas) != 2 {
