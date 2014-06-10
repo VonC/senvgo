@@ -2221,7 +2221,7 @@ type ExtractorReplace struct {
 	regexp *regexp.Regexp
 }
 
-// NewExtractorPrepend build an ExtractorPrepend to prepend data
+// NewExtractorReplace build an ExtractorReplace to prepend data
 func NewExtractorReplace(data string, rx *regexp.Regexp, p PrgData) *ExtractorReplace {
 	res := &ExtractorReplace{Extractable{data: data, p: p}, nil}
 	res.regexp = rx
@@ -2229,9 +2229,9 @@ func NewExtractorReplace(data string, rx *regexp.Regexp, p PrgData) *ExtractorRe
 	return res
 }
 
-// ExtractFrom prepends data to content
+// ExtractFrom replace data to content
 func (er *ExtractorReplace) ExtractFrom(data string) string {
-	pdbg("=====> ExtractorPrepend.ExtractFrom '%v'\n", data)
+	pdbg("=====> ExtractorReplace.ExtractFrom '%v'\n", data)
 	res := string(er.regexp.ReplaceAll([]byte(data), []byte(er.data)))
 	pdbg("RES='%v'\n", res)
 	return res
