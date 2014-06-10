@@ -1,0 +1,13 @@
+[mc]
+  test			      MultiCommander.exe
+  arch            _win32_,_x64_
+  page.mc         http://multicommander.com/downloads
+  url.get         mc
+  url.rx          "(/files/updates/MultiCommander_$arch_Portable_.*?\.zip)"
+  url.prepend     http://multicommander.com
+  name.get        _url
+  name.rx         (MultiCommander_$arch_Portable_.*?\.zip)
+  # name.replace    [\(\)] with 
+  folder.get      _name
+  folder.rx       (MultiCommander_$arch_Portable_.*?)\.zip
+  # todo add some commondirs
