@@ -1,0 +1,10 @@
+[pe]
+  test			      gpg2.exe
+  page.pe         http://technet.microsoft.com/en-us/sysinternals/bb896653
+  url.get         pe
+  url.rx          "(http://[^"]*?/ProcessExplorer.zip)"
+  name.get        pe
+  name.rx         (Process Explorer v[^<]*?)<
+  name.append     .zip
+  folder.get      _name
+  folder.rx       (Process.*)\.zip
