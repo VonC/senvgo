@@ -1,0 +1,12 @@
+[ag]
+  test			      AstroGrep.exe
+  page.ag         http://astrogrep.sourceforge.net/download/
+  url.get         ag
+  url.rx          "(https://sourceforge.net/projects/astrogrep/files/latest/download)"
+  name.get        ag
+  name.rx         >(AstroGrep v.*?)<
+  name.replace    [ ] with _
+  name.append     .zip
+  folder.get      _name
+  folder.rx       (AstroGrep_v.*?)\.zip
+  # todo add some commondirs
