@@ -1,0 +1,13 @@
+[perl]
+  arch            -32bit-,-64bit-
+  test			      perl\bin\perl.exe
+  page.perl       http://strawberryperl.com/releases.html
+  url.get         perl
+  url.rx          href="(/download/[^/]*?/strawberry-perl-[^-]*?_$arch_portable.zip)"
+  url.prepend     http://strawberryperl.com
+  name.get        _url
+  name.rx         /(strawberry-perl-[^-]*?_$arch_portable.zip)
+  folder.get      _name
+  folder.rx       (strawberry-perl-[^-]*?_$arch_portable).zip
+  doskey          perl=~perl\bin\perl.exe $*
+  # todo add some commondirs
