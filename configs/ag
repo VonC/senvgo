@@ -9,4 +9,5 @@
   name.append     .zip
   folder.get      _name
   folder.rx       (AstroGrep_v.*?)\.zip
+  doskey          ag=~AstroGrep.exe $*
   # todo add some commondirs
