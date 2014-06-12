@@ -2132,7 +2132,7 @@ func (em *ExtractorMatch) Regexp() *regexp.Regexp {
 	return em.regexp
 }
 
-func (em *ExtractorMatch) RxForName(spaces bool) *regexp.Regexp {
+func (em *ExtractorMatch) RxForName(spaces bool, aextd Extractor) *regexp.Regexp {
 	rx := em.data
 	arch := em.p.GetArch()
 	if arch != nil {
@@ -2164,6 +2164,22 @@ func (em *ExtractorMatch) RxForName(spaces bool) *regexp.Regexp {
 	}
 	if !spaces {
 		res = strings.Replace(res, " ", "_", -1)
+	}
+	if aextd != nil {
+		aextd = aextd.Next()
+		pdbg("NEXT aextd '%v'", aextd)
+		for aextd != nil {
+			if rrxext, ok := aextd.(*ExtractorPrepend); ok {
+				pdbg("ExtractorPrepend() --------> '%v'", aextd)
+				res = rrxext.data + res
+			} else if rrxext, ok := aextd.(*ExtractorAppend); ok {
+				pdbg("ExtractorAppend() --------> '%v'", aextd)
+				res = res + rrxext.data
+			} else {
+				break
+			}
+			aextd = aextd.Next()
+		}
 	}
 	var err error
 	var rrx *regexp.Regexp
