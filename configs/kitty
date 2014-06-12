@@ -1,0 +1,16 @@
+[kitty]
+  arch            -32bit-,-64bit-
+  test			      kitty.exe
+  page.kitty      http://www.fosshub.com/KiTTY.html
+  url.get         kitty
+  url.rx          href="/download/(kitty_portable.exe)"
+  url.prepend     http://mirror3.fosshub.com/programs/
+  name.get        kitty
+  name.rx         version: (\d(?:\.\d+)+)
+  name.prepend    kitty_
+  name.append     .exe  
+  folder.get      _name
+  folder.rx       (kitty_.*?)\.(?:exe|zip)
+  doskey          kitty=~kitty.exe $*
+  invoke          mkdir @DESTNS@ && copy @FILENS@ @DESTNS@\\kitty.exe && mklink /J @DESTNS@\\Sessions @DESTNS@\\..\Sessions & mklink /J @DESTNS@\\kitty.ini @DESTNS@\\..\kitty.ini
+  # todo add some commondirs
