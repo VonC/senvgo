@@ -3476,18 +3476,20 @@ func (p *Prg) RxFolder() *regexp.Regexp {
 	}
 	ext := p.exts.extractFolder
 	var rxext *ExtractorMatch
+	var aextd Extractor
 	for ext != nil {
 		pdbg("RxFolder() ########### '%v'", ext)
 		if rrxext, ok := ext.(*ExtractorMatch); ok {
 			pdbg("RxFolder() --------> '%v'", ext)
 			rxext = rrxext
+			aextd = ext
 		}
 		ext = ext.Next()
 	}
 	pdbg("RxFolder() ~~~~~~~~~~~~~~~~~~~ '%v'", rxext)
 	if rxext != nil {
 		pdbg("Last rx detected '%+v'", rxext)
-		res = rxext.RxForName(false)
+		res = rxext.RxForName(false, aextd)
 	}
 	return res
 }
