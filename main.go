@@ -3514,19 +3514,23 @@ func (p *Prg) GetArchive() *Path {
 			return nil
 		}
 		aext := p.exts.extractArchive
+		var aextd Extractor
 		var rxext *ExtractorMatch
 		for aext != nil {
 			pdbg("GetArchive() ########### '%v'", aext)
 			if rrxext, ok := aext.(*ExtractorMatch); ok {
 				pdbg("GetArchive() --------> '%v'", aext)
 				rxext = rrxext
+				aextd = aext
 			}
+			pdbg("GetArchive() aextd '%v'", aextd)
 			aext = aext.Next()
 		}
 		pdbg("GetArchive() ~~~~~~~~~~~~~~~~~~~ '%v'", rxext)
 		if rxext != nil {
 			pdbg("Last rx detected '%+v'", rxext)
-			rx := rxext.RxForName(true)
+			rx := rxext.RxForName(true, aextd)
+			pdbg("rx '%v'", rx)
 			cache.trimFiles(rx.String(), p.GetName())
 			if archiveName.isExe() {
 				targzrx := strings.Replace(rx.String(), ".exe", ".tar.gz", -1)
