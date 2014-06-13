@@ -2,6 +2,7 @@
   arch            -32bit-,-64bit-
   test			      kitty.exe
   page.kitty      http://www.fosshub.com/KiTTY.html
+  # todo page.ver http://www.9bis.net/kitty/check_update.php?version=0
   url.get         kitty
   url.rx          href="/download/(kitty_portable.exe)"
   url.prepend     http://mirror3.fosshub.com/programs/
