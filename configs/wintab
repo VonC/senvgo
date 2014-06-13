@@ -1,0 +1,14 @@
+[wintab]
+  test			      WindowTabs.exe
+  page.wintab     http://www.windowtabs.com/download/
+  url.get         wintab
+  url.rx          href="(/WindowTabs.exe)"
+  url.prepend     http://www.windowtabs.com
+  name.get        wintab
+  name.rx         Version (\d+(?:\.\d+)+) -
+  name.prepend    wintab_
+  name.append     .exe
+  folder.get      _name
+  folder.rx       (wintab_.*?)\.(?:exe|zip)
+  doskey          wintab=~WindowTabs.exe $*
+  invoke          mkdir @DESTNS@ & copy @FILENS@ @DESTNS@\\WindowTabs.exe
