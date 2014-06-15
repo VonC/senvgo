@@ -1,0 +1,10 @@
+[greenshot]
+  test			      Greenshot.exe
+  page.gs         http://getgreenshot.org/version-history/
+  url.get         gs
+  url.rx          href="(http://sourceforge.net.*?Greenshot-NO-INSTALLER-.*?.zip/download)"
+  name.get        _url
+  name.rx         (Greenshot-NO-INSTALLER-.*?.zip)
+  folder.get      _name
+  folder.rx       (Greenshot-NO-INSTALLER-.*?)\.zip
+  doskey          gs=~Greenshot.exe $*
