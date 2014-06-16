@@ -1554,7 +1554,7 @@ func pdbg(format string, args ...interface{}) string {
 	pmsg = spaces + pmsg
 	msg = pmsg + "\n" + spaces + "  " + msg + "\n"
 	// fmt.Printf("MSG '%v'\n", msg)
-	fmt.Fprintf(os.Stderr, fmt.Sprintf(msg))
+	fmt.Fprintf(os.Stderr, fmt.Sprint(msg))
 	return res
 }
 
