@@ -595,7 +595,7 @@ func (p *Path) String() string {
 	if p == nil {
 		return "<nil>"
 	}
-	res := fmt.Sprintf(p.path)
+	res := fmt.Sprint(p.path)
 	if len(res) > 200 {
 		res = res[:20] + fmt.Sprintf(" (%v)", len(res))
 	}
