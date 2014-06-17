@@ -1,0 +1,10 @@
+[filezilla]
+  test			      filezilla.exe
+  page.filezilla  https://filezilla-project.org/download.php?show_all=1
+  url.get         filezilla
+  url.rx          href="(http://sourceforge.net/projects/filezilla/files/FileZilla_Client/\d.*?/FileZilla_.*?_win32.zip/download)"
+  name.get        _url
+  name.rx         (FileZilla_.*?_win32.zip)
+  folder.get      _name
+  folder.rx       (F.*?)\.zip
+  doskey          fz=~filezilla.exe $*
