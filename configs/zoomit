@@ -1,0 +1,12 @@
+[zoomit]
+  test			      ZoomIt.exe
+  page.zoomit     http://technet.microsoft.com/en-us/sysinternals/bb897434
+  url.get         zoomit
+  url.rx          href="(http://download.sysinternals.com/files/ZoomIt.zip)">
+  name.get        zoomit
+  name.rx         <h1>ZoomIt (v\d(?:\.\d+)*?)</h1>
+  name.prepend    ZoomIt_
+  name.append     .zip
+  folder.get      _name
+  folder.rx       (Z.*?)\.zip
+  doskey          zi=~ZoomIt.exe $*
