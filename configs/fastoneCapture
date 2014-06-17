@@ -1,0 +1,10 @@
+[fastoneCapture]
+  test			      FSCapture.exe
+  page.fsc        http://www.faststone.org/FSCapturerDownload.htm
+  url.get         fsc
+  url.rx          href="(http://www.faststonesoft.net/DN/FSCapture\d+\.zip)"
+  name.get        _url
+  name.rx         (FSCapture\d+\.zip)
+  folder.get      _name
+  folder.rx       (FSCapture\d+)\.zip
+  doskey          fsc=~FSCapture.exe $*
