@@ -1929,7 +1929,7 @@ func do(req *http.Request) (*http.Response, error) {
 		req.AddCookie(c)
 	}
 
-	pdbg("(do) Sent URL: '%v:%v' => Host: '%v'\n", req.Method, req.URL, req.Host)
+	pdbg("(do) Sent URL: '%v:%v' => Host: '%v' Referer '%v'\n", req.Method, req.URL, req.Host, req.Referer())
 	pdbg("~~~~\n")
 	pdbg("(do) Cookies set: '[%v]: %v'\n", len(req.Cookies()), req.Cookies())
 	pdbg("(do) Sent header: '%v'\n", req.Header)
