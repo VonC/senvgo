@@ -606,7 +606,7 @@ func (p *Path) String() string {
 // Cache gets or update a resource, can be linked, can retrieve last value cached
 type Cache interface {
 	GetPage(url *url.URL, name string) *Path
-	GetArchive(p *Path, url *url.URL, name string, cookies []*http.Cookie, isExe bool) *Path
+	GetArchive(p *Path, url *url.URL, name string, cookies []*http.Cookie, isExe bool, referer string) *Path
 	UpdateArchive(p *Path, name string, isExe bool)
 	UpdatePage(p *Path, name string)
 	Next() Cache
@@ -764,7 +764,7 @@ func (c *CacheGitHub) IsGitHub() bool {
 }
 
 // Get gets or download zip archives only from GitHub
-func (c *CacheGitHub) GetArchive(p *Path, url *url.URL, name string, cookies []*http.Cookie, isExe bool) *Path {
+func (c *CacheGitHub) GetArchive(p *Path, url *url.URL, name string, cookies []*http.Cookie, isExe bool, referer string) *Path {
 	pdbg("CacheGitHub.GetArchive '%v' for '%v' from '%v' (exe %v)\n", p, name, c, isExe)
 	if !p.isPortableCompressed() {
 		pdbg("GetArchive '%v' is not a .zip or tag.gz\n", p)
@@ -779,7 +779,7 @@ func (c *CacheGitHub) GetArchive(p *Path, url *url.URL, name string, cookies []*
 
 	if c.next != nil {
 		if res == nil {
-			res = c.Next().GetArchive(p, url, name, cookies, isExe)
+			res = c.Next().GetArchive(p, url, name, cookies, isExe, referer)
 		} else {
 			c.Next().UpdateArchive(p, name, isExe)
 			res = p
@@ -1357,7 +1357,7 @@ func (c *CacheDisk) HasCacheDiskInNexts() bool {
 }
 
 // Get will get either an url or an archive extension (exe, zip, tar.gz, ...)
-func (c *CacheDisk) GetArchive(p *Path, url *url.URL, name string, cookies []*http.Cookie, isExe bool) *Path {
+func (c *CacheDisk) GetArchive(p *Path, url *url.URL, name string, cookies []*http.Cookie, isExe bool, referer string) *Path {
 	pdbg("[CacheDisk.GetArchive][%v]: '%v' for '%v' from '%v'\n", c.id, p, name, c)
 	if p.EndsWithSeparator() {
 		pdbg("[CacheDisk.GetArchive][%v]: no file for '%v': it is a Dir.\n", c.id, p)
@@ -1376,7 +1376,7 @@ func (c *CacheDisk) GetArchive(p *Path, url *url.URL, name string, cookies []*ht
 	}
 
 	if c.next != nil {
-		filepath = c.Next().GetArchive(filename, url, name, cookies, isExe)
+		filepath = c.Next().GetArchive(filename, url, name, cookies, isExe, referer)
 		if filepath != nil {
 			if !c.Next().IsGitHub() {
 				if filepath.EndsWithSeparator() {
@@ -1403,7 +1403,7 @@ func (c *CacheDisk) GetArchive(p *Path, url *url.URL, name string, cookies []*ht
 	time.Sleep(time.Duration(5) * time.Second)
 
 	record(fmt.Sprintf("[DOWN] for '%v': '%v'\n", name, filename))
-	download(url, filename, 100000, cookies)
+	download(url, filename, 100000, cookies, referer)
 	pdbg("CacheDisk.GetArchive[%v]: ... DONE download '%v' for '%v'\n", c.id, url, filename)
 	filepath = c.checkArchive(filename, name, isExe)
 	return filepath
@@ -1605,7 +1605,7 @@ func (c *CacheDisk) GetPage(url *url.URL, name string) *Path {
 		filename := c.Folder(name).Add(name + "_" + sha + "_" + t.Format("20060102") + "_" + t.Format("150405"))
 		pdbg("Get '%v' downloads '%v' for '%v' wasNotFound='%v'\n", c.id, filename, url, wasNotFound)
 		if filepath == nil {
-			filepath = download(url, filename, 0, nil)
+			filepath = download(url, filename, 0, nil, "")
 			downloadedUrl = append(downloadedUrl, url)
 		} else if wasNotFound {
 			filename = c.Folder(name).Add(filepath.Base())
@@ -1618,7 +1618,7 @@ func (c *CacheDisk) GetPage(url *url.URL, name string) *Path {
 			}
 		} else if !alreadyDownloaded(url) {
 			// forcing download eventhough filepath is not nil
-			newFilePath := download(url, filename, 0, nil)
+			newFilePath := download(url, filename, 0, nil, "")
 			downloadedUrl = append(downloadedUrl, url)
 			if filepath.SameContentAs(newFilePath) {
 				pdbg("SAME CONTENT for '%v' => going with older '%v'", url, filepath)
@@ -2019,7 +2019,7 @@ func (pt *PassThru) Read(p []byte) (int, error) {
 	return n, err
 }
 
-func download(url *url.URL, filename *Path, minLength int64, cookies []*http.Cookie) *Path {
+func download(url *url.URL, filename *Path, minLength int64, cookies []*http.Cookie, referer string) *Path {
 	var res *Path
 	// http://stackoverflow.com/questions/18414212/golang-how-to-follow-location-with-cookie
 	// http://stackoverflow.com/questions/10268583/how-to-automate-download-and-installation-of-java-jdk-on-linux
@@ -2041,6 +2041,9 @@ func download(url *url.URL, filename *Path, minLength int64, cookies []*http.Coo
 	}
 	mainRepoJar.SetCookies(cookies)
 	getClient().Jar.SetCookies(url, cookies)
+	if referer != "" {
+		req.Header.Set("Referer", referer)
+	}
 
 	fmt.Fprint(os.Stderr, fmt.Sprintf("*** Download url '%v'\n", url))
 	response, err := do(req) // http.Get(url.String())
@@ -3559,7 +3562,7 @@ func (p *Prg) GetArchive() *Path {
 		}
 		pname := NewPath(archiveName.NoExt().String() + pext)
 		pdbg("pname '%v'", pname)
-		portableArchive := cache.GetArchive(pname, nil, p.GetName(), p.cookies, p.isExe())
+		portableArchive := cache.GetArchive(pname, nil, p.GetName(), p.cookies, p.isExe(), p.referer)
 		if portableArchive != nil {
 			p.archive = portableArchive
 		}
@@ -3567,7 +3570,7 @@ func (p *Prg) GetArchive() *Path {
 	if p.archive == nil && archiveName != nil && p.exts != nil {
 		pdbg("Get archive name for %v(%v) on '%v'\n", p.GetName(), p.name, archiveName)
 		url := p.GetURL()
-		p.archive = cache.GetArchive(archiveName, url, p.GetName(), p.cookies, p.isExe())
+		p.archive = cache.GetArchive(archiveName, url, p.GetName(), p.cookies, p.isExe(), p.referer)
 	}
 	return p.archive
 }
