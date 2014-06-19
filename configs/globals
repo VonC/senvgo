@@ -9,5 +9,13 @@
   #delpaths jdk7 python2
   #addpaths git jdk8 gow hg
   #addpaths hg
-order=greenshot
+order=kdiff3
 #order=peazip gow git npp python2 hg bzr go sbt gpg procexp mc ag perl kitty wintab greenshot fastoneCapture zoomit filezilla winscp autoit iron firefox kdiff3 paint svn wiztree ss liteide gvim dexpot freeplane node npm ruby ads ontop jdk8
+
+# todo: 
+
+# * https://github.com/panzi/git-kdiff3 => https://github.com/panzi/git-kdiff3/blob/master/git-kdiff3
+
+# * winmerge 2011 is dead (http://forums.winmerge.org/viewtopic.php?f=4&t=352&start=10#p1384), reborn at https://bitbucket.org/jtuc/winmerge2011/downloads, while WinMerge3 (based on Qt) is dead.
+
+# * ditto: manage stack of CTRL-C
