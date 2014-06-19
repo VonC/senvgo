@@ -1554,7 +1554,7 @@ func pdbg(format string, args ...interface{}) string {
 	pmsg = spaces + pmsg
 	msg = pmsg + "\n" + spaces + "  " + msg + "\n"
 	// fmt.Printf("MSG '%v'\n", msg)
-	fmt.Fprintf(os.Stderr, fmt.Sprint(msg))
+	fmt.Fprint(os.Stderr, fmt.Sprint(msg))
 	return res
 }
 
@@ -2041,7 +2041,7 @@ func download(url *url.URL, filename *Path, minLength int64, cookies []*http.Coo
 	mainRepoJar.SetCookies(cookies)
 	getClient().Jar.SetCookies(url, cookies)
 
-	fmt.Fprintf(os.Stderr, fmt.Sprintf("*** Download url '%v'\n", url))
+	fmt.Fprint(os.Stderr, fmt.Sprintf("*** Download url '%v'\n", url))
 	response, err := do(req) // http.Get(url.String())
 	if err != nil {
 		fmt.Println("Error while downloading", url, "-", err)
