@@ -353,6 +353,7 @@ type Prg struct {
 	uninstcmd    string
 	pages        map[string]string
 	commondirs   []string
+	referer      string
 }
 
 func (p *Prg) String() string {
@@ -2359,6 +2360,12 @@ func readConfigFile(sconfig string) []*Prg {
 			line = strings.TrimSpace(line[len("commondirs"):])
 			currentPrg.commondirs = strings.Split(line, ",")
 			pdbg("currentPrg '%v': commondirs = '%v'", currentPrg.name, currentPrg.commondirs)
+			continue
+		}
+		if strings.HasPrefix(line, "referer") && currentPrg != nil {
+			line = strings.TrimSpace(line[len("referer"):])
+			currentPrg.referer = line
+			pdbg("currentPrg '%v': referer = '%v'", currentPrg.name, currentPrg.referer)
 			continue
 		}
 		if strings.HasPrefix(line, "addpaths") {
