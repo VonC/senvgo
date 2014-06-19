@@ -2210,6 +2210,10 @@ func NewExtractorPrepend(rx string, p PrgData) *ExtractorPrepend {
 // ExtractFrom prepends data to content
 func (ep *ExtractorPrepend) ExtractFrom(data string) string {
 	pdbg("=====> ExtractorPrepend.ExtractFrom '%v'\n", data)
+	arch := ep.p.GetArch()
+	if arch != nil {
+		data = strings.Replace(data, "_$arch_", arch.Arch(), -1)
+	}
 	res := ep.data + data
 	pdbg("RES='%v'\n", res)
 	return res
@@ -2230,6 +2234,10 @@ func NewExtractorAppend(rx string, p PrgData) *ExtractorAppend {
 // ExtractFrom prepends data to content
 func (ep *ExtractorAppend) ExtractFrom(data string) string {
 	pdbg("=====> ExtractorAppend.ExtractFrom '%v'\n", data)
+	arch := ep.p.GetArch()
+	if arch != nil {
+		data = strings.Replace(data, "_$arch_", arch.Arch(), -1)
+	}
 	res := data + ep.data
 	pdbg("RES='%v'\n", res)
 	return res
