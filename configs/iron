@@ -1,0 +1,14 @@
+[iron]
+  test			      IronPortable.exe
+  page.iron       http://www.srware.net/forum/viewforum.php?f=18
+  url.get         iron
+  url.rx          (Iron)
+  url.prepend     http://www.srware.net/downloads/
+  url.append      Portable.zip
+  name.get        iron
+  name.rx         New Iron-Version: (.*?\d) Stable for Windows 
+  name.prepend    iron_
+  name.append     .zip  
+  folder.get      _name
+  folder.rx       (iron_.*?)\.zip
+  doskey          iron=~IronPortable.exe $*
