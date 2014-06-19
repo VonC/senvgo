@@ -1,0 +1,13 @@
+[firefox]
+  test			      FireFoxPortable.exe
+  page.firefox    http://www.firefox-usb.com/
+  url.get         firefox
+  url.rx          ">File Name: (FirefoxPortable_.*?\.zip)<
+  url.prepend     http://www.firefox-usb.com/download/
+  name.get        _url
+  name.rx         (FirefoxPortable_.*?\.zip) 
+  folder.get      _name
+  folder.rx       (FirefoxPortable_.*?)\.zip
+  doskey          firefox=~FireFoxPortable.exe $*
+  commondirs      Data
+  referer         http://www.firefox-usb.com/
