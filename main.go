@@ -2819,9 +2819,7 @@ func (p *Prg) isInstalled() bool {
 	if p.test == "" {
 		return false
 	}
-	folder := p.GetFolder()
-	folderMain := prgsenv().Add(p.GetName())
-	folderFull := folderMain.AddP(folder)
+	folderFull := p.folderFull()
 	test := folderFull.Add(p.test)
 	pdbg("*** TEST='%+v'\n", test)
 	return test.Exists()
