@@ -1,0 +1,18 @@
+[kdiff3]
+  arch            -32bit-,-64bit-
+  test			      kdiff3.exe
+  page.kdiff3     http://sourceforge.net/projects/kdiff3/
+  url.get         kdiff3
+  url.rx          /kdiff3/(\d[^/]*?)/kdiff3
+  url.prepend     http://switch.dl.sourceforge.net/project/kdiff3/kdiff3/
+  #               http://switch.dl.sourceforge.net/project/kdiff3/kdiff3/0.9.97/KDiff3-64bit-Setup_0.9.97.exe
+  url.append      /KDiff3_$arch_Setup__$1_.exe
+  name.get        _url
+  name.rx         (KDiff3-.*?\.exe) 
+  folder.get      _name
+  folder.rx       (KDiff3-.*?)\.(exe|zip)
+  doskey          kdiff3=~kdiff3.exe $*
+  referer         _url
+  invoke          @FILENS@ /S /D=@DESTNS@
+  uninstexe       Uninstall.exe
+  uninstcmd       @FILENS@ /LOG=@DESTNS@..\uninst.log /VERYSILENT /SUPPRESSMSGBOXES /NORESTART
