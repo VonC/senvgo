@@ -2129,6 +2129,7 @@ func (em *ExtractorMatch) ExtractFrom(content string) string {
 	if len(matches) >= 1 && len(matches[0]) >= 4 {
 		res = content[matches[0][2]:matches[0][3]]
 		pdbg(" RES='%v'\n", res)
+		em.p.AddMatch(res)
 		// for i, x := range matches {
 		// 	pdbg("res %d: '%v'", i, content[x[2]:x[3]])
 		// }
