@@ -3085,6 +3085,7 @@ func (p *Prg) BuildZip() bool {
 			compress7z(portableArchive, folderFull, nil, fmt.Sprintf("Compress '%v' for '%v'", portableArchive, p.GetName()), "zip")
 		}
 		cache.UpdateArchive(portableArchive, p.GetName(), true)
+		p.archive = portableArchive
 	}
 	return true
 }
