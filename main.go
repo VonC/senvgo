@@ -1425,6 +1425,7 @@ func (c *CacheDisk) GetArchive(p *Path, url *url.URL, name string, cookies []*ht
 	record(fmt.Sprintf("[DOWN] for '%v': '%v'\n", name, filename))
 	download(url, filename, 100000, cookies, referer)
 	pdbg("CacheDisk.GetArchive[%v]: ... DONE download '%v' for '%v'\n", c.id, url, filename)
+	//os.Exit(0)
 	filepath = c.checkArchive(filename, name, isExe)
 	return filepath
 }
@@ -3620,6 +3621,7 @@ func (p *Prg) GetURL() *url.URL {
 			p.url = nil
 		}
 	}
+	//os.Exit(0)
 	return p.url
 }
 
