@@ -3652,6 +3652,8 @@ func (p Path) Exists() bool {
 		return false
 	}
 	pdbg("Error while checking if '%v' exists: '%v'\n", path, err)
+	//debug.PrintStack()
+	//os.Exit(0)
 	return false
 }
 
