@@ -1,0 +1,12 @@
+[paint]
+  test			      RWPaint.exe
+  page.paint      http://www.rw-designer.com/image-editor
+  url.get         paint
+  url.rx          href="(http://download.rw-designer.com/\d.*?/RWPaint.zip)"
+  name.get        _url
+  name.rx         /(\d.*?)/RWPaint.zip
+  name.prepend    RWPaint_
+  name.append     .zip
+  folder.get      _name
+  folder.rx       (RW.*?)\.zip
+  doskey          paint=~RWPaint.exe $*
