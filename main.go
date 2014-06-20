@@ -2144,10 +2144,7 @@ func (em *ExtractorMatch) ExtractFrom(content string) string {
 func (em *ExtractorMatch) Regexp() *regexp.Regexp {
 	if em.regexp == nil {
 		rx := em.data
-		arch := em.p.GetArch()
-		if arch != nil {
-			rx = strings.Replace(rx, "_$arch_", arch.Arch(), -1)
-		}
+		rx = em.p.Replace(rx)
 		var err error
 		if em.regexp, err = regexp.Compile(rx); err != nil {
 			em.regexp = nil
@@ -2159,10 +2156,7 @@ func (em *ExtractorMatch) Regexp() *regexp.Regexp {
 
 func (em *ExtractorMatch) RxForName(spaces bool, aextd Extractor) *regexp.Regexp {
 	rx := em.data
-	arch := em.p.GetArch()
-	if arch != nil {
-		rx = strings.Replace(rx, "_$arch_", arch.Arch(), -1)
-	}
+	rx = em.p.Replace(rx)
 	res := ""
 	seekOpen := true
 	d := 0
@@ -2231,10 +2225,8 @@ func NewExtractorPrepend(rx string, p PrgData) *ExtractorPrepend {
 // ExtractFrom prepends data to content
 func (ep *ExtractorPrepend) ExtractFrom(data string) string {
 	pdbg("=====> ExtractorPrepend.ExtractFrom '%v'\n", data)
-	arch := ep.p.GetArch()
-	if arch != nil {
-		data = strings.Replace(data, "_$arch_", arch.Arch(), -1)
-	}
+	data = ep.p.Replace(data)
+	ep.data = ep.p.Replace(ep.data)
 	res := ep.data + data
 	pdbg("RES='%v'\n", res)
 	return res
@@ -2255,10 +2247,9 @@ func NewExtractorAppend(rx string, p PrgData) *ExtractorAppend {
 // ExtractFrom prepends data to content
 func (ep *ExtractorAppend) ExtractFrom(data string) string {
 	pdbg("=====> ExtractorAppend.ExtractFrom '%v'\n", data)
-	arch := ep.p.GetArch()
-	if arch != nil {
-		data = strings.Replace(data, "_$arch_", arch.Arch(), -1)
-	}
+	data = ep.p.Replace(data)
+	ep.data = ep.p.Replace(ep.data)
+	pdbg("=====> ExtractorAppend.ExtractFrom '%v': matches '%v'\n", data, ep.p.(*Prg).matches)
 	res := data + ep.data
 	pdbg("RES='%v'\n", res)
 	return res
@@ -2500,9 +2491,7 @@ func readConfigFile(sconfig string) []*Prg {
 			line = strings.TrimSpace(line[len("delfolders"):])
 			elts := strings.SplitN(line, " ", -1)
 			for _, elt := range elts {
-				if currentPrg.GetArch() != nil {
-					elt = strings.Replace(elt, "_$arch_", currentPrg.GetArch().Arch(), -1)
-				}
+				elt = currentPrg.Replace(elt)
 				delprx := regexp.MustCompile(elt)
 				pdbg("delfolders: append '%v'", delprx.String())
 				currentPrg.delfolders = append(currentPrg.delfolders, delprx)
