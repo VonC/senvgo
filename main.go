@@ -354,6 +354,7 @@ type Prg struct {
 	pages        map[string]string
 	commondirs   []string
 	referer      string
+	matches      []string
 }
 
 func (p *Prg) String() string {
@@ -423,13 +424,32 @@ func (p *Prg) UrlFromId(id string) string {
 type PrgData interface {
 	// Name of the program to be installed, used for folder
 	GetName() string
-	// If not nil, returns patterns for win32 or win64
-	GetArch() *Arch
 
 	GetArchive() *Path
 	GetURL() *url.URL
 	GetFolder() *Path
 	UrlFromId(id string) string
+	Replace(s string) string
+	AddMatch(match string)
+}
+
+func (p *Prg) AddMatch(match string) {
+	p.matches = append(p.matches, match)
+}
+
+func (p *Prg) Replace(s string) string {
+	if s == "" {
+		return s
+	}
+	arch := p.GetArch()
+	if arch != nil {
+		s = strings.Replace(s, "_$arch_", arch.Arch(), -1)
+	}
+	for mpos, m := range p.matches {
+		ss := fmt.Sprintf("_$%v_", mpos+1)
+		s = strings.Replace(s, ss, m, -1)
+	}
+	return s
 }
 
 // GetName returns the name of the program to be installed, used for folder
