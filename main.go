@@ -3572,6 +3572,13 @@ func (p *Prg) GetArchive() *Path {
 	pdbg("***** Prg name '%v': isexe %v for depOn %v len %v\n", p.name, archiveName.isExe(), p.depOn, len(p.deps))
 	//debug.PrintStack()
 	p.archiveIsExe = false
+	referer := ""
+	if p.referer != "" {
+		referer = p.referer
+		if referer == "_url" {
+			referer, _ = url.QueryUnescape(p.GetURL().String())
+		}
+	}
 	if archiveName != nil && archiveName.isExe() && p.depOn == nil {
 		pdbg("Set isExe to true archiveName '%v'", archiveName)
 		p.archiveIsExe = true
@@ -3581,7 +3588,7 @@ func (p *Prg) GetArchive() *Path {
 		}
 		pname := NewPath(archiveName.NoExt().String() + pext)
 		pdbg("pname '%v'", pname)
-		portableArchive := cache.GetArchive(pname, nil, p.GetName(), p.cookies, p.isExe(), p.referer)
+		portableArchive := cache.GetArchive(pname, nil, p.GetName(), p.cookies, p.isExe(), referer)
 		if portableArchive != nil {
 			p.archive = portableArchive
 		}
@@ -3589,7 +3596,7 @@ func (p *Prg) GetArchive() *Path {
 	if p.archive == nil && archiveName != nil && p.exts != nil {
 		pdbg("Get archive name for %v(%v) on '%v'\n", p.GetName(), p.name, archiveName)
 		url := p.GetURL()
-		p.archive = cache.GetArchive(archiveName, url, p.GetName(), p.cookies, p.isExe(), p.referer)
+		p.archive = cache.GetArchive(archiveName, url, p.GetName(), p.cookies, p.isExe(), referer)
 	}
 	return p.archive
 }
