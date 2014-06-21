@@ -1,0 +1,11 @@
+[svn]
+  test			  bin/svn.exe
+  page.svn    http://www.visualsvn.com/downloads/
+  url.get     svn
+  url.rx      href="(/files/Apache-Subversion-\d.*?\.zip)"
+  url.prepend http://www.visualsvn.com
+  name.get    _url
+  name.rx     (Apache-.*?\.zip) 
+  folder.get  _name
+  folder.rx   (Apache-.*?)\.zip
+  doskey      svn=~bin/svn.exe
