@@ -2278,7 +2278,7 @@ func (er *ExtractorReplace) ExtractFrom(data string) string {
 	return res
 }
 
-var cfgRx, _ = regexp.Compile(`^([^\.]+)\.([^\.\s]+)\s+(.*?)$`)
+var cfgRx, _ = regexp.Compile(`^\s*?([^#/\.\s]+)\.([^\.\s]+)\s+(.*?)$`)
 
 func NewCacheDisk(id string, root *Path) *CacheDisk {
 	cache := &CacheDisk{CacheData: &CacheData{id: id, limits: make(map[string]int)}, root: root}
@@ -2587,6 +2587,7 @@ func readConfigFile(sconfig string) []*Prg {
 		variable := line[m[2]:m[3]]
 		extractor := line[m[4]:m[5]]
 		data := line[m[6]:m[7]]
+		//pdbg("variable='%s', ext='%v', data='%s' for line '%s'", variable, extractor, data, line)
 		if !pageidRx.MatchString(data) {
 			pdbg("Wrong get id page '%v' in '%v'", data, currentPrg.name)
 			return nil
