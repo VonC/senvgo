@@ -8,4 +8,4 @@
   name.rx     (Apache-.*?\.zip) 
   folder.get  _name
   folder.rx   (Apache-.*?)\.zip
-  doskey      svn=~bin/svn.exe
+  doskey      svn=~bin/svn.exe $*
