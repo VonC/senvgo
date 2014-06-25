@@ -2,10 +2,10 @@
   test			   WizTree.exe
   page.wiztree http://antibody-software.com/web/software/software/wiztree-finds-the-files-and-folders-using-the-most-disk-space-on-your-hard-drive/
   url.get      wiztree
-  url.rx      href="(/files/Apache-Subversion-\d.*?\.zip)"
-  url.prepend http://www.visualsvn.com
+  url.rx      a href="(/files/wiztree_1_07_portable.zip)"
+  url.prepend http://antibody-software.com
   name.get    _url
-  name.rx     (Apache-.*?\.zip) 
+  name.rx     (wiztree_.*?\.zip)
   folder.get  _name
-  folder.rx   (Apache-.*?)\.zip
-  doskey      wiztree=~WizTree.exe
+  folder.rx   (wiztree_.*?)\.zip
+  doskey      wiztree=~WizTree.exe $*
