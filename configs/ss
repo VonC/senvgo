@@ -1,0 +1,12 @@
+[ss]
+  test			   SpaceSniffer.exe
+  page.ss      http://www.fosshub.com/SpaceSniffer.html
+  url.get      ss
+  url.rx       href="(/download/spacesniffer_.*?\.zip)"
+  url.prepend  http://www.fosshub.com
+  referer      http://www.fosshub.com/SpaceSniffer.html
+  name.get     _url
+  name.rx      (spacesniffer_.*?\.zip)
+  folder.get   _name
+  folder.rx    (spacesniffer_.*?)\.zip
+  doskey       ss=~SpaceSniffer.exe $*
