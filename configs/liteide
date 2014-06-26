@@ -1,0 +1,11 @@
+[liteide]
+  test			   bin/liteide.exe
+  page.liteide https://code.google.com/p/golangide/downloads/list?can=2&q=windows&colspec=Filename+Summary+Uploaded+ReleaseDate+Size+DownloadCount
+  url.get      liteide
+  url.rx       href="(//golangide.googlecode.com/files/liteidex.*?\.windows.7z)"
+  url.prepend  https:
+  name.get     _url
+  name.rx      (liteidex.*?\.7z)
+  folder.get   _name
+  folder.rx    (liteidex.*?)\.7z
+  doskey       goide=~bin/liteide.exe $*
