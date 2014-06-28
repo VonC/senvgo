@@ -7,5 +7,5 @@
   name.get     _url
   name.rx      (gvim[\d_]+\.zip)
   folder.get   _name
-  folder.rx    (gvim[\d_]+\.zip)
+  folder.rx    (gvim[\d_]+)\.zip
   doskey       vi=~gvim.exe $*
