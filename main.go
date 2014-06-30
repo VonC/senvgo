@@ -3392,7 +3392,7 @@ func compress7z(archive, folder, file *Path, msg, format string) bool {
 func (p *Prg) invokeUnZipOr7z() bool {
 	folder := p.GetFolder()
 	archive := p.GetArchive()
-	folderMain := NewPathDir("test/" + p.GetName())
+	folderMain := p.folderMain()
 	pdbg("folderMain '%v'\n", folderMain)
 	folderTmp := folderMain.Add("tmp/")
 	folderFull := folderMain.AddP(folder)
@@ -3421,6 +3421,12 @@ func (p *Prg) invokeUnZipOr7z() bool {
 		if len(fi) == 1 {
 			if fi[0].IsDir() {
 				ftm = ftm.Add(fi[0].Name())
+			}
+			fi = getFiles(ftm, "")
+			if len(fi) == 1 {
+				if fi[0].IsDir() {
+					ftm = ftm.Add(fi[0].Name())
+				}
 			}
 		}
 		pdbg("Need to move content of %v to '%v'\n", ftm, folderFull)
