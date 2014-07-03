@@ -1,0 +1,11 @@
+[dexpot]
+  test			   dexpot.exe
+  page.dexpot  http://dexpot.de/index.php?id=download
+  url.get      dexpot
+  url.rx       href="(download/dexpot_.*?\.zip)"
+  url.prepend  http://dexpot.de/
+  name.get     _url
+  name.rx      (dexpot_.*?\.zip)
+  folder.get   _name
+  folder.rx    (dexpot_.*?)\.zip
+  doskey       dexpot=~dexpot.exe $*
