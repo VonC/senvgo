@@ -1,0 +1,10 @@
+[freeplane]
+  test			   freeplane.exe
+  page.freeplane  http://sourceforge.net/projects/freeplane/files/freeplane%20stable/
+  url.get      freeplane
+  url.rx       href="(http://sourceforge.net/projects/freeplane/files/freeplane%20stable/freeplane_bin-.*?\.zip/download)"
+  name.get     _url
+  name.rx      (freeplane_bin-.*?\.zip)
+  folder.get   _name
+  folder.rx    (freeplane_bin-.*?)\.zip
+  doskey       fp=~freeplane.exe $*
