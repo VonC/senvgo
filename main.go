@@ -2674,7 +2674,7 @@ func (p *Path) Abs() *Path {
 
 func (p *Prg) folderLatest() *Path {
 	folderMain := prgsenv().Add(p.GetName())
-	folderLatest := folderMain.Add("latest")
+	folderLatest := folderMain.Add("latest\\")
 	return folderLatest
 }
 
