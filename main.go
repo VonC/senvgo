@@ -473,6 +473,9 @@ func (p *Prg) writeAddBins() bool {
 	return res
 }
 
+var rxBinPrg, _ = regexp.Compile(`~([a-z0-9]+)/`)
+var rxBinLatest, _ = regexp.Compile(`~([a-z0-9]+[^/])`)
+
 func (p *Prg) writeAddBin(name, cmd string) bool {
 	dir := prgsenv().Add("bin")
 	pdbg("Addbin for prg '%v': name '%v' => cmd '%v'", p.name, name, cmd)
@@ -490,7 +493,8 @@ func (p *Prg) writeAddBin(name, cmd string) bool {
 		defer filebin.Close()
 		st := "@echo off"
 		st = st + "\n"
-		st = st + p.folderLatest().String() + cmd
+		cmd = rxBinLatest.ReplaceAllString(cmd, p.folderLatest().String()+"$1")
+		st = st + cmd
 		if _, err := filebin.WriteString(st); err != nil {
 			pdbg("Fail write in addbin file '%v'\nerr='%v'", filename, err)
 			return false
