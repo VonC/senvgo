@@ -473,8 +473,8 @@ func (p *Prg) writeAddBins() bool {
 	return res
 }
 
-var rxBinPrg, _ = regexp.Compile(`~([a-z0-9]+)/`)
-var rxBinLatest, _ = regexp.Compile(`~([a-z0-9]+[^/])`)
+var rxBinPrg, _ = regexp.Compile(`~([a-z0-9]+)[/\\]`)
+var rxBinLatest, _ = regexp.Compile(`~([a-z0-9]+[^/\\])`)
 
 func (p *Prg) writeAddBin(name, cmd string) bool {
 	dir := prgsenv().Add("bin")
