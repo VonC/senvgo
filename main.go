@@ -2110,11 +2110,12 @@ func NewExtractorGet(uri string, p PrgData) *ExtractorGet {
 type ExtractorMatch struct {
 	Extractable
 	regexp *regexp.Regexp
+	last   bool
 }
 
 // NewExtractorMatch builds ExtractorMatch for applying a regexp to a data
 func NewExtractorMatch(rx string, p PrgData) *ExtractorMatch {
-	res := &ExtractorMatch{Extractable{data: rx, p: p}, nil}
+	res := &ExtractorMatch{Extractable{data: rx, p: p}, nil, false}
 	res.self = res
 	return res
 }
@@ -2131,14 +2132,22 @@ func (em *ExtractorMatch) ExtractFrom(content string) string {
 	matches := rx.FindAllStringSubmatchIndex(content, -1)
 	pdbg("matches: '%v'\n", matches)
 	res := ""
-	if len(matches) >= 1 && len(matches[0]) >= 4 {
-		res = content[matches[0][2]:matches[0][3]]
-		pdbg(" RES='%v'\n", res)
-		em.p.AddMatch(res)
-		// for i, x := range matches {
-		// 	pdbg("res %d: '%v'", i, content[x[2]:x[3]])
-		// }
-	} else {
+	if len(matches) >= 1 {
+		index := 0
+		if em.last {
+			index = len(matches) - 1
+		}
+
+		if len(matches[index]) >= 4 {
+			res = content[matches[index][2]:matches[index][3]]
+			pdbg(" RES='%v'\n", res)
+			em.p.AddMatch(res)
+			// for i, x := range matches {
+			// 	pdbg("res %d: '%v'", i, content[x[2]:x[3]])
+			// }
+		}
+	}
+	if res == "" {
 		pn := pdbg("[Err] Rx '%v' applied to '%v': NO MATCH", rx, c)
 		panic(pn)
 	}
@@ -2149,6 +2158,10 @@ func (em *ExtractorMatch) ExtractFrom(content string) string {
 func (em *ExtractorMatch) Regexp() *regexp.Regexp {
 	if em.regexp == nil {
 		rx := em.data
+		if strings.HasPrefix(rx, "$") {
+			em.last = true
+			rx = rx[1:]
+		}
 		rx = em.p.Replace(rx)
 		var err error
 		if em.regexp, err = regexp.Compile(rx); err != nil {
