@@ -1,0 +1,13 @@
+[npm]
+  arch         x86,x64
+  test			   npm.bat
+  page.node    http://nodejs.org/dist/npm/
+  url.get      node
+  url.rx       $href="(npm-.*?.zip)"
+  url.prepend  http://nodejs.org/dist/npm/
+  name.get     _url
+  name.rx      (npm-.*?\.zip)
+  folder.get   _name
+  folder.rx    (npm-.*?)\.zip
+  doskey       node=
+  addbin       npm.bat=~node/npm.bat $*
