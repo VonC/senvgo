@@ -2836,7 +2836,26 @@ func (p *Prg) postInstall() bool {
 		pdbg("res from deleteFolderContent tmp: '%v', for '%v'", bb, p.name)
 		b = b && bb
 	}
+	if p.GetName() == "node" {
+		b = b && p.postInstallNode()
+	}
 	return b
+}
+
+func (p *Prg) postInstallNode() bool {
+	pdbg("post install for %v", p.GetName())
+	nm := p.folderFull().Add("node_modules")
+	npm := readJunction("npm", nm, "npm link")
+	pdbg("npm='%v'", npm)
+	res := true
+	if npm == nil {
+		res = junction(nm.Add("npm"), prgsenv().Add("npm/latest/node_modules/npm"), "npm link")
+	}
+	npmf := p.folderFull().Add("npm.cmd")
+	if npmf.Exists() == false {
+		res = res && copy(npmf, prgsenv().Add("npm/latest/npm.cmd"))
+	}
+	return res
 }
 
 func (p *Prg) isInstalled() bool {
