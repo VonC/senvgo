@@ -87,6 +87,11 @@ func main() {
 					p.BuildZip()
 					write = p.checkUninst()
 				}
+				if !p.postInstall() {
+					p.fail = true
+					write = false
+					pdbg("PRG '%v': issue on postInstall", p.name)
+				}
 			} else if p.hasFailed() {
 				pdbg("PRG '%v': already FAILED\n", p.name)
 				write = false
@@ -112,6 +117,7 @@ func main() {
 				}
 				res = res && rescd
 			}
+			res = res && !p.fail
 			if res {
 				pdbg("prg OK full install '%v'", p.name)
 			} else {
