@@ -1,0 +1,14 @@
+[node]
+  arch         x86,x64
+  test			   node.exe
+  page.node    http://nodejs.org/download/
+  url.get      node
+  url.rx       href="(http://nodejs.org/dist/v.*?/_$arch_/node-v.*?-_$arch_.msi)"
+  name.get     _url
+  name.rx      (node-v.*?\.msi)
+  folder.get   _name
+  folder.rx    (node-v.*?)\.(?:msi|zip)
+  invoke       C:\WINDOWS\system32\msiexec.exe /i @FILENS@ /l @DESTNS@.log INSTALLDIR=@DESTNS@ /qn
+  uninstcmd    C:\WINDOWS\system32\msiexec.exe /x @FILENS@ /l @DESTNS@_uninst.log /qn
+  doskey       node=
+  addbin       node.bat=~node.exe $*
