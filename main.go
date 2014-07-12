@@ -411,6 +411,7 @@ func (p *Prg) checkUninst() bool {
 	return true
 }
 
+// RegisterUrl maps id with an url
 func (p *Prg) RegisterUrl(id, url string) {
 	if p.pages == nil {
 		p.pages = make(map[string]string)
@@ -418,6 +419,7 @@ func (p *Prg) RegisterUrl(id, url string) {
 	p.pages[id] = url
 }
 
+// UrlFromId gets url from id
 func (p *Prg) UrlFromId(id string) string {
 	if p.pages != nil {
 		return p.pages[id]
