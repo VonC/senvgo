@@ -411,16 +411,16 @@ func (p *Prg) checkUninst() bool {
 	return true
 }
 
-// RegisterUrl maps id with an url
-func (p *Prg) RegisterUrl(id, url string) {
+// RegisterURL maps id with an url
+func (p *Prg) RegisterURL(id, url string) {
 	if p.pages == nil {
 		p.pages = make(map[string]string)
 	}
 	p.pages[id] = url
 }
 
-// UrlFromId gets url from id
-func (p *Prg) UrlFromId(id string) string {
+// ULRFromId gets url from id
+func (p *Prg) URLFromId(id string) string {
 	if p.pages != nil {
 		return p.pages[id]
 	}
@@ -436,7 +436,7 @@ type PrgData interface {
 	GetArchive() *Path
 	GetURL() *url.URL
 	GetFolder() *Path
-	UrlFromId(id string) string
+	URLFromId(id string) string
 	Replace(s string) string
 	AddMatch(match string)
 }
@@ -1867,8 +1867,8 @@ func (eg *ExtractorGet) ExtractFrom(data string) string {
 		return data
 	}
 	if strings.HasPrefix(data, "http") == false {
-		data = eg.Extractable.p.UrlFromId(data)
-		pdbg("=====> ExtractorGet.ExtractFrom UrlFromId data '%v'\n", data)
+		data = eg.Extractable.p.URLFromId(data)
+		pdbg("=====> ExtractorGet.ExtractFrom URLFromId data '%v'\n", data)
 	}
 	if data != "_" {
 		url, err := url.Parse(data)
@@ -2606,7 +2606,7 @@ func readConfigFile(sconfig string) []*Prg {
 				return nil
 			}
 			pdbg("Register id '%v' for url '%v'", id, url)
-			currentPrg.RegisterUrl(id, url)
+			currentPrg.RegisterURL(id, url)
 		}
 
 		variable := line[m[2]:m[3]]
