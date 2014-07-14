@@ -397,16 +397,15 @@ func (p *Prg) checkUninst() bool {
 	if out, err := c.Output(); err != nil {
 		pdbg("Error invoking UNINST '%v'\n''%v': %v'\n", cmd, string(out), err)
 		return false
-	} else {
-		record(fmt.Sprintf("[UNINST] '%v' invoked in '%v'\n", p.name, folderFull))
-		err := deleteFolderContent(folderFull.String())
-		if err != nil {
-			pdbg("Error removing UNINST folderFull '%v': '%v'\n", folderFull, err)
-			return false
-		}
-		if !p.isInstalled() {
-			return p.install()
-		}
+	}
+	record(fmt.Sprintf("[UNINST] '%v' invoked in '%v'\n", p.name, folderFull))
+	err := deleteFolderContent(folderFull.String())
+	if err != nil {
+		pdbg("Error removing UNINST folderFull '%v': '%v'\n", folderFull, err)
+		return false
+	}
+	if !p.isInstalled() {
+		return p.install()
 	}
 	return true
 }
@@ -2950,9 +2949,8 @@ func (p *Prg) install() bool {
 				}
 			}
 			return p.postInstall()
-		} else {
-			return false
 		}
+		return false
 	}
 	/*
 		if strings.Contains(folder, "Java_SE") {
@@ -3122,15 +3120,14 @@ func (p *Prg) BuildZip() bool {
 	if strings.HasPrefix(p.buildZip, "go:") {
 		methodName := strings.TrimSpace(p.buildZip[len("go:"):])
 		return p.callFunc(methodName, folderFull, archive)
-	} else {
-		portableArchive := NewPath(archive.NoExt().String() + ".zip")
-		pdbg("portableArchive '%v' (%v)", portableArchive, portableArchive.Exists())
-		if !portableArchive.Exists() {
-			compress7z(portableArchive, folderFull, nil, fmt.Sprintf("Compress '%v' for '%v'", portableArchive, p.GetName()), "zip")
-		}
-		cache.UpdateArchive(portableArchive, p.GetName(), true)
-		p.archive = portableArchive
 	}
+	portableArchive := NewPath(archive.NoExt().String() + ".zip")
+	pdbg("portableArchive '%v' (%v)", portableArchive, portableArchive.Exists())
+	if !portableArchive.Exists() {
+		compress7z(portableArchive, folderFull, nil, fmt.Sprintf("Compress '%v' for '%v'", portableArchive, p.GetName()), "zip")
+	}
+	cache.UpdateArchive(portableArchive, p.GetName(), true)
+	p.archive = portableArchive
 	return true
 }
 
@@ -3423,12 +3420,12 @@ func compress7z(archive, folder, file *Path, msg, format string) bool {
 	//cmd = fmt.Sprintf(`%v a -t%v%v -mmt=on -mx5 -mfb=32 -mpass=1 -sccUTF-8 -mem=AES256 -w%v %v %v%v`, cmd, format, deflate, parentfolder, farchive, ffolder.NoSep(), argFile)
 	pdbg("msg '%v' for archive '%v' argFile '%v' format '%v', ffolder '%v', deflate '%v' => 7zC...\n'%v'", msg, archive, file, format, ffolder, deflate, scmd)
 	c := exec.Command("cmd", cmd...)
-	if out, err := c.CombinedOutput(); err != nil {
+	out, err := c.CombinedOutput()
+	if err != nil {
 		pdbg("Error invoking 7zC '%v'\nout='%v' => err='%v'\n", cmd, string(out), err)
 		return false
-	} else {
-		pdbg("out '%v'", string(out))
 	}
+	pdbg("out '%v'", string(out))
 	pdbg("msg '%v' for archive '%v' argFile '%v' format '%v', ffolder '%v', deflate '%v' => 7zC... DONE\n'%v'", msg, archive, file, format, ffolder, deflate, scmd)
 	return true
 }
