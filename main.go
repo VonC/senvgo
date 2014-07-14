@@ -420,7 +420,7 @@ func (p *Prg) RegisterURL(id, url string) {
 }
 
 // ULRFromId gets url from id
-func (p *Prg) URLFromId(id string) string {
+func (p *Prg) URLFromID(id string) string {
 	if p.pages != nil {
 		return p.pages[id]
 	}
@@ -436,7 +436,7 @@ type PrgData interface {
 	GetArchive() *Path
 	GetURL() *url.URL
 	GetFolder() *Path
-	URLFromId(id string) string
+	URLFromID(id string) string
 	Replace(s string) string
 	AddMatch(match string)
 }
@@ -1867,8 +1867,8 @@ func (eg *ExtractorGet) ExtractFrom(data string) string {
 		return data
 	}
 	if strings.HasPrefix(data, "http") == false {
-		data = eg.Extractable.p.URLFromId(data)
-		pdbg("=====> ExtractorGet.ExtractFrom URLFromId data '%v'\n", data)
+		data = eg.Extractable.p.URLFromID(data)
+		pdbg("=====> ExtractorGet.ExtractFrom URLFromID data '%v'\n", data)
 	}
 	if data != "_" {
 		url, err := url.Parse(data)
