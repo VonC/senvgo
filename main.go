@@ -647,7 +647,7 @@ type Cache interface {
 	IsGitHub() bool
 	SetLimit(limit int, id string, name string)
 	GetLimit(name string) int
-	Id() string
+	ID() string
 }
 
 // CacheData has common data between different types od cache
@@ -659,7 +659,7 @@ type CacheData struct {
 	limits map[string]int
 }
 
-func (c *CacheData) Id() string {
+func (c *CacheData) ID() string {
 	return c.id
 }
 
@@ -1739,7 +1739,7 @@ func (c *CacheDisk) getFile(url *url.URL, name string) *Path {
 	rsc := c.getResourceName(url, name)
 	pattern := name + "_" + rsc + "_.*"
 	// if c.id == "secondary" {
-	pdbg("pattern '%v' for limit %v on cache id '%v'", pattern, c.GetLimit(""), c.Id())
+	pdbg("pattern '%v' for limit %v on cache id '%v'", pattern, c.GetLimit(""), c.ID())
 	c.trimFiles(pattern, name)
 	// }
 	filepath := dir.Add(getLastModifiedFile(dir, pattern))
@@ -2583,7 +2583,7 @@ func readConfigFile(sconfig string) []*Prg {
 			if serr != nil {
 				panic(serr)
 			}
-			cid := currentCache.Id()
+			cid := currentCache.ID()
 			currentCache.SetLimit(cl, cid, "")
 			continue
 		}
