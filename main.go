@@ -1591,13 +1591,13 @@ func pdbg(format string, args ...interface{}) string {
 	return res
 }
 
-var downloadedUrl = []*url.URL{}
+var downloadedURL = []*url.URL{}
 
 func alreadyDownloaded(u *url.URL) bool {
 	if u == nil {
 		return true
 	}
-	for _, uu := range downloadedUrl {
+	for _, uu := range downloadedURL {
 		if uu.String() == u.String() {
 			return true
 		}
@@ -1638,7 +1638,7 @@ func (c *CacheDisk) GetPage(url *url.URL, name string) *Path {
 		pdbg("Get '%v' downloads '%v' for '%v' wasNotFound='%v'\n", c.id, filename, url, wasNotFound)
 		if filepath == nil {
 			filepath = download(url, filename, 0, nil, "")
-			downloadedUrl = append(downloadedUrl, url)
+			downloadedURL = append(downloadedURL, url)
 		} else if wasNotFound {
 			filename = c.Folder(name).Add(filepath.Base())
 			pdbg("Copy filepath '%v' to filename='%v'", filepath, filename)
@@ -1651,7 +1651,7 @@ func (c *CacheDisk) GetPage(url *url.URL, name string) *Path {
 		} else if !alreadyDownloaded(url) {
 			// forcing download eventhough filepath is not nil
 			newFilePath := download(url, filename, 0, nil, "")
-			downloadedUrl = append(downloadedUrl, url)
+			downloadedURL = append(downloadedURL, url)
 			if filepath.SameContentAs(newFilePath) {
 				pdbg("SAME CONTENT for '%v' => going with older '%v'", url, filepath)
 				err := os.Remove(newFilePath.String())
