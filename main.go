@@ -1953,7 +1953,7 @@ func (j *repoJar) SetCookies(cookies []*http.Cookie) {
 }
 
 var mainRepoJar = &repoJar{}
-var mainHttpClient *http.Client
+var mainHTTPClient *http.Client
 
 func do(req *http.Request) (*http.Response, error) {
 	//debug.PrintStack()
@@ -1968,7 +1968,7 @@ func do(req *http.Request) (*http.Response, error) {
 	pdbg("(do) Sent header: '%v'\n", req.Header)
 	pdbg("(do) Sent body: '%+v'\n", req.Body)
 	pdbg("(do) -------\n")
-	//resp, err := mainHttpClient.Get(req.URL.String())
+	//resp, err := mainHTTPClient.Get(req.URL.String())
 
 	resp, err := getClient().Do(req)
 	if err != nil {
@@ -1991,7 +1991,7 @@ func redirectPolicy(req *http.Request, via []*http.Request) error {
 }
 
 func getClient() *http.Client {
-	if mainHttpClient == nil {
+	if mainHTTPClient == nil {
 		tr := &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		}
@@ -2005,12 +2005,12 @@ func getClient() *http.Client {
 			// http://stackoverflow.com/questions/14661511/setting-up-proxy-for-http-client
 			tr.Proxy = http.ProxyURL(proxyurl)
 		}
-		mainHttpClient = &http.Client{
+		mainHTTPClient = &http.Client{
 			CheckRedirect: redirectPolicy, //http.redirectPolicyFunc}
 			Transport:     tr,
 		}
 	}
-	return mainHttpClient
+	return mainHTTPClient
 }
 
 // http://play.golang.org/p/1LAEuOS-09
