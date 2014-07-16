@@ -1,0 +1,11 @@
+[ruby]
+  arch         i386,x64
+  test			   bin\ruby.exe
+  page.ruby    http://rubyinstaller.org/downloads/
+  url.get      ruby
+  url.rx       href="(http://dl.bintray.com/oneclick/rubyinstaller/ruby-.*?-_$arch_-mingw32.7z\?direct)"
+  name.get     _url
+  name.rx      (ruby-.*?\.7z)
+  folder.get   _name
+  folder.rx    (ruby-.*?)\.7z
+  doskey       ruby=
