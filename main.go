@@ -418,7 +418,7 @@ func (p *Prg) RegisterURL(id, url string) {
 	p.pages[id] = url
 }
 
-// ULRFromId gets url from id
+// URLFromID gets url from id
 func (p *Prg) URLFromID(id string) string {
 	if p.pages != nil {
 		return p.pages[id]
@@ -794,7 +794,7 @@ func (c *CacheGitHub) IsGitHub() bool {
 	return true
 }
 
-// Get gets or download zip archives only from GitHub
+// GetArchive gets or downloads zip archives only from GitHub
 func (c *CacheGitHub) GetArchive(p *Path, url *url.URL, name string, cookies []*http.Cookie, isExe bool, referer string) *Path {
 	pdbg("CacheGitHub.GetArchive '%v' for '%v' from '%v' (exe %v)\n", p, name, c, isExe)
 	if !p.isPortableCompressed() {
@@ -1047,7 +1047,7 @@ func (c *CacheGitHub) getRepo(name string) *github.Repository {
 	return repo
 }
 
-// Update make sure the zip archive is uploaded on GitHub as a release
+// UpdateArchive makes sure the zip archive is uploaded on GitHub as a release
 func (c *CacheGitHub) UpdateArchive(p *Path, name string, isExe bool) {
 	pdbg("UPDARC Github '%v' for '%v' from '%v'\n", p, name, c)
 	if !p.isPortableCompressed() {
@@ -1323,7 +1323,7 @@ func (c *CacheDisk) IsGitHub() bool {
 	return false
 }
 
-// Update updates c.last and all next caches c.last with content.
+// UpdateArchive updates c.last and all next caches c.last with content.
 func (c *CacheDisk) UpdateArchive(p *Path, name string, isExe bool) {
 	filepath := c.UpdateCache("[CacheDisk.UpdateArchive]", p, name)
 	if filepath != nil && c.next != nil {
@@ -1387,7 +1387,7 @@ func (c *CacheDisk) HasCacheDiskInNexts() bool {
 	return res
 }
 
-// Get will get either an url or an archive extension (exe, zip, tar.gz, ...)
+// GetArchive will get either an url or an archive extension (exe, zip, tar.gz, ...)
 func (c *CacheDisk) GetArchive(p *Path, url *url.URL, name string, cookies []*http.Cookie, isExe bool, referer string) *Path {
 	pdbg("[CacheDisk.GetArchive][%v]: '%v' for '%v' from '%v'\n", c.id, p, name, c)
 	if p.EndsWithSeparator() {
@@ -1605,7 +1605,7 @@ func alreadyDownloaded(u *url.URL) bool {
 	return false
 }
 
-// Get will get either an url or an archive extension (exe, zip, tar.gz, ...)
+// GetPage will get either an url or an archive extension (exe, zip, tar.gz, ...)
 func (c *CacheDisk) GetPage(url *url.URL, name string) *Path {
 	//debug.PrintStack()
 	pdbg("'%v' for '%v' from '%v'", url, name, c)
@@ -3688,7 +3688,7 @@ func get(iniValue *Path, ext Extractor, underscore bool, data string) *Path {
 	return NewPath(res)
 }
 
-// exists returns whether the given file or directory exists or not
+// Exists returns whether the given file or directory exists or not
 // http://stackoverflow.com/questions/10510691/how-to-check-whether-a-file-or-directory-denoted-by-a-path-exists-in-golang
 func (p Path) Exists() bool {
 	path := filepath.FromSlash(p.String())
