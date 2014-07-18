@@ -3051,7 +3051,7 @@ func (i Invoke) InstallJDK(folder *Path, archive *Path) bool {
 	if archive.HasTar() && !archiveTar.Exists() {
 		uncompress7z(archive, folder, nil, "Extract jdk tar from tar.gz", true)
 		if !archiveTar.Exists() {
-			fmt.Println("[InstallJDK] ERR: unable to access tar '%v'\n", archiveTar)
+			pdbg("ERR: unable to access tar '%v'", archiveTar)
 			return false
 		}
 		archiveTools = archiveTar
