@@ -1,0 +1,14 @@
+[ads]
+  arch         x86-,x86_64-
+  test			   Apache Directory Studio.exe
+  page.ads     http://directory.apache.org/studio/download/download-windows.html
+  url.get      ads
+  url.rx       href="(http://.*?/ApacheDirectoryStudio-win32-_$arch_.*?.exe)"
+  name.get     _url
+  name.rx      (ApacheDirectoryStudio-.*?\.exe)
+  folder.get   _name
+  folder.rx    (ApacheDirectoryStudio-.*?)\.(?:zip|exe)
+  invoke       @FILENS@ /S /D=@DESTNS@
+  uninstexe    Uninstall.exe
+  uninstcmd    @FILENS@ /LOG=@DESTNS@..\uninst.log /VERYSILENT /SUPPRESSMSGBOXES /NORESTART
+  doskey       ads=~Apache~1.exe
