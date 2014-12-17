@@ -2302,6 +2302,8 @@ func (er *ExtractorReplace) ExtractFrom(data string) string {
 	return res
 }
 
+// http://stackoverflow.com/questions/15326421/how-do-i-do-a-case-insensitive-regular-expression-in-go
+// flags in go regexp
 var cfgRx, _ = regexp.Compile(`^\s*?([^#/\.\s]+)\.([^\.\s]+)\s+(.*?)$`)
 
 func NewCacheDisk(id string, root *Path) *CacheDisk {
