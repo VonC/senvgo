@@ -10,10 +10,10 @@ import (
 func TestMain(t *testing.T) {
 
 	Convey("senvgo call be called", t, func() {
-		godbg.SetBuffers(nil)
+		SetBuffers(nil)
 		main()
 		So(OutString(), ShouldEqual, ``)
-		So(ErrString(), ShouldEqual, `  [main:7] (func.001:14)
+		So(ErrString(), ShouldEqualNL, `  [main:7] (func.001:14)
     senvgo
 `)
 	})
