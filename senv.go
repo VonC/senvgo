@@ -1,7 +1,7 @@
 package main
 
-import . "github.com/VonC/godbg"
+import "github.com/VonC/godbg"
 
 func main() {
-	Pdbgf("senvgo")
+	godbg.Pdbgf("senvgo")
 }
