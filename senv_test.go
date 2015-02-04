@@ -10,7 +10,6 @@ import (
 func TestMain(t *testing.T) {
 
 	Convey("senvgo main installation scenario with no command", t, func() {
-
 		SetBuffers(nil)
 		main()
 		So(OutString(), ShouldEqual, ``)
@@ -19,6 +18,12 @@ func TestMain(t *testing.T) {
 `)
 
 		Convey("No prg means no prgs installed", func() {
+			SetBuffers(nil)
+			main()
+			So(OutString(), ShouldEqual, ``)
+			So(ErrString(), ShouldEqualNL, `  &[main:7] (func.001:14)
+    senvgo
+    No program to install: nothing to do1.`)
 		})
 	})
 }
