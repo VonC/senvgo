@@ -7,10 +7,19 @@ import (
 	"github.com/VonC/godbg"
 )
 
+// By default, os.Exit()
+type ExitFunc func(int)
+
+var exit ExitFunc
+
+func init() {
+	exit = os.Exit
+}
+
 func main() {
 	godbg.Pdbgf("senvgo")
 	// http://stackoverflow.com/questions/18963984/exit-with-error-code-in-go
-	os.Exit(run())
+	exit(run())
 }
 
 func run() int {
