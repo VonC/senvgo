@@ -25,6 +25,6 @@ func main() {
 func run() int {
 	// here goes
 	// the code
-	fmt.Println("No program to install: nothing to do")
+	fmt.Fprintf(godbg.Out(), "No program to install: nothing to do")
 	return 0
 }

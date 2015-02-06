@@ -21,10 +21,10 @@ func TestMain(t *testing.T) {
 		Convey("No prg means no prgs installed", func() {
 			SetBuffers(nil)
 			main()
-			So(OutString(), ShouldEqual, ``)
-			So(ErrString(), ShouldEqualNL, `  &[main:7] (func.001:14)
+			So(OutString(), ShouldEqual, `No program to install: nothing to do`)
+			So(ErrString(), ShouldEqualNL, `  [main:7] (func.001:14)
     senvgo
-    No program to install: nothing to do1.`)
+`)
 		})
 	})
 }
