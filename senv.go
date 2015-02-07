@@ -2,24 +2,23 @@ package main
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/VonC/godbg"
+	"github.com/VonC/godbg/exit"
 )
 
-// By default, os.Exit()
-type ExitFunc func(int)
-
-var exit ExitFunc
+var exiter exit.Exiter
+var status int
 
 func init() {
-	exit = os.Exit
+	exiter = exit.DefaultExiter()
 }
 
 func main() {
 	godbg.Pdbgf("senvgo")
 	// http://stackoverflow.com/questions/18963984/exit-with-error-code-in-go
-	exit(run())
+	status = run()
+	exiter.Exit(status)
 }
 
 func run() int {
