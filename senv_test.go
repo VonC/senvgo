@@ -27,6 +27,7 @@ func TestMain(t *testing.T) {
 			So(ErrString(), ShouldEqualNL, `  [main:7] (func.001:14)
     senvgo
 `)
+			So(exiter.Status(), ShouldEqual, 0)
 		})
 	})
 }
