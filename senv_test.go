@@ -10,7 +10,7 @@ import (
 
 func TestMain(t *testing.T) {
 
-	exiter = exit.NewExiter(func(int) {})
+	exiter = exit.New(func(int) {})
 
 	Convey("senvgo main installation scenario with no command", t, func() {
 		SetBuffers(nil)

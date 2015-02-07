@@ -11,7 +11,7 @@ var exiter *exit.Exit
 var status int
 
 func init() {
-	exiter = exit.DefaultExiter()
+	exiter = exit.Default()
 }
 
 func main() {
