@@ -15,7 +15,7 @@ func TestMain(t *testing.T) {
 	Convey("senvgo main installation scenario with no command", t, func() {
 		SetBuffers(nil)
 		main()
-		So(ErrString(), ShouldEqualNL, `  [main:7] (func.001:14)
+		So(ErrString(), ShouldEqualNL, `  [main] (func)
     senvgo
 `)
 		So(exiter.Status(), ShouldEqual, 0)
@@ -24,10 +24,11 @@ func TestMain(t *testing.T) {
 			SetBuffers(nil)
 			main()
 			So(OutString(), ShouldEqual, `No program to install: nothing to do`)
-			So(ErrString(), ShouldEqualNL, `  [main:7] (func.001:14)
+			So(ErrString(), ShouldEqualNL, `  [main] (func)
     senvgo
 `)
 			So(exiter.Status(), ShouldEqual, 0)
 		})
+
 	})
 }
