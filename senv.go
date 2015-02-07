@@ -7,7 +7,7 @@ import (
 	"github.com/VonC/godbg/exit"
 )
 
-var exiter exit.Exiter
+var exiter *exit.Exit
 var status int
 
 func init() {
