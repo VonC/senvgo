@@ -5,13 +5,16 @@ import (
 
 	"github.com/VonC/godbg"
 	"github.com/VonC/godbg/exit"
+	"github.com/VonC/senvgo/prgs"
 )
 
 var exiter *exit.Exit
 var status int
+var prgsGetter prgs.PGetter
 
 func init() {
 	exiter = exit.Default()
+	prgsGetter = prgs.Getter()
 }
 
 func main() {
@@ -22,8 +25,9 @@ func main() {
 }
 
 func run() int {
-	// here goes
-	// the code
-	fmt.Fprintf(godbg.Out(), "No program to install: nothing to do")
+	prgs := prgsGetter.Get()
+	if len(prgs) == 0 {
+		fmt.Fprintf(godbg.Out(), "No program to install: nothing to do")
+	}
 	return 0
 }

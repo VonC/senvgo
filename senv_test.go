@@ -5,8 +5,15 @@ import (
 
 	. "github.com/VonC/godbg"
 	"github.com/VonC/godbg/exit"
+	"github.com/VonC/senvgo/prgs"
 	. "github.com/smartystreets/goconvey/convey"
 )
+
+type testGetter0Prg struct{}
+
+func (tg testGetter0Prg) Get() []*prgs.Prg {
+	return []*prgs.Prg{}
+}
 
 func TestMain(t *testing.T) {
 
@@ -14,6 +21,7 @@ func TestMain(t *testing.T) {
 
 	Convey("senvgo main installation scenario with no command", t, func() {
 		SetBuffers(nil)
+		prgsGetter = testGetter0Prg{}
 		main()
 		So(ErrString(), ShouldEqualNL, `  [main] (func)
     senvgo
@@ -30,5 +38,6 @@ func TestMain(t *testing.T) {
 			So(exiter.Status(), ShouldEqual, 0)
 		})
 
+		// Convey("A program already installed means nothing to do", func() {
 	})
 }
