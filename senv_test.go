@@ -11,8 +11,14 @@ import (
 
 type testGetter0Prg struct{}
 
-func (tg testGetter0Prg) Get() []*prgs.Prg {
+func (tg0 testGetter0Prg) Get() []*prgs.Prg {
 	return []*prgs.Prg{}
+}
+
+type testGetter3Prgs struct{}
+
+func (tg3 testGetter3Prgs) Get() []*prgs.Prg {
+	return []*prgs.Prg{&prgs.Prg{}, &prgs.Prg{}, &prgs.Prg{}}
 }
 
 func TestMain(t *testing.T) {
@@ -36,6 +42,10 @@ func TestMain(t *testing.T) {
     senvgo
 `)
 			So(exiter.Status(), ShouldEqual, 0)
+			prgsGetter = testGetter3Prgs{}
+			SetBuffers(nil)
+			main()
+			So(OutString(), ShouldNotEqual, `No program to install: nothing to do`)
 		})
 
 		// Convey("A program already installed means nothing to do", func() {
