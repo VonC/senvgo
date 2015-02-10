@@ -9,8 +9,8 @@ import (
 
 type testGetter struct{}
 
-func (tg testGetter) Get() []*Prg {
-	return []*Prg{&Prg{}}
+func (tg testGetter) Get() []Prg {
+	return []Prg{&prg{}}
 }
 func TestMain(t *testing.T) {
 
@@ -20,4 +20,14 @@ func TestMain(t *testing.T) {
 		getter = testGetter{}
 		So(len(Getter().Get()), ShouldEqual, 1)
 	})
+
+	Convey("Prg implements a Prger", t, func() {
+		Convey("Prg has a name", func() {
+			p := &prg{name: "prg1"}
+			So(p.Name(), ShouldEqual, "prg1")
+			var prg Prg = p
+			So(prg.Name(), ShouldEqual, "prg1")
+		})
+	})
+
 }
