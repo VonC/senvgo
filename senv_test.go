@@ -10,15 +10,18 @@ import (
 )
 
 type testGetter0Prg struct{}
+type testPrg struct{ name string }
 
-func (tg0 testGetter0Prg) Get() []*prgs.Prg {
-	return []*prgs.Prg{}
+func (tp *testPrg) Name() string { return tp.name }
+
+func (tg0 testGetter0Prg) Get() []prgs.Prg {
+	return []prgs.Prg{}
 }
 
 type testGetter3Prgs struct{}
 
-func (tg3 testGetter3Prgs) Get() []*prgs.Prg {
-	return []*prgs.Prg{&prgs.Prg{}, &prgs.Prg{}, &prgs.Prg{}}
+func (tg3 testGetter3Prgs) Get() []prgs.Prg {
+	return []prgs.Prg{&testPrg{name: "prg1"}, &testPrg{name: "prg2"}, &testPrg{name: "prg3"}}
 }
 
 func TestMain(t *testing.T) {
