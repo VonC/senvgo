@@ -51,6 +51,14 @@ func TestMain(t *testing.T) {
 			So(OutString(), ShouldNotEqual, `No program to install: nothing to do`)
 		})
 
-		// Convey("A program already installed means nothing to do", func() {
+		Convey("A program already installed means nothing to do", func() {
+			prgsGetter = testGetter3Prgs{}
+			SetBuffers(nil)
+			main()
+			So(OutString(), ShouldNotEqual, `'prg1' (1/3)... already installed: nothing to do
+'prg3' (2/3)... already installed: nothing to do
+'prg3' (3/3)... already installed: nothing to do
+				`)
+		})
 	})
 }
