@@ -55,10 +55,10 @@ func TestMain(t *testing.T) {
 			prgsGetter = testGetter3Prgs{}
 			SetBuffers(nil)
 			main()
-			So(OutString(), ShouldNotEqual, `'prg1' (1/3)... already installed: nothing to do
-'prg3' (2/3)... already installed: nothing to do
+			So(OutString(), ShouldEqual, `'prg1' (1/3)... already installed: nothing to do
+'prg2' (2/3)... already installed: nothing to do
 'prg3' (3/3)... already installed: nothing to do
-				`)
+`)
 		})
 	})
 }
