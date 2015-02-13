@@ -11,8 +11,8 @@ type inst struct {
 
 // Inst defines what kind of service a program installer has to provide
 type Inst interface {
-	// IsAlreadyInstalled checks if a program is already installed locally
-	IsAlreadyInstalled() bool
+	// IsInstalled checks if a program is already installed locally
+	IsInstalled() bool
 }
 
 // New returns a new installer instance for a given program
@@ -20,6 +20,6 @@ func New(p prgs.Prg) Inst {
 	return &inst{p: p}
 }
 
-func (i *inst) IsAlreadyInstalled() bool {
+func (i *inst) IsInstalled() bool {
 	return false
 }

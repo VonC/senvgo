@@ -13,8 +13,8 @@ type testPrg struct{ name string }
 
 func (tp *testPrg) Name() string { return tp.name }
 
-func (tg testInstaller) IsAlreadyInstalled() bool {
-	tg.i.IsAlreadyInstalled()
+func (tg testInstaller) IsInstalled() bool {
+	tg.i.IsInstalled()
 	return true
 }
 func TestMain(t *testing.T) {
@@ -26,7 +26,7 @@ func TestMain(t *testing.T) {
 		So(inst1.(*inst).p.Name(), ShouldEqual, "prg1")
 		inst1 = &testInstaller{i: inst1}
 		Convey("an installer can test if the program is already installed", func() {
-			So(inst1.IsAlreadyInstalled(), ShouldBeTrue)
+			So(inst1.IsInstalled(), ShouldBeTrue)
 		})
 	})
 
