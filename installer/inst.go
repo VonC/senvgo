@@ -13,6 +13,8 @@ type inst struct {
 type Inst interface {
 	// IsInstalled checks if a program is already installed locally
 	IsInstalled() bool
+	// hasFailed checks if a program has failed to install locally
+	hasFailed() bool
 }
 
 // New returns a new installer instance for a given program
@@ -22,4 +24,7 @@ func New(p prgs.Prg) Inst {
 
 func (i *inst) IsInstalled() bool {
 	return false
+}
+func (i *inst) hasFailed() bool {
+	return true
 }

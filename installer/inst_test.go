@@ -17,6 +17,10 @@ func (tg testInstaller) IsInstalled() bool {
 	tg.i.IsInstalled()
 	return true
 }
+func (tg testInstaller) hasFailed() bool {
+	tg.i.hasFailed()
+	return false
+}
 func TestMain(t *testing.T) {
 
 	Convey("For a given installer", t, func() {
@@ -27,6 +31,9 @@ func TestMain(t *testing.T) {
 		inst1 = &testInstaller{i: inst1}
 		Convey("an installer can test if the program is already installed", func() {
 			So(inst1.IsInstalled(), ShouldBeTrue)
+		})
+		Convey("an installer can test if the program has failed to install", func() {
+			So(inst1.hasFailed(), ShouldBeFalse)
 		})
 	})
 
