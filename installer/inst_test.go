@@ -13,12 +13,12 @@ type testPrg struct{ name string }
 
 func (tp *testPrg) Name() string { return tp.name }
 
-func (tg testInstaller) IsInstalled() bool {
-	tg.i.IsInstalled()
+func (ti testInstaller) IsInstalled() bool {
+	ti.i.IsInstalled()
 	return true
 }
-func (tg testInstaller) hasFailed() bool {
-	tg.i.hasFailed()
+func (ti testInstaller) HasFailed() bool {
+	ti.i.HasFailed()
 	return false
 }
 func TestMain(t *testing.T) {
@@ -33,7 +33,7 @@ func TestMain(t *testing.T) {
 			So(inst1.IsInstalled(), ShouldBeTrue)
 		})
 		Convey("an installer can test if the program has failed to install", func() {
-			So(inst1.hasFailed(), ShouldBeFalse)
+			So(inst1.HasFailed(), ShouldBeFalse)
 		})
 	})
 
