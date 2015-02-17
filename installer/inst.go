@@ -11,6 +11,8 @@ type inst struct {
 
 // Inst defines what kind of service a program installer has to provide
 type Inst interface {
+	// Install does a program installation
+	Install() error
 	// IsInstalled checks if a program is already installed locally
 	IsInstalled() bool
 	// HasFailed checks if a program has failed to install locally
@@ -27,4 +29,8 @@ func (i *inst) IsInstalled() bool {
 }
 func (i *inst) HasFailed() bool {
 	return true
+}
+
+func (i *inst) Install() error {
+	return nil
 }
