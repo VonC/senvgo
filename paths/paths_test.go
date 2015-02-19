@@ -13,12 +13,13 @@ import (
 
 func TestPath(t *testing.T) {
 
-	Convey("An empty path remains empty", t, func() {
-		SetBuffers(nil)
-		p := NewPath("")
-		So(p.path, ShouldEqual, "")
+	Convey("Tests for Path", t, func() {
+		Convey("An empty path remains empty", func() {
+			SetBuffers(nil)
+			p := NewPath("")
+			So(p.path, ShouldEqual, "")
+		})
 	})
-
 }
 
 type testPrg struct{ name string }
