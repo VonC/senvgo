@@ -10,7 +10,8 @@ import (
 	"github.com/VonC/senvgo/prgs"
 )
 
-// Path represents a filename path, always '/' separated
+// Path represents a path always '/' separated.
+// Either filename or http://...
 type Path struct {
 	path string
 }

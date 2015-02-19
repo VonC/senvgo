@@ -11,6 +11,16 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
+func TestPath(t *testing.T) {
+
+	Convey("An empty path remains empty", t, func() {
+		SetBuffers(nil)
+		p := NewPath("")
+		So(p.path, ShouldEqual, "")
+	})
+
+}
+
 type testPrg struct{ name string }
 
 func (tp *testPrg) Name() string { return tp.name }
