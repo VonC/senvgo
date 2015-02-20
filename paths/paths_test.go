@@ -19,6 +19,12 @@ func TestPath(t *testing.T) {
 			p := NewPath("")
 			So(p.path, ShouldEqual, "")
 		})
+
+		Convey("An http path remains unchanged", func() {
+			SetBuffers(nil)
+			p := NewPath(`http://a\b/../c`)
+			So(p.path, ShouldEqual, `http://a\b/../c`)
+		})
 	})
 }
 
