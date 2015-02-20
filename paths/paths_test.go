@@ -25,6 +25,17 @@ func TestPath(t *testing.T) {
 			p := NewPath(`http://a\b/../c`)
 			So(p.path, ShouldEqual, `http://a\b/../c`)
 		})
+		Convey("A path without trailing / must have one if it is an existing folder", func() {
+			SetBuffers(nil)
+			p := NewPath(`../paths`)
+			So(p.path, ShouldEqual, `..\paths\`)
+		})
+		Convey("A path without trailing / must keep it even if it is not an existing folder", func() {
+			SetBuffers(nil)
+			p := NewPath(`xxx\`)
+			p = NewPath(`xxx/`)
+			So(p.path, ShouldEqual, `xxx\`)
+		})
 	})
 }
 

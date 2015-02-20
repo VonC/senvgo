@@ -22,14 +22,11 @@ func NewPath(p string) *Path {
 	res := &Path{path: p}
 	if strings.HasPrefix(res.path, "http") == false {
 		res.path = filepath.FromSlash(p)
+		// fmt.Printf("p '%s' vs. res.path '%s'\n", p, res.path)
 		// If there is no trailing '/' (after the filepath.FromSlash() call),
 		// check if one should be added:
 		if !strings.HasSuffix(res.path, string(filepath.Separator)) && res.path != "" {
 			if res.Exists() && res.IsDir() {
-				res.path = res.path + string(filepath.Separator)
-			} else if strings.HasSuffix(p, string(filepath.Separator)) {
-				// preserve the trailing '/' initially passed in 'p'
-				// even if the actual path might not be a folder
 				res.path = res.path + string(filepath.Separator)
 			}
 		}
