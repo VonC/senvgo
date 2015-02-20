@@ -13,7 +13,7 @@ import (
 
 func TestPath(t *testing.T) {
 
-	Convey("Tests for Path", t, func() {
+	FocusConvey("Tests for Path", t, func() {
 		Convey("An empty path remains empty", func() {
 			SetBuffers(nil)
 			p := NewPath("")
@@ -35,6 +35,12 @@ func TestPath(t *testing.T) {
 			p := NewPath(`xxx\`)
 			p = NewPath(`xxx/`)
 			So(p.path, ShouldEqual, `xxx\`)
+		})
+
+		FocusConvey("A Path can test if it is a Dir", func() {
+			SetBuffers(nil)
+			p := NewPath("")
+			So(p.IsDir(), ShouldBeFalse)
 		})
 	})
 }
