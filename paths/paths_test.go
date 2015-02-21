@@ -78,6 +78,7 @@ func TestMain(t *testing.T) {
 			err := tpw.WritePath(prgs, tpw.b)
 			So(err, ShouldBeNil)
 			So(tpw.b.String(), ShouldEqual, "prg1prg2")
+			So(NoOutput(), ShouldBeTrue)
 		})
 
 		Convey("A Path writer can report error during writing", func() {
@@ -87,6 +88,7 @@ func TestMain(t *testing.T) {
 			err := tpw.WritePath(prgs, tw)
 			So(err.Error(), ShouldEqual, "Error writing 'prg2'")
 			So(tpw.b.String(), ShouldEqual, "prg1")
+			So(NoOutput(), ShouldBeTrue)
 		})
 	})
 }
