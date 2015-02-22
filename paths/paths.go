@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/VonC/godbg"
 	"github.com/VonC/senvgo/prgs"
 )
 
@@ -39,13 +40,13 @@ func NewPath(p string) *Path {
 func (p *Path) IsDir() bool {
 	f, err := os.Open(p.path)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Fprintln(godbg.Err(), err)
 		return false
 	}
 	defer f.Close()
 	fi, err := f.Stat()
 	if err != nil {
-		fmt.Println(err)
+		fmt.Fprintln(godbg.Err(), err)
 		return false
 	}
 	switch mode := fi.Mode(); {

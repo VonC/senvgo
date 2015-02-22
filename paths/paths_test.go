@@ -18,29 +18,36 @@ func TestPath(t *testing.T) {
 			SetBuffers(nil)
 			p := NewPath("")
 			So(p.path, ShouldEqual, "")
+			So(NoOutput(), ShouldBeTrue)
 		})
 
 		Convey("An http path remains unchanged", func() {
 			SetBuffers(nil)
 			p := NewPath(`http://a\b/../c`)
 			So(p.path, ShouldEqual, `http://a\b/../c`)
+			So(NoOutput(), ShouldBeTrue)
 		})
 		Convey("A path without trailing / must have one if it is an existing folder", func() {
 			SetBuffers(nil)
 			p := NewPath(`../paths`)
 			So(p.path, ShouldEqual, `..\paths\`)
+			So(NoOutput(), ShouldBeTrue)
 		})
 		Convey("A path without trailing / must keep it even if it is not an existing folder", func() {
 			SetBuffers(nil)
 			p := NewPath(`xxx\`)
 			p = NewPath(`xxx/`)
 			So(p.path, ShouldEqual, `xxx\`)
+			So(NoOutput(), ShouldBeTrue)
 		})
 
 		FocusConvey("A Path can test if it is a Dir", func() {
 			SetBuffers(nil)
 			p := NewPath("")
 			So(p.IsDir(), ShouldBeFalse)
+			So(OutString(), ShouldBeEmpty)
+			So(ErrString(), ShouldEqual, `open : The system cannot find the file specified.
+`)
 		})
 	})
 }
