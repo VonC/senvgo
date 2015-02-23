@@ -75,13 +75,12 @@ func TestPath(t *testing.T) {
 		})
 		Convey("IsDir() can fail on f.Stat()", func() {
 			// Errors
-			SetBuffers(nil)
 			fstat = testerrfstat
 			p := NewPath("..")
+			SetBuffers(nil)
 			So(p.IsDir(), ShouldBeFalse)
 			So(OutString(), ShouldBeEmpty)
 			So(ErrString(), ShouldEqual, `fstat error on '..'
-fstat error on '..'
 `)
 			So(p.path, ShouldEqual, `..`)
 			fstat = ifstat
