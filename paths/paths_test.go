@@ -125,7 +125,7 @@ fstat error on '..'
 			p := NewPath("test")
 			So(p.Exists(), ShouldBeFalse)
 			So(OutString(), ShouldBeEmpty)
-			So(ErrString(), ShouldEqual, ``)
+			So(ErrString(), ShouldEqual, `a`)
 			So(p.path, ShouldEqual, `test`)
 			fosstat = ifosstat
 		})
