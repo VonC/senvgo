@@ -14,7 +14,7 @@ import (
 
 func TestPath(t *testing.T) {
 
-	Convey("Tests for Path", t, func() {
+	Convey("Tests for NewPath", t, func() {
 		Convey("An empty path remains empty", func() {
 			SetBuffers(nil)
 			p := NewPath("")
@@ -41,6 +41,9 @@ func TestPath(t *testing.T) {
 			So(p.path, ShouldEqual, `xxx\`)
 			So(NoOutput(), ShouldBeTrue)
 		})
+	})
+
+	Convey("Tests for IsDir", t, func() {
 
 		Convey("A Path can test if it is a Dir", func() {
 			SetBuffers(nil)
@@ -49,17 +52,19 @@ func TestPath(t *testing.T) {
 			So(OutString(), ShouldBeEmpty)
 			So(ErrString(), ShouldEqual, `open : The system cannot find the file specified.
 `)
+		})
 
-			// Existing files
+		Convey("An existing file is not a dir", func() {
 			SetBuffers(nil)
-			p = NewPath("paths_test.go")
+			p := NewPath("paths_test.go")
 			So(p.IsDir(), ShouldBeFalse)
 			So(NoOutput(), ShouldBeTrue)
 			So(p.path, ShouldEqual, `paths_test.go`)
+		})
 
-			// Existing folders
+		Convey("An existing folder is a dir", func() {
 			SetBuffers(nil)
-			p = NewPath("..")
+			p := NewPath("..")
 			So(p.IsDir(), ShouldBeTrue)
 			So(NoOutput(), ShouldBeTrue)
 			So(p.path, ShouldEqual, `..\`)
@@ -67,11 +72,12 @@ func TestPath(t *testing.T) {
 			So(p.IsDir(), ShouldBeTrue)
 			So(NoOutput(), ShouldBeTrue)
 			So(p.path, ShouldEqual, `..\paths\`)
-
+		})
+		Convey("IsDir() can fail on f.Stat()", func() {
 			// Errors
 			SetBuffers(nil)
 			fstat = testerrfstat
-			p = NewPath("..")
+			p := NewPath("..")
 			So(p.IsDir(), ShouldBeFalse)
 			So(OutString(), ShouldBeEmpty)
 			So(ErrString(), ShouldEqual, `fstat error on '..'
@@ -80,9 +86,11 @@ fstat error on '..'
 			So(p.path, ShouldEqual, `..`)
 			fstat = ifstat
 		})
+	})
 
-		Convey("A Path can test if it exists", func() {
-			// non-Existing paths (files or folders)
+	Convey("Tests for Exists()", t, func() {
+
+		Convey("Non-existing path must not exist", func() {
 			SetBuffers(nil)
 			p := NewPath("")
 			So(p.Exists(), ShouldBeFalse)
@@ -94,10 +102,11 @@ fstat error on '..'
 			So(p.Exists(), ShouldBeFalse)
 			So(NoOutput(), ShouldBeTrue)
 			So(p.path, ShouldEqual, `xxx`)
-
+		})
+		Convey("Existing path must exist", func() {
 			// Existing paths (files or folders)
 			SetBuffers(nil)
-			p = NewPath("paths_test.go")
+			p := NewPath("paths_test.go")
 			So(p.Exists(), ShouldBeTrue)
 			So(NoOutput(), ShouldBeTrue)
 			So(p.path, ShouldEqual, `paths_test.go`)
@@ -107,54 +116,62 @@ fstat error on '..'
 			So(p.Exists(), ShouldBeTrue)
 			So(NoOutput(), ShouldBeTrue)
 			So(p.path, ShouldEqual, `..\paths\`)
+		})
 
+		Convey("Exists() can fail on os.Stat()", func() {
 			// Stat error on path
 			SetBuffers(nil)
 			fosstat = testerrosfstat
-			p = NewPath("test")
+			p := NewPath("test")
 			So(p.Exists(), ShouldBeFalse)
 			So(OutString(), ShouldBeEmpty)
 			So(ErrString(), ShouldEqual, ``)
 			So(p.path, ShouldEqual, `test`)
 			fosstat = ifosstat
 		})
+	})
 
-		Convey("A Path can print itself", func() {
+	Convey("Tests for Path.String()", t, func() {
 
-			// nil path is '<nil>'
+		Convey("nil path is '<nil>'", func() {
 			SetBuffers(nil)
 			var p *Path
 			So(p.String(), ShouldEqual, `<nil>`)
 			So(NoOutput(), ShouldBeTrue)
 
-			// file or folder are unchanged
+		})
+
+		Convey("files or folders are unchanged", func() {
 			SetBuffers(nil)
-			p = NewPath("test")
+			p := NewPath("test")
 			So(p.String(), ShouldEqual, `test`)
 			So(NoOutput(), ShouldBeTrue)
+		})
 
-			// long file or folder are truncated
+		Convey("long files or folders are abbreviated", func() {
 			SetBuffers(nil)
 			var data []byte
 			data = append(data, ([]byte("long string with "))...)
 			for i := 0; i < 100; i++ {
 				data = append(data, ([]byte("abcd"))...)
 			}
-			p = NewPath(string(data))
+			p := NewPath(string(data))
 			So(p.String(), ShouldEqual, `long string with abc (417)`)
 			So(NoOutput(), ShouldBeTrue)
 		})
+	})
 
-		Convey("A Path can have a trailing separator", func() {
+	Convey("Tests for NewPathDir()", t, func() {
+		Convey("Path with a trailing separator should keep it", func() {
 			// Path with a trailing separator should keep it
 			SetBuffers(nil)
 			p := NewPathDir("xxx/")
 			So(NoOutput(), ShouldBeTrue)
 			So(p.path, ShouldEqual, `xxx\`)
-
-			// Path with a trailing separator should keep it
+		})
+		Convey("Path without a trailing separator should have one", func() {
 			SetBuffers(nil)
-			p = NewPathDir("yyy")
+			p := NewPathDir("yyy")
 			So(NoOutput(), ShouldBeTrue)
 			So(p.path, ShouldEqual, `yyy\`)
 		})
