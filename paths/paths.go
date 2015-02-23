@@ -35,6 +35,17 @@ func NewPath(p string) *Path {
 	return res
 }
 
+// NewPathDir will create a Path *always* terminated with a traling '/'.
+// Handy for folders which doesn't exist yet
+func NewPathDir(p string) *Path {
+	res := &Path{}
+	res.path = filepath.FromSlash(p)
+	if !strings.HasSuffix(res.path, string(filepath.Separator)) {
+		res.path = res.path + string(filepath.Separator)
+	}
+	return res
+}
+
 var fstat func(f *os.File) (fi os.FileInfo, err error)
 
 func ifstat(f *os.File) (fi os.FileInfo, err error) {
