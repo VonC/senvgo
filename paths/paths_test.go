@@ -42,7 +42,7 @@ func TestPath(t *testing.T) {
 			So(NoOutput(), ShouldBeTrue)
 		})
 
-		FocusConvey("A Path can test if it is a Dir", func() {
+		Convey("A Path can test if it is a Dir", func() {
 			SetBuffers(nil)
 			p := NewPath("")
 			So(p.IsDir(), ShouldBeFalse)
@@ -78,6 +78,8 @@ func TestPath(t *testing.T) {
 fstat error on '..'
 `)
 			So(p.path, ShouldEqual, `..`)
+			fstat = ifstat
+
 		})
 	})
 }
