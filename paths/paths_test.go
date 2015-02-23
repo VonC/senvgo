@@ -81,7 +81,7 @@ fstat error on '..'
 			fstat = ifstat
 		})
 
-		FocusConvey("A Path can test if it exists", func() {
+		Convey("A Path can test if it exists", func() {
 			// non-Existing paths (files or folders)
 			SetBuffers(nil)
 			p := NewPath("")
@@ -117,6 +117,32 @@ fstat error on '..'
 			So(ErrString(), ShouldEqual, ``)
 			So(p.path, ShouldEqual, `test`)
 			fosstat = ifosstat
+		})
+
+		FocusConvey("A Path can print itself", func() {
+
+			// nil path is '<nil>'
+			SetBuffers(nil)
+			var p *Path
+			So(p.String(), ShouldEqual, `<nil>`)
+			So(NoOutput(), ShouldBeTrue)
+
+			// file or folder are unchanged
+			SetBuffers(nil)
+			p = NewPath("test")
+			So(p.String(), ShouldEqual, `test`)
+			So(NoOutput(), ShouldBeTrue)
+
+			// long file or folder are truncated
+			SetBuffers(nil)
+			var data []byte
+			data = append(data, ([]byte("long string with "))...)
+			for i := 0; i < 100; i++ {
+				data = append(data, ([]byte("abcd"))...)
+			}
+			p = NewPath(string(data))
+			So(p.String(), ShouldEqual, `long string with abc (417)`)
+			So(NoOutput(), ShouldBeTrue)
 		})
 	})
 }
