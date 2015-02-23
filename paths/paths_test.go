@@ -14,7 +14,7 @@ import (
 
 func TestPath(t *testing.T) {
 
-	FocusConvey("Tests for Path", t, func() {
+	Convey("Tests for Path", t, func() {
 		Convey("An empty path remains empty", func() {
 			SetBuffers(nil)
 			p := NewPath("")
@@ -119,7 +119,7 @@ fstat error on '..'
 			fosstat = ifosstat
 		})
 
-		FocusConvey("A Path can print itself", func() {
+		Convey("A Path can print itself", func() {
 
 			// nil path is '<nil>'
 			SetBuffers(nil)
