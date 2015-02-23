@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"os"
 	"testing"
 
 	. "github.com/VonC/godbg"
@@ -66,8 +67,23 @@ func TestPath(t *testing.T) {
 			So(p.IsDir(), ShouldBeTrue)
 			So(NoOutput(), ShouldBeTrue)
 			So(p.path, ShouldEqual, `..\paths\`)
+
+			// Errors
+			SetBuffers(nil)
+			fstat = testerrfstat
+			p = NewPath("..")
+			So(p.IsDir(), ShouldBeFalse)
+			So(OutString(), ShouldBeEmpty)
+			So(ErrString(), ShouldEqual, `fstat error on '..'
+fstat error on '..'
+`)
+			So(p.path, ShouldEqual, `..`)
 		})
 	})
+}
+
+func testerrfstat(f *os.File) (fi os.FileInfo, err error) {
+	return nil, fmt.Errorf("fstat error on '%+v'", f.Name())
 }
 
 type testPrg struct{ name string }
