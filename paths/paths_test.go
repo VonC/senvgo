@@ -144,6 +144,20 @@ fstat error on '..'
 			So(p.String(), ShouldEqual, `long string with abc (417)`)
 			So(NoOutput(), ShouldBeTrue)
 		})
+
+		Convey("A Path can have a trailing separator", func() {
+			// Path with a trailing separator should keep it
+			SetBuffers(nil)
+			p := NewPathDir("xxx/")
+			So(NoOutput(), ShouldBeTrue)
+			So(p.path, ShouldEqual, `xxx\`)
+
+			// Path with a trailing separator should keep it
+			SetBuffers(nil)
+			p = NewPathDir("yyy")
+			So(NoOutput(), ShouldBeTrue)
+			So(p.path, ShouldEqual, `yyy\`)
+		})
 	})
 }
 
