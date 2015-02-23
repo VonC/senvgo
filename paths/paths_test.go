@@ -48,6 +48,15 @@ func TestPath(t *testing.T) {
 			So(OutString(), ShouldBeEmpty)
 			So(ErrString(), ShouldEqual, `open : The system cannot find the file specified.
 `)
+			SetBuffers(nil)
+			p = NewPath("..")
+			So(p.IsDir(), ShouldBeTrue)
+			So(NoOutput(), ShouldBeTrue)
+			So(p.path, ShouldEqual, `..\`)
+			p = NewPath("../paths")
+			So(p.IsDir(), ShouldBeTrue)
+			So(NoOutput(), ShouldBeTrue)
+			So(p.path, ShouldEqual, `..\paths\`)
 		})
 	})
 }
