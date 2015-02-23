@@ -79,13 +79,53 @@ fstat error on '..'
 `)
 			So(p.path, ShouldEqual, `..`)
 			fstat = ifstat
+		})
 
+		FocusConvey("A Path can test if it exists", func() {
+			// non-Existing paths (files or folders)
+			SetBuffers(nil)
+			p := NewPath("")
+			So(p.Exists(), ShouldBeFalse)
+			So(NoOutput(), ShouldBeTrue)
+			So(p.path, ShouldEqual, ``)
+
+			SetBuffers(nil)
+			p = NewPath("xxx")
+			So(p.Exists(), ShouldBeFalse)
+			So(NoOutput(), ShouldBeTrue)
+			So(p.path, ShouldEqual, `xxx`)
+
+			// Existing paths (files or folders)
+			SetBuffers(nil)
+			p = NewPath("paths_test.go")
+			So(p.Exists(), ShouldBeTrue)
+			So(NoOutput(), ShouldBeTrue)
+			So(p.path, ShouldEqual, `paths_test.go`)
+
+			SetBuffers(nil)
+			p = NewPath("../paths")
+			So(p.Exists(), ShouldBeTrue)
+			So(NoOutput(), ShouldBeTrue)
+			So(p.path, ShouldEqual, `..\paths\`)
+
+			// Stat error on path
+			SetBuffers(nil)
+			fosstat = testerrosfstat
+			p = NewPath("test")
+			So(p.Exists(), ShouldBeFalse)
+			So(OutString(), ShouldBeEmpty)
+			So(ErrString(), ShouldEqual, ``)
+			So(p.path, ShouldEqual, `test`)
+			fosstat = ifosstat
 		})
 	})
 }
 
 func testerrfstat(f *os.File) (fi os.FileInfo, err error) {
 	return nil, fmt.Errorf("fstat error on '%+v'", f.Name())
+}
+func testerrosfstat(name string) (fi os.FileInfo, err error) {
+	return nil, fmt.Errorf("os.Stat() error on '%+v'", name)
 }
 
 type testPrg struct{ name string }
