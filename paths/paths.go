@@ -62,11 +62,17 @@ func (p *Path) IsDir() bool {
 	return false
 }
 
+var fosstat func(name string) (fi os.FileInfo, err error)
+
+func ifosstat(name string) (fi os.FileInfo, err error) {
+	return os.Stat(name)
+}
+
 // Exists returns whether the given file or directory exists or not
 // http://stackoverflow.com/questions/10510691/how-to-check-whether-a-file-or-directory-denoted-by-a-path-exists-in-golang
 func (p *Path) Exists() bool {
-	path := filepath.FromSlash(p.String())
-	_, err := os.Stat(path)
+	path := filepath.FromSlash(p.path)
+	_, err := fosstat(path)
 	if err == nil {
 		return true
 	}
@@ -116,4 +122,5 @@ var pw *pathWriter
 func init() {
 	pw = &pathWriter{}
 	fstat = ifstat
+	fosstat = ifosstat
 }
