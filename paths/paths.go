@@ -35,6 +35,12 @@ func NewPath(p string) *Path {
 	return res
 }
 
+var fstat func(f *os.File) (fi os.FileInfo, err error)
+
+func ifstat(f *os.File) (fi os.FileInfo, err error) {
+	return f.Stat()
+}
+
 // IsDir checks is a path is an existing directory.
 // If there is any error, it is printed on Stderr, but not returned.
 func (p *Path) IsDir() bool {
@@ -44,7 +50,7 @@ func (p *Path) IsDir() bool {
 		return false
 	}
 	defer f.Close()
-	fi, err := f.Stat()
+	fi, err := fstat(f)
 	if err != nil {
 		fmt.Fprintln(godbg.Err(), err)
 		return false
@@ -109,4 +115,5 @@ var pw *pathWriter
 
 func init() {
 	pw = &pathWriter{}
+	fstat = ifstat
 }
