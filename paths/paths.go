@@ -101,6 +101,7 @@ func (p *Path) Exists() bool {
 	//pdbg("Error while checking if '%v' exists: '%v'\n", path, err)
 	//debug.PrintStack()
 	//os.Exit(0)
+	fmt.Fprintln(godbg.Err(), err)
 	return false
 }
 

@@ -120,12 +120,13 @@ fstat error on '..'
 
 		Convey("Exists() can fail on os.Stat()", func() {
 			// Stat error on path
-			SetBuffers(nil)
 			fosstat = testerrosfstat
 			p := NewPath("test")
+			SetBuffers(nil)
 			So(p.Exists(), ShouldBeFalse)
 			So(OutString(), ShouldBeEmpty)
-			So(ErrString(), ShouldEqual, `a`)
+			So(ErrString(), ShouldEqual, `os.Stat() error on 'test'
+`)
 			So(p.path, ShouldEqual, `test`)
 			fosstat = ifosstat
 		})
@@ -182,7 +183,8 @@ func testerrfstat(f *os.File) (fi os.FileInfo, err error) {
 	return nil, fmt.Errorf("fstat error on '%+v'", f.Name())
 }
 func testerrosfstat(name string) (fi os.FileInfo, err error) {
-	return nil, fmt.Errorf("os.Stat() error on '%+v'", name)
+	err = fmt.Errorf("os.Stat() error on '%s'", name)
+	return nil, err
 }
 
 type testPrg struct{ name string }
