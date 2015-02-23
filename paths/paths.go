@@ -46,6 +46,14 @@ func NewPathDir(p string) *Path {
 	return res
 }
 
+// EndsWithSeparator checks if Paths ends with a filepath separator
+func (p *Path) EndsWithSeparator() bool {
+	if strings.HasSuffix(p.path, string(filepath.Separator)) {
+		return true
+	}
+	return false
+}
+
 var fstat func(f *os.File) (fi os.FileInfo, err error)
 
 func ifstat(f *os.File) (fi os.FileInfo, err error) {
