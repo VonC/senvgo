@@ -40,6 +40,9 @@ func (ti *testInst) IsInstalled() bool {
 func (ti *testInst) HasFailed() bool {
 	return strings.HasPrefix(ti.p.Name(), "prgf")
 }
+func (ti *testInst) Install() error {
+	return nil
+}
 
 func TestMain(t *testing.T) {
 
