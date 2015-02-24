@@ -90,6 +90,20 @@ func (p *Path) SetDir() *Path {
 	return NewPathDir(p.path)
 }
 
+// Add adds a string path to a Path
+// Makes sure the current path represents a folder first
+// (existing or not it: just means making sure it ends with file separator)
+func (p *Path) Add(s string) *Path {
+	pp := p.SetDir()
+	return NewPath(pp.path + s)
+}
+
+// Add adds a Path to a Path
+// no check is done regarding the absolute path of the argument
+func (p *Path) AddP(path *Path) *Path {
+	return p.Add(path.path)
+}
+
 var fosstat func(name string) (fi os.FileInfo, err error)
 
 func ifosstat(name string) (fi os.FileInfo, err error) {

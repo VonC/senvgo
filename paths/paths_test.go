@@ -231,6 +231,54 @@ func TestPath(t *testing.T) {
 		})
 	})
 
+	Convey("Tests for Add()", t, func() {
+
+		Convey("empty path plus anything means starts with /", func() {
+			p := NewPath("")
+			SetBuffers(nil)
+			p = p.Add("aaa")
+			So(NoOutput(), ShouldBeTrue)
+			So(p.path, ShouldEqual, `\aaa`)
+		})
+
+		Convey("adding path preserves final separator (or lack thereof) /", func() {
+			p := NewPath("aaa")
+			SetBuffers(nil)
+			p = p.Add("bbb")
+			So(NoOutput(), ShouldBeTrue)
+			So(p.path, ShouldEqual, `aaa\bbb`)
+			p = p.Add("ccc/")
+			So(NoOutput(), ShouldBeTrue)
+			So(p.path, ShouldEqual, `aaa\bbb\ccc\`)
+		})
+
+	})
+
+	Convey("Tests for AddP()", t, func() {
+
+		Convey("empty path plus anything means starts with /", func() {
+			p := NewPath("")
+			p1 := NewPath("aaa")
+			SetBuffers(nil)
+			p = p.AddP(p1)
+			So(NoOutput(), ShouldBeTrue)
+			So(p.path, ShouldEqual, `\aaa`)
+		})
+
+		Convey("adding path preserves final separator (or lack thereof) /", func() {
+			p := NewPath("aaa")
+			SetBuffers(nil)
+			p1 := NewPath("bbb")
+			p = p.AddP(p1)
+			So(NoOutput(), ShouldBeTrue)
+			So(p.path, ShouldEqual, `aaa\bbb`)
+			p1 = NewPath("ccc/")
+			p = p.AddP(p1)
+			So(NoOutput(), ShouldBeTrue)
+			So(p.path, ShouldEqual, `aaa\bbb\ccc\`)
+		})
+
+	})
 }
 
 func testerrfstat(f *os.File) (fi os.FileInfo, err error) {
