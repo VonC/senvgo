@@ -81,6 +81,15 @@ func (p *Path) IsDir() bool {
 	return false
 }
 
+// SetDir makes sure a Path represents a folder (existing or not)
+// That means it ends with a path separator
+func (p *Path) SetDir() *Path {
+	if p.EndsWithSeparator() {
+		return p
+	}
+	return NewPathDir(p.path)
+}
+
 var fosstat func(name string) (fi os.FileInfo, err error)
 
 func ifosstat(name string) (fi os.FileInfo, err error) {

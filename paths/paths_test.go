@@ -199,8 +199,38 @@ func TestPath(t *testing.T) {
 			SetBuffers(nil)
 			So(p.EndsWithSeparator(), ShouldBeTrue)
 		})
-
 	})
+
+	Convey("Tests for SetDir()", t, func() {
+
+		Convey("paths not ending with / must end with /", func() {
+			p := NewPath("")
+			SetBuffers(nil)
+			p = p.SetDir()
+			So(NoOutput(), ShouldBeTrue)
+			So(p.EndsWithSeparator(), ShouldBeTrue)
+			// Non-existing folder, at least in Windows
+			So(p.IsDir(), ShouldBeFalse)
+
+			p = NewPath(`xxx\e`)
+			SetBuffers(nil)
+			p = p.SetDir()
+			So(NoOutput(), ShouldBeTrue)
+			So(p.EndsWithSeparator(), ShouldBeTrue)
+			// Non-existing folder
+			So(p.IsDir(), ShouldBeFalse)
+		})
+		Convey("paths ending with / must still end with /", func() {
+			p := NewPath(`yyy/`)
+			SetBuffers(nil)
+			p2 := p.SetDir()
+			So(NoOutput(), ShouldBeTrue)
+			So(p2.EndsWithSeparator(), ShouldBeTrue)
+			So(p2.IsDir(), ShouldBeFalse)
+			So(p2.path, ShouldEqual, p.path)
+		})
+	})
+
 }
 
 func testerrfstat(f *os.File) (fi os.FileInfo, err error) {
