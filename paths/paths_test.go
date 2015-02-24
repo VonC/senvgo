@@ -277,7 +277,36 @@ func TestPath(t *testing.T) {
 			So(NoOutput(), ShouldBeTrue)
 			So(p.path, ShouldEqual, `aaa\bbb\ccc\`)
 		})
+	})
 
+	Convey("Tests for NoSep()", t, func() {
+
+		Convey("No trailing / means same Path is returned", func() {
+			p := NewPath("")
+			SetBuffers(nil)
+			p1 := p.NoSep()
+			So(NoOutput(), ShouldBeTrue)
+			So(p, ShouldEqual, p1)
+			p = NewPath("a/b")
+			SetBuffers(nil)
+			p1 = p.NoSep()
+			So(NoOutput(), ShouldBeTrue)
+			So(p, ShouldEqual, p1)
+		})
+		Convey("Trailing / means same new Path is returned", func() {
+			p := NewPath("/")
+			SetBuffers(nil)
+			p1 := p.NoSep()
+			So(NoOutput(), ShouldBeTrue)
+			So(p, ShouldNotEqual, p1)
+			So(p1.path, ShouldEqual, ``)
+			p = NewPath("c/d/")
+			SetBuffers(nil)
+			p1 = p.NoSep()
+			So(NoOutput(), ShouldBeTrue)
+			So(p, ShouldNotEqual, p1)
+			So(p1.path, ShouldEqual, `c\d`)
+		})
 	})
 }
 

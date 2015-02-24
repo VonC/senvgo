@@ -104,6 +104,21 @@ func (p *Path) AddP(path *Path) *Path {
 	return p.Add(path.path)
 }
 
+// NoSep makes sure the path doesn't end with a file separator.
+// If it already was not ending with the file separator, it returns the same object. If it was, it returns a new Path.
+func (p *Path) NoSep() *Path {
+	if !p.EndsWithSeparator() {
+		return p
+	}
+	pp := p.path
+	for strings.HasSuffix(pp, string(filepath.Separator)) {
+		pp = pp[:len(pp)-1]
+	}
+	res := &Path{}
+	res.path = filepath.FromSlash(pp)
+	return res
+}
+
 var fosstat func(name string) (fi os.FileInfo, err error)
 
 func ifosstat(name string) (fi os.FileInfo, err error) {
