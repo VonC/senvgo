@@ -176,6 +176,31 @@ func TestPath(t *testing.T) {
 			So(p.path, ShouldEqual, `yyy\`)
 		})
 	})
+
+	Convey("Tests for EndsWithSeparator()", t, func() {
+
+		Convey("path not ending with / mens false", func() {
+			p := NewPath("")
+			SetBuffers(nil)
+			So(p.EndsWithSeparator(), ShouldBeFalse)
+			p = NewPath(`xxx\e`)
+			SetBuffers(nil)
+			So(p.EndsWithSeparator(), ShouldBeFalse)
+		})
+
+		Convey("path ending with / mens true", func() {
+			p := NewPath("aaa/")
+			SetBuffers(nil)
+			So(p.EndsWithSeparator(), ShouldBeTrue)
+			p = NewPath(`xxx\yyy/`)
+			SetBuffers(nil)
+			So(p.EndsWithSeparator(), ShouldBeTrue)
+			p = NewPathDir("bbb")
+			SetBuffers(nil)
+			So(p.EndsWithSeparator(), ShouldBeTrue)
+		})
+
+	})
 }
 
 func testerrfstat(f *os.File) (fi os.FileInfo, err error) {
