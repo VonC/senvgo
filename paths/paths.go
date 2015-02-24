@@ -169,6 +169,24 @@ func (p *Path) String() string {
 	return res
 }
 
+var fosmkdirall func(path string, perm os.FileMode) error
+
+func ifosmkdirall(path string, perm os.FileMode) error {
+	return os.MkdirAll(path, perm)
+}
+
+// MkDir creates a directory named path, along with any necessary parents,
+// and return true if created, false otherwise.
+// Any error is printed on Stderr
+func (p *Path) MkdirAll() bool {
+	err := fosmkdirall(p.path, 0755)
+	if err != nil {
+		fmt.Fprintf(godbg.Err(), "Error creating folder for path '%v': '%v'\n", p.path, err)
+		return false
+	}
+	return true
+}
+
 // PathWriter computes final PATH of a collection of programs
 type PathWriter interface {
 	// WritePath writes in a writer `set PATH=`... with all prgs PATH.
@@ -193,4 +211,5 @@ func init() {
 	pw = &pathWriter{}
 	fstat = ifstat
 	fosstat = ifosstat
+	fosmkdirall = ifosmkdirall
 }

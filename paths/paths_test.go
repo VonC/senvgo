@@ -356,6 +356,44 @@ func TestPath(t *testing.T) {
 		})
 	})
 
+	Convey("Tests for MkdirAll()", t, func() {
+
+		Convey("MkdirAll() when works without error", func() {
+			fosmkdirall = testfosmkdirall
+			p := NewPath("aaa")
+			SetBuffers(nil)
+			ok := p.MkdirAll()
+			So(ok, ShouldBeTrue)
+			So(NoOutput(), ShouldBeTrue)
+			fosmkdirall = ifosmkdirall
+
+			p = NewPath(".")
+			SetBuffers(nil)
+			ok = p.MkdirAll()
+			So(ok, ShouldBeTrue)
+			So(NoOutput(), ShouldBeTrue)
+
+		})
+
+		Convey("MkdirAll() when works with error", func() {
+			fosmkdirall = testfosmkdirall
+			p := NewPath("err")
+			SetBuffers(nil)
+			ok := p.MkdirAll()
+			So(ok, ShouldBeFalse)
+			So(OutString(), ShouldBeEmpty)
+			So(ErrString(), ShouldEqual, `Error creating folder for path 'err': 'testfosmkdirall error on path 'err''
+`)
+			fosmkdirall = ifosmkdirall
+		})
+	})
+}
+
+func testfosmkdirall(path string, perm os.FileMode) error {
+	if path == "err" {
+		return fmt.Errorf("testfosmkdirall error on path '%s'", path)
+	}
+	return nil
 }
 
 func testerrfstat(f *os.File) (fi os.FileInfo, err error) {
