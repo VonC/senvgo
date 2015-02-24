@@ -233,7 +233,7 @@ func TestPath(t *testing.T) {
 
 	Convey("Tests for Add()", t, func() {
 
-		Convey("empty path plus anything means starts with /", func() {
+		Convey("empty path plus anything string means starts with /", func() {
 			p := NewPath("")
 			SetBuffers(nil)
 			p = p.Add("aaa")
@@ -241,7 +241,7 @@ func TestPath(t *testing.T) {
 			So(p.path, ShouldEqual, `\aaa`)
 		})
 
-		Convey("adding path preserves final separator (or lack thereof) /", func() {
+		Convey("adding path string preserves final separator (or lack thereof) /", func() {
 			p := NewPath("aaa")
 			SetBuffers(nil)
 			p = p.Add("bbb")
@@ -308,6 +308,54 @@ func TestPath(t *testing.T) {
 			So(p1.path, ShouldEqual, `c\d`)
 		})
 	})
+
+	Convey("Tests for AddNoSep()", t, func() {
+
+		Convey("empty path plus anything string means starts with anything", func() {
+			p := NewPath("")
+			SetBuffers(nil)
+			p = p.AddNoSep("aaa/")
+			So(NoOutput(), ShouldBeTrue)
+			So(p.path, ShouldEqual, `aaa\`)
+		})
+
+		Convey("adding path string removes final separator", func() {
+			p := NewPath("aaa")
+			SetBuffers(nil)
+			p = p.AddNoSep("bbb")
+			So(NoOutput(), ShouldBeTrue)
+			So(p.path, ShouldEqual, `aaabbb`)
+			p = p.AddNoSep("ccc/")
+			So(NoOutput(), ShouldBeTrue)
+			So(p.path, ShouldEqual, `aaabbbccc\`)
+		})
+	})
+
+	Convey("Tests for AddPNoSep()", t, func() {
+
+		Convey("empty path plus anything means starts with anything", func() {
+			p := NewPath("")
+			p1 := NewPath("aaa/")
+			SetBuffers(nil)
+			p = p.AddPNoSep(p1)
+			So(NoOutput(), ShouldBeTrue)
+			So(p.path, ShouldEqual, `aaa\`)
+		})
+
+		Convey("adding path removes final separator", func() {
+			p := NewPath("aaa")
+			p1 := NewPath("bbb")
+			SetBuffers(nil)
+			p = p.AddPNoSep(p1)
+			So(NoOutput(), ShouldBeTrue)
+			So(p.path, ShouldEqual, `aaabbb`)
+			p1 = NewPath("ccc/")
+			p = p.AddPNoSep(p1)
+			So(NoOutput(), ShouldBeTrue)
+			So(p.path, ShouldEqual, `aaabbbccc\`)
+		})
+	})
+
 }
 
 func testerrfstat(f *os.File) (fi os.FileInfo, err error) {

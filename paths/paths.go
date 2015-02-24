@@ -119,6 +119,18 @@ func (p *Path) NoSep() *Path {
 	return res
 }
 
+// AddNoSep adds a string path to a Path with no triling separator
+func (p *Path) AddNoSep(s string) *Path {
+	pp := p.NoSep()
+	return NewPath(pp.path + s)
+}
+
+// Add adds a Path to a Path, making sure the resulting path doesn't end with a file separator
+// no check is done regarding the absolute path of the argument
+func (p *Path) AddPNoSep(path *Path) *Path {
+	return p.AddNoSep(path.String())
+}
+
 var fosstat func(name string) (fi os.FileInfo, err error)
 
 func ifosstat(name string) (fi os.FileInfo, err error) {
