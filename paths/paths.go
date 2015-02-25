@@ -187,6 +187,44 @@ func (p *Path) MkdirAll() bool {
 	return true
 }
 
+var fosopenfile func(name string, flag int, perm os.FileMode) (file *os.File, err error)
+
+func ifosopenfile(name string, flag int, perm os.FileMode) (file *os.File, err error) {
+	return os.OpenFile(name, flag, perm)
+}
+
+var fosremove func(name string) error
+
+func ifosremove(name string) error {
+	return os.Remove(name)
+}
+
+// MustOpenFile create or append a file, or panic if issue.
+// If the Path is a Dir, returns nil.
+// The caller is responsible for closing the file
+func (p *Path) MustOpenFile(append bool) (file *os.File) {
+	if p.IsDir() {
+		return nil
+	}
+	var err error
+	if p.Exists() {
+		if append {
+			file, err = fosopenfile(p.path, os.O_APPEND|os.O_WRONLY, 0600)
+		} else {
+			err = fosremove(p.path)
+		}
+		if err != nil {
+			panic(err)
+		}
+	}
+	if !p.Exists() {
+		if file, err = fosopenfile(p.path, os.O_CREATE|os.O_WRONLY, 0600); err != nil {
+			panic(err)
+		}
+	}
+	return file
+}
+
 // PathWriter computes final PATH of a collection of programs
 type PathWriter interface {
 	// WritePath writes in a writer `set PATH=`... with all prgs PATH.
