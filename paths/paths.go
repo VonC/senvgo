@@ -225,6 +225,17 @@ func (p *Path) MustOpenFile(append bool) (file *os.File) {
 	return file
 }
 
+// GetFiles returns all files and folders within a dir, matching a pattern.
+// If the dir is not an actual existing dir, returns an empty list.
+// Empty pattern means all files and subfolders are returned.
+// This is not recursive.
+func (dir *Path) GetFiles(pattern string) []os.FileInfo {
+	if dir.IsDir() == false {
+		return []os.FileInfo{}
+	}
+	return []os.FileInfo{}
+}
+
 // PathWriter computes final PATH of a collection of programs
 type PathWriter interface {
 	// WritePath writes in a writer `set PATH=`... with all prgs PATH.

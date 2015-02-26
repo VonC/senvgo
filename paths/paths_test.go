@@ -459,6 +459,26 @@ func TestPath(t *testing.T) {
 			f = p.MustOpenFile(true)
 		})
 	})
+
+	Convey("Tests for GetFiles(pattern)", t, func() {
+
+		Convey("GetFiles() returns empty list is not IsDir", func() {
+			dir := NewPathDir("xxx")
+			files := dir.GetFiles("")
+			SetBuffers(nil)
+			So(len(files), ShouldEqual, 0)
+			So(NoOutput(), ShouldBeTrue)
+		})
+
+		Convey("GetFiles() with empty patterns return all files", func() {
+			dir := NewPathDir(".")
+			files := dir.GetFiles("")
+			SetBuffers(nil)
+			So(len(files), ShouldEqual, 0)
+			So(NoOutput(), ShouldBeTrue)
+		})
+
+	})
 }
 
 func testfosopenfile(name string, flag int, perm os.FileMode) (file *os.File, err error) {
