@@ -217,7 +217,7 @@ func (p *Path) MustOpenFile(append bool) (file *os.File) {
 			panic(err)
 		}
 	}
-	if !p.Exists() {
+	if file == nil {
 		if file, err = fosopenfile(p.path, os.O_CREATE|os.O_WRONLY, 0600); err != nil {
 			panic(err)
 		}
