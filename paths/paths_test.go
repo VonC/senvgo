@@ -387,6 +387,96 @@ func TestPath(t *testing.T) {
 			fosmkdirall = ifosmkdirall
 		})
 	})
+
+	Convey("Tests for MustOpenFile()", t, func() {
+
+		Convey("MustOpenFile() returns nil if IsDir", func() {
+			p := NewPath(".")
+			f := p.MustOpenFile(false)
+			So(f, ShouldBeNil)
+		})
+		Convey("MustOpenFile() can append to an existing file", func() {
+			fosopenfile = testfosopenfile
+			fosremove = testfosremove
+			p := NewPath("paths_test.go")
+			SetBuffers(nil)
+			f := p.MustOpenFile(true)
+			defer f.Close()
+			So(f, ShouldNotBeNil)
+			So(f.Name(), ShouldEqual, "paths_test.go")
+			So(NoOutput(), ShouldBeTrue)
+			fosopenfile = ifosopenfile
+			fosremove = ifosremove
+		})
+
+		Convey("MustOpenFile() can create over an existing file", func() {
+			fosopenfile = testfosopenfile
+			fosremove = testfosremove
+			p := NewPath("paths_test.go")
+			SetBuffers(nil)
+			f := p.MustOpenFile(false)
+			defer f.Close()
+			So(f, ShouldNotBeNil)
+			So(f.Name(), ShouldEqual, "paths_test.go")
+			So(NoOutput(), ShouldBeTrue)
+			fosopenfile = ifosopenfile
+			fosremove = ifosremove
+		})
+
+		Convey("MustOpenFile() can fail on append", func() {
+			fosopenfile = testfosopenfile
+			fosremove = testfosremove
+			p := NewPath("paths.go")
+			SetBuffers(nil)
+			var f *os.File
+			defer func() {
+				err := recover()
+				So(f, ShouldBeNil)
+				So(NoOutput(), ShouldBeTrue)
+				So(fmt.Sprintf("'%v'", err), ShouldEqual, "'Error os.OpenFile O_APPEND for 'paths.go''")
+				fosopenfile = ifosopenfile
+				fosremove = ifosremove
+			}()
+			f = p.MustOpenFile(true)
+		})
+
+		Convey("MustOpenFile() can fail on create", func() {
+			fosopenfile = testfosopenfile
+			fosremove = testfosremove
+			p := NewPath("xxx")
+			SetBuffers(nil)
+			var f *os.File
+			defer func() {
+				err := recover()
+				So(f, ShouldBeNil)
+				So(OutString(), ShouldBeEmpty)
+				So(ErrString(), ShouldEqual, `open xxx: The system cannot find the file specified.
+`)
+				So(fmt.Sprintf("'%v'", err), ShouldEqual, "'Error os.OpenFile O_CREATE for 'xxx''")
+				fosopenfile = ifosopenfile
+				fosremove = ifosremove
+			}()
+			f = p.MustOpenFile(true)
+		})
+	})
+}
+
+func testfosopenfile(name string, flag int, perm os.FileMode) (file *os.File, err error) {
+	if name == "paths_test.go" {
+		return ifosopenfile(name, flag, perm)
+	}
+	if name == "paths.go" && flag&os.O_APPEND != 0 {
+		return nil, fmt.Errorf("Error os.OpenFile O_APPEND for '%s'", name)
+	}
+	if name == "xxx" {
+		return nil, fmt.Errorf("Error os.OpenFile O_CREATE for '%s'", name)
+	}
+	return nil, nil
+}
+
+func testfosremove(name string) error {
+	ifosremove("xxx")
+	return nil
 }
 
 func testfosmkdirall(path string, perm os.FileMode) error {
