@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/VonC/godbg"
@@ -250,7 +251,8 @@ func (dir *Path) GetFiles(pattern string) []os.FileInfo {
 		godbg.Pdbgf("Error while opening dir '%v': '%v'\n", dir, err)
 		return nil
 	}
-	res := []os.FileInfo{}
+	filteredList := []os.FileInfo{}
+	res := filteredList
 	list, err := fosfreaddir(f, -1)
 	if err != nil {
 		godbg.Pdbgf("Error while reading dir '%v': '%v'\n", dir, err)
@@ -259,6 +261,17 @@ func (dir *Path) GetFiles(pattern string) []os.FileInfo {
 	if len(list) == 0 {
 		return res
 	}
+	rx := regexp.MustCompile(pattern)
+	for _, fi := range list {
+		if pattern == "" || rx.MatchString(fi.Name()) {
+			filteredList = append(filteredList, fi)
+		}
+	}
+	if len(filteredList) == 0 {
+		godbg.Pdbgf("NO FILE in '%v' for '%v'\n", dir, pattern)
+		return res
+	}
+	res = filteredList
 	return res
 }
 

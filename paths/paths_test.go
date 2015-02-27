@@ -494,20 +494,40 @@ func TestPath(t *testing.T) {
 			fosfreaddir = ifosfreaddir
 		})
 
-		Convey("GetFiles() with empty patterns return all files", func() {
-			dir := NewPathDir(".")
-			files := dir.GetFiles("")
+		Convey("GetFiles() returns an empty list for an empty folder", func() {
+			dir := NewPathDir("../../..")
 			SetBuffers(nil)
+			fosfreaddir = testfosfreaddir
+			files := dir.GetFiles("emptyfolder")
+			So(files, ShouldNotBeNil)
 			So(len(files), ShouldEqual, 0)
 			So(NoOutput(), ShouldBeTrue)
+			fosfreaddir = ifosfreaddir
+		})
+
+		Convey("GetFiles() with empty patterns return all files", func() {
+			dir := NewPathDir(".")
+			SetBuffers(nil)
+			fosfreaddir = testfosfreaddir
+			files := dir.GetFiles("")
+			So(len(files), ShouldEqual, 6)
+			So(NoOutput(), ShouldBeTrue)
+			fosfreaddir = ifosfreaddir
 		})
 
 	})
 }
 
 func testfosfreaddir(f *os.File, n int) (fi []os.FileInfo, err error) {
+	if f.Name() == `.\` {
+		return []os.FileInfo{}, nil
+	}
 	if f.Name() == `..\..\` {
+		ifosfreaddir(f, n)
 		return nil, fmt.Errorf("Error file.Readdir for '%s' (%d)", f.Name(), n)
+	}
+	if f.Name() == `..\..\..\` {
+		return []os.FileInfo{}, nil
 	}
 	return nil, nil
 }
