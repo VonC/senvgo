@@ -231,6 +231,12 @@ func ifosopen(name string) (file *os.File, err error) {
 	return os.Open(name)
 }
 
+var fosfreaddir func(f *os.File, n int) (fi []os.FileInfo, err error)
+
+func ifosfreaddir(f *os.File, n int) (fi []os.FileInfo, err error) {
+	return f.Readdir(n)
+}
+
 // GetFiles returns all files and folders within a dir, matching a pattern.
 // If the dir is not an actual existing dir, returns an empty list.
 // Empty pattern means all files and subfolders are returned.
@@ -244,10 +250,16 @@ func (dir *Path) GetFiles(pattern string) []os.FileInfo {
 		godbg.Pdbgf("Error while opening dir '%v': '%v'\n", dir, err)
 		return nil
 	}
-	if f == nil {
+	res := []os.FileInfo{}
+	list, err := fosfreaddir(f, -1)
+	if err != nil {
+		godbg.Pdbgf("Error while reading dir '%v': '%v'\n", dir, err)
 		return nil
 	}
-	return []os.FileInfo{}
+	if len(list) == 0 {
+		return res
+	}
+	return res
 }
 
 // PathWriter computes final PATH of a collection of programs
