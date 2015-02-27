@@ -470,6 +470,18 @@ func TestPath(t *testing.T) {
 			So(NoOutput(), ShouldBeTrue)
 		})
 
+		Convey("GetFiles() can fail opening the directory", func() {
+			dir := NewPathDir("..")
+			SetBuffers(nil)
+			fosopen = testfosopen
+			files := dir.GetFiles("err")
+			So(files, ShouldBeNil)
+			So(OutString(), ShouldBeEmpty)
+			So(ErrString(), ShouldEqualNL, `  [*Path.GetFiles:269] (func.055:477)
+    Error while opening dir '..\': 'Error os.Open for '..\''`)
+			fosopen = ifosopen
+		})
+
 		Convey("GetFiles() with empty patterns return all files", func() {
 			dir := NewPathDir(".")
 			files := dir.GetFiles("")
@@ -479,6 +491,13 @@ func TestPath(t *testing.T) {
 		})
 
 	})
+}
+
+func testfosopen(name string) (file *os.File, err error) {
+	if name == `..\` {
+		return nil, fmt.Errorf("Error os.Open for '%s'", name)
+	}
+	return nil, nil
 }
 
 func testfosopenfile(name string, flag int, perm os.FileMode) (file *os.File, err error) {

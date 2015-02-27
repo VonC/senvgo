@@ -225,6 +225,12 @@ func (p *Path) MustOpenFile(append bool) (file *os.File) {
 	return file
 }
 
+var fosopen func(name string) (file *os.File, err error)
+
+func ifosopen(name string) (file *os.File, err error) {
+	return os.Open(name)
+}
+
 // GetFiles returns all files and folders within a dir, matching a pattern.
 // If the dir is not an actual existing dir, returns an empty list.
 // Empty pattern means all files and subfolders are returned.
@@ -232,6 +238,14 @@ func (p *Path) MustOpenFile(append bool) (file *os.File) {
 func (dir *Path) GetFiles(pattern string) []os.FileInfo {
 	if dir.IsDir() == false {
 		return []os.FileInfo{}
+	}
+	f, err := fosopen(dir.String())
+	if err != nil {
+		godbg.Pdbgf("Error while opening dir '%v': '%v'\n", dir, err)
+		return nil
+	}
+	if f == nil {
+		return nil
 	}
 	return []os.FileInfo{}
 }
@@ -261,4 +275,6 @@ func init() {
 	fstat = ifstat
 	fosstat = ifosstat
 	fosmkdirall = ifosmkdirall
+	fosopenfile = ifosopenfile
+	fosopen = ifosopen
 }
