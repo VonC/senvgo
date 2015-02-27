@@ -534,12 +534,12 @@ func TestPath(t *testing.T) {
 			fosfreaddir = testfosfreaddir
 			files := dir.GetFiles("f[236]")
 			So(len(files), ShouldEqual, 3)
-			So(fmt.Sprintf("%+v", files), ShouldEqual, `[f2 f3 f6]`)
+			So(fmt.Sprintf("%+v", files), ShouldEqual, `[f6 f3 f2]`)
 			So(NoOutput(), ShouldBeTrue)
 
 			files = dir.GetFiles(`.*\.go`)
 			So(len(files), ShouldEqual, 3)
-			So(fmt.Sprintf("%+v", files), ShouldEqual, `[f1.go f4.go f5.go]`)
+			So(fmt.Sprintf("%+v", files), ShouldEqual, `[f4.go f1.go f5.go]`)
 			So(NoOutput(), ShouldBeTrue)
 
 			fosfreaddir = ifosfreaddir
@@ -560,7 +560,7 @@ func (tfi *testFileInfo) String() string     { return tfi.Name() }
 
 func testfosfreaddir(f *os.File, n int) (fi []os.FileInfo, err error) {
 	if f.Name() == `.\` {
-		return []os.FileInfo{&testFileInfo{"f1.go"}, &testFileInfo{"f2"}, &testFileInfo{"f3"}, &testFileInfo{"f4.go"}, &testFileInfo{"f5.go"}, &testFileInfo{"f6"}}, nil
+		return []os.FileInfo{&testFileInfo{"f4.go"}, &testFileInfo{"f1.go"}, &testFileInfo{"f6"}, &testFileInfo{"f5.go"}, &testFileInfo{"f3"}, &testFileInfo{"f2"}}, nil
 	}
 	if f.Name() == `..\..\` {
 		ifosfreaddir(f, n)
