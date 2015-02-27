@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"testing"
+	"time"
 
 	. "github.com/VonC/godbg"
 	"github.com/VonC/senvgo/prgs"
@@ -515,12 +516,51 @@ func TestPath(t *testing.T) {
 			fosfreaddir = ifosfreaddir
 		})
 
+		Convey("GetFiles() with bad pattern return no files and a warning", func() {
+			dir := NewPathDir(".")
+			SetBuffers(nil)
+			fosfreaddir = testfosfreaddir
+			files := dir.GetFiles("^g.*$")
+			So(len(files), ShouldEqual, 0)
+			So(OutString(), ShouldBeEmpty)
+			So(ErrString(), ShouldEqualNL, `  [*Path.GetFiles] (func)
+    NO FILE in '.\' for '^g.*$'`)
+			fosfreaddir = ifosfreaddir
+		})
+
+		Convey("GetFiles() with patterns return selected files", func() {
+			dir := NewPathDir(".")
+			SetBuffers(nil)
+			fosfreaddir = testfosfreaddir
+			files := dir.GetFiles("f[236]")
+			So(len(files), ShouldEqual, 3)
+			So(fmt.Sprintf("%+v", files), ShouldEqual, `[f2 f3 f6]`)
+			So(NoOutput(), ShouldBeTrue)
+
+			files = dir.GetFiles(`.*\.go`)
+			So(len(files), ShouldEqual, 3)
+			So(fmt.Sprintf("%+v", files), ShouldEqual, `[f1.go f4.go f5.go]`)
+			So(NoOutput(), ShouldBeTrue)
+
+			fosfreaddir = ifosfreaddir
+		})
+
 	})
 }
 
+type testFileInfo struct{ name string }
+
+func (tfi *testFileInfo) Name() string       { return tfi.name }
+func (tfi *testFileInfo) Size() int64        { return 0 }
+func (tfi *testFileInfo) Mode() os.FileMode  { return 0 }
+func (tfi *testFileInfo) ModTime() time.Time { return time.Now() }
+func (tfi *testFileInfo) IsDir() bool        { return false }
+func (tfi *testFileInfo) Sys() interface{}   { return nil }
+func (tfi *testFileInfo) String() string     { return tfi.Name() }
+
 func testfosfreaddir(f *os.File, n int) (fi []os.FileInfo, err error) {
 	if f.Name() == `.\` {
-		return []os.FileInfo{}, nil
+		return []os.FileInfo{&testFileInfo{"f1.go"}, &testFileInfo{"f2"}, &testFileInfo{"f3"}, &testFileInfo{"f4.go"}, &testFileInfo{"f5.go"}, &testFileInfo{"f6"}}, nil
 	}
 	if f.Name() == `..\..\` {
 		ifosfreaddir(f, n)
