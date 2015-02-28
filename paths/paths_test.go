@@ -636,6 +636,94 @@ func TestPath(t *testing.T) {
 
 	})
 
+	Convey("Tests for GetNameOrderedFiles(pattern)", t, func() {
+
+		Convey("GetNameOrderedFiles() returns empty list is not IsDir", func() {
+			dir := NewPathDir("xxx")
+			files := dir.GetNameOrderedFiles("")
+			SetBuffers(nil)
+			So(len(files), ShouldEqual, 0)
+			So(NoOutput(), ShouldBeTrue)
+		})
+
+		Convey("GetNameOrderedFiles() can fail opening the directory", func() {
+			dir := NewPathDir("..")
+			SetBuffers(nil)
+			fosopen = testfosopen
+			files := dir.GetNameOrderedFiles("err")
+			So(files, ShouldBeNil)
+			So(OutString(), ShouldBeEmpty)
+			So(ErrString(), ShouldEqualNL, `    [*Path.GetFiles] (*Path.GetNameOrderedFiles) (func)
+      Error while opening dir '..\': 'Error os.Open for '..\''`)
+			fosopen = ifosopen
+		})
+
+		Convey("GetNameOrderedFiles() can fail listing files the directory", func() {
+			dir := NewPathDir("../..")
+			SetBuffers(nil)
+			fosopen = ifosopen
+			fosfreaddir = testfosfreaddir
+			files := dir.GetNameOrderedFiles("errlist")
+			So(files, ShouldBeNil)
+			So(OutString(), ShouldBeEmpty)
+			So(ErrString(), ShouldEqualNL, `    [*Path.GetFiles] (*Path.GetNameOrderedFiles) (func)
+      Error while reading dir '..\..\': 'Error file.Readdir for '..\..\' (-1)'`)
+			fosfreaddir = ifosfreaddir
+		})
+
+		Convey("GetNameOrderedFiles() returns an empty list for an empty folder", func() {
+			dir := NewPathDir("../../..")
+			SetBuffers(nil)
+			fosfreaddir = testfosfreaddir
+			files := dir.GetNameOrderedFiles("emptyfolder")
+			So(files, ShouldNotBeNil)
+			So(len(files), ShouldEqual, 0)
+			So(NoOutput(), ShouldBeTrue)
+			fosfreaddir = ifosfreaddir
+		})
+
+		Convey("GetNameOrderedFiles() with empty patterns return all files, ordered alphabetically", func() {
+			dir := NewPathDir(".")
+			SetBuffers(nil)
+			fosfreaddir = testfosfreaddir
+			files := dir.GetNameOrderedFiles("")
+			So(len(files), ShouldEqual, 6)
+			So(fmt.Sprintf("%+v", files), ShouldEqual, `[f1.go f2 f3 f4.go f5.go f6]`)
+			So(NoOutput(), ShouldBeTrue)
+			fosfreaddir = ifosfreaddir
+		})
+
+		Convey("GetNameOrderedFiles() with bad pattern return no files and a warning", func() {
+			dir := NewPathDir(".")
+			SetBuffers(nil)
+			fosfreaddir = testfosfreaddir
+			files := dir.GetNameOrderedFiles("^g.*$")
+			So(len(files), ShouldEqual, 0)
+			So(OutString(), ShouldBeEmpty)
+			So(ErrString(), ShouldEqualNL, `    [*Path.GetFiles] (*Path.GetNameOrderedFiles) (func)
+      NO FILE in '.\' for '^g.*$'`)
+			fosfreaddir = ifosfreaddir
+		})
+
+		Convey("GetNameOrderedFiles() with patterns return selected files, ordered alphabetically", func() {
+			dir := NewPathDir(".")
+			SetBuffers(nil)
+			fosfreaddir = testfosfreaddir
+			files := dir.GetNameOrderedFiles("f[236]")
+			So(len(files), ShouldEqual, 3)
+			So(fmt.Sprintf("%+v", files), ShouldEqual, `[f2 f3 f6]`)
+			So(NoOutput(), ShouldBeTrue)
+
+			files = dir.GetNameOrderedFiles(`.*\.go`)
+			So(len(files), ShouldEqual, 3)
+			So(fmt.Sprintf("%+v", files), ShouldEqual, `[f1.go f4.go f5.go]`)
+			So(NoOutput(), ShouldBeTrue)
+
+			fosfreaddir = ifosfreaddir
+		})
+
+	})
+
 }
 
 type testFileInfo struct {

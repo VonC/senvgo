@@ -306,6 +306,29 @@ func (dir *Path) GetDateOrderedFiles(pattern string) []os.FileInfo {
 	return res
 }
 
+type byName []os.FileInfo
+
+func (f byName) Len() int {
+	return len(f)
+}
+func (f byName) Less(i, j int) bool {
+	return f[i].Name() < f[j].Name()
+}
+func (f byName) Swap(i, j int) {
+	f[i], f[j] = f[j], f[i]
+}
+
+// GetDateOrderedFiles returns files of a folder sorted alphabetically.
+// Not recursive.
+func (dir *Path) GetNameOrderedFiles(pattern string) []os.FileInfo {
+	// pdbg("Look in '%v' for '%v'\n", dir, pattern)
+	res := []os.FileInfo{}
+	filteredList := dir.GetFiles(pattern)
+	sort.Sort(byName(filteredList))
+	res = filteredList
+	return res
+}
+
 // PathWriter computes final PATH of a collection of programs
 type PathWriter interface {
 	// WritePath writes in a writer `set PATH=`... with all prgs PATH.
