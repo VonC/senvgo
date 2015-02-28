@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/VonC/godbg"
@@ -229,7 +230,9 @@ func (p *Path) MustOpenFile(append bool) (file *os.File) {
 var fosopen func(name string) (file *os.File, err error)
 
 func ifosopen(name string) (file *os.File, err error) {
-	return os.Open(name)
+	file, err = os.Open(name)
+	//fmt.Printf("ifosopen '%v' => %+v\n", name, file)
+	return
 }
 
 var fosfreaddir func(f *os.File, n int) (fi []os.FileInfo, err error)
@@ -251,6 +254,8 @@ func (dir *Path) GetFiles(pattern string) []os.FileInfo {
 		godbg.Pdbgf("Error while opening dir '%v': '%v'\n", dir, err)
 		return nil
 	}
+	defer f.Close()
+	//fmt.Printf("=> %+v\n", f)
 	filteredList := []os.FileInfo{}
 	res := filteredList
 	list, err := fosfreaddir(f, -1)
@@ -271,6 +276,32 @@ func (dir *Path) GetFiles(pattern string) []os.FileInfo {
 		godbg.Pdbgf("NO FILE in '%v' for '%v'\n", dir, pattern)
 		return res
 	}
+	res = filteredList
+	return res
+}
+
+// https://groups.google.com/forum/#!topic/golang-nuts/Q7hYQ9GdX9Q
+
+type byDate []os.FileInfo
+
+func (f byDate) Len() int {
+	return len(f)
+}
+func (f byDate) Less(i, j int) bool {
+	return f[i].ModTime().Unix() > f[j].ModTime().Unix()
+}
+func (f byDate) Swap(i, j int) {
+	f[i], f[j] = f[j], f[i]
+}
+
+// GetDateOrderedFiles returns files of a folder sorted chronologically
+// (most recent to oldest).
+// Not recursive.
+func (dir *Path) GetDateOrderedFiles(pattern string) []os.FileInfo {
+	// pdbg("Look in '%v' for '%v'\n", dir, pattern)
+	res := []os.FileInfo{}
+	filteredList := dir.GetFiles(pattern)
+	sort.Sort(byDate(filteredList))
 	res = filteredList
 	return res
 }

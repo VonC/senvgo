@@ -512,6 +512,7 @@ func TestPath(t *testing.T) {
 			fosfreaddir = testfosfreaddir
 			files := dir.GetFiles("")
 			So(len(files), ShouldEqual, 6)
+			So(fmt.Sprintf("%+v", files), ShouldEqual, `[f4.go f1.go f6 f5.go f3 f2]`)
 			So(NoOutput(), ShouldBeTrue)
 			fosfreaddir = ifosfreaddir
 		})
@@ -546,21 +547,119 @@ func TestPath(t *testing.T) {
 		})
 
 	})
+
+	Convey("Tests for GetDateOrderedFiles(pattern)", t, func() {
+
+		Convey("GetDateOrderedFiles() returns empty list is not IsDir", func() {
+			dir := NewPathDir("xxx")
+			files := dir.GetDateOrderedFiles("")
+			SetBuffers(nil)
+			So(len(files), ShouldEqual, 0)
+			So(NoOutput(), ShouldBeTrue)
+		})
+
+		Convey("GetDateOrderedFiles() can fail opening the directory", func() {
+			dir := NewPathDir("..")
+			SetBuffers(nil)
+			fosopen = testfosopen
+			files := dir.GetDateOrderedFiles("err")
+			So(files, ShouldBeNil)
+			So(OutString(), ShouldBeEmpty)
+			So(ErrString(), ShouldEqualNL, `    [*Path.GetFiles] (*Path.GetDateOrderedFiles) (func)
+      Error while opening dir '..\': 'Error os.Open for '..\''`)
+			fosopen = ifosopen
+		})
+
+		Convey("GetDateOrderedFiles() can fail listing files the directory", func() {
+			dir := NewPathDir("../..")
+			SetBuffers(nil)
+			fosopen = ifosopen
+			fosfreaddir = testfosfreaddir
+			files := dir.GetDateOrderedFiles("errlist")
+			So(files, ShouldBeNil)
+			So(OutString(), ShouldBeEmpty)
+			So(ErrString(), ShouldEqualNL, `    [*Path.GetFiles] (*Path.GetDateOrderedFiles) (func)
+      Error while reading dir '..\..\': 'Error file.Readdir for '..\..\' (-1)'`)
+			fosfreaddir = ifosfreaddir
+		})
+
+		Convey("GetDateOrderedFiles() returns an empty list for an empty folder", func() {
+			dir := NewPathDir("../../..")
+			SetBuffers(nil)
+			fosfreaddir = testfosfreaddir
+			files := dir.GetDateOrderedFiles("emptyfolder")
+			So(files, ShouldNotBeNil)
+			So(len(files), ShouldEqual, 0)
+			So(NoOutput(), ShouldBeTrue)
+			fosfreaddir = ifosfreaddir
+		})
+
+		Convey("GetDateOrderedFiles() with empty patterns return all files, ordered from most recent to oldest", func() {
+			dir := NewPathDir(".")
+			SetBuffers(nil)
+			fosfreaddir = testfosfreaddir
+			files := dir.GetDateOrderedFiles("")
+			So(len(files), ShouldEqual, 6)
+			So(fmt.Sprintf("%+v", files), ShouldEqual, `[f1.go f2 f3 f4.go f5.go f6]`)
+			So(NoOutput(), ShouldBeTrue)
+			fosfreaddir = ifosfreaddir
+		})
+
+		Convey("GetDateOrderedFiles() with bad pattern return no files and a warning", func() {
+			dir := NewPathDir(".")
+			SetBuffers(nil)
+			fosfreaddir = testfosfreaddir
+			files := dir.GetDateOrderedFiles("^g.*$")
+			So(len(files), ShouldEqual, 0)
+			So(OutString(), ShouldBeEmpty)
+			So(ErrString(), ShouldEqualNL, `    [*Path.GetFiles] (*Path.GetDateOrderedFiles) (func)
+      NO FILE in '.\' for '^g.*$'`)
+			fosfreaddir = ifosfreaddir
+		})
+
+		Convey("GetDateOrderedFiles() with patterns return selected files, ordered from most recent to oldest", func() {
+			dir := NewPathDir(".")
+			SetBuffers(nil)
+			fosfreaddir = testfosfreaddir
+			files := dir.GetDateOrderedFiles("f[236]")
+			So(len(files), ShouldEqual, 3)
+			So(fmt.Sprintf("%+v", files), ShouldEqual, `[f2 f3 f6]`)
+			So(NoOutput(), ShouldBeTrue)
+
+			files = dir.GetDateOrderedFiles(`.*\.go`)
+			So(len(files), ShouldEqual, 3)
+			So(fmt.Sprintf("%+v", files), ShouldEqual, `[f1.go f4.go f5.go]`)
+			So(NoOutput(), ShouldBeTrue)
+
+			fosfreaddir = ifosfreaddir
+		})
+
+	})
+
 }
 
-type testFileInfo struct{ name string }
+type testFileInfo struct {
+	name string
+	time time.Time
+}
 
 func (tfi *testFileInfo) Name() string       { return tfi.name }
 func (tfi *testFileInfo) Size() int64        { return 0 }
 func (tfi *testFileInfo) Mode() os.FileMode  { return 0 }
-func (tfi *testFileInfo) ModTime() time.Time { return time.Now() }
+func (tfi *testFileInfo) ModTime() time.Time { return tfi.time }
 func (tfi *testFileInfo) IsDir() bool        { return false }
 func (tfi *testFileInfo) Sys() interface{}   { return nil }
 func (tfi *testFileInfo) String() string     { return tfi.Name() }
 
 func testfosfreaddir(f *os.File, n int) (fi []os.FileInfo, err error) {
 	if f.Name() == `.\` {
-		return []os.FileInfo{&testFileInfo{"f4.go"}, &testFileInfo{"f1.go"}, &testFileInfo{"f6"}, &testFileInfo{"f5.go"}, &testFileInfo{"f3"}, &testFileInfo{"f2"}}, nil
+		return []os.FileInfo{
+			&testFileInfo{"f4.go", time.Now().Add(-4 * time.Hour)},
+			&testFileInfo{"f1.go", time.Now().Add(-1 * time.Hour)},
+			&testFileInfo{"f6", time.Now().Add(-6 * time.Hour)},
+			&testFileInfo{"f5.go", time.Now().Add(-5 * time.Hour)},
+			&testFileInfo{"f3", time.Now().Add(-3 * time.Hour)},
+			&testFileInfo{"f2", time.Now().Add(-2 * time.Hour)}}, nil
 	}
 	if f.Name() == `..\..\` {
 		ifosfreaddir(f, n)
@@ -576,6 +675,7 @@ func testfosopen(name string) (file *os.File, err error) {
 	if name == `..\` {
 		return nil, fmt.Errorf("Error os.Open for '%s'", name)
 	}
+	fmt.Printf("testfosopen '%v' => %+v\n", name, file)
 	return nil, nil
 }
 
