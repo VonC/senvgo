@@ -724,6 +724,95 @@ func TestPath(t *testing.T) {
 
 	})
 
+	Convey("Tests for GetLastModifiedFile(pattern)", t, func() {
+
+		Convey("GetLastModifiedFile() returns empty list is not IsDir", func() {
+			dir := NewPathDir("xxx")
+			lastModifiedFile := dir.GetLastModifiedFile("")
+			SetBuffers(nil)
+			So(len(lastModifiedFile), ShouldEqual, 0)
+			So(NoOutput(), ShouldBeTrue)
+		})
+
+		Convey("GetLastModifiedFile() can fail opening the directory", func() {
+			dir := NewPathDir("..")
+			SetBuffers(nil)
+			fosopen = testfosopen
+			lastModifiedFile := dir.GetLastModifiedFile("err")
+			So(lastModifiedFile, ShouldBeEmpty)
+			So(OutString(), ShouldBeEmpty)
+			So(ErrString(), ShouldEqualNL, `      [*Path.GetFiles] (*Path.GetDateOrderedFiles) (*Path.GetLastModifiedFile) (func)
+        Error while opening dir '..\': 'Error os.Open for '..\''
+  [*Path.GetLastModifiedFile] (func)
+    Error while accessing dir '..\'`)
+			fosopen = ifosopen
+		})
+
+		Convey("GetLastModifiedFile() can fail listing files the directory", func() {
+			dir := NewPathDir("../..")
+			SetBuffers(nil)
+			fosopen = ifosopen
+			fosfreaddir = testfosfreaddir
+			lastModifiedFile := dir.GetLastModifiedFile("errlist")
+			So(lastModifiedFile, ShouldBeEmpty)
+			So(OutString(), ShouldBeEmpty)
+			So(ErrString(), ShouldEqualNL, `      [*Path.GetFiles] (*Path.GetDateOrderedFiles) (*Path.GetLastModifiedFile) (func)
+        Error while reading dir '..\..\': 'Error file.Readdir for '..\..\' (-1)'
+  [*Path.GetLastModifiedFile] (func)
+    Error while accessing dir '..\..\'`)
+			fosfreaddir = ifosfreaddir
+		})
+
+		Convey("GetLastModifiedFile() returns an empty list for an empty folder", func() {
+			dir := NewPathDir("../../..")
+			SetBuffers(nil)
+			fosfreaddir = testfosfreaddir
+			lastModifiedFile := dir.GetLastModifiedFile("emptyfolder")
+			So(lastModifiedFile, ShouldNotBeNil)
+			So(len(lastModifiedFile), ShouldEqual, 0)
+			So(NoOutput(), ShouldBeTrue)
+			fosfreaddir = ifosfreaddir
+		})
+
+		Convey("GetLastModifiedFile() with empty patterns return all files, ordered alphabetically", func() {
+			dir := NewPathDir(".")
+			SetBuffers(nil)
+			fosfreaddir = testfosfreaddir
+			lastModifiedFile := dir.GetLastModifiedFile("")
+			So(lastModifiedFile, ShouldEqual, `f1.go`)
+			So(NoOutput(), ShouldBeTrue)
+			fosfreaddir = ifosfreaddir
+		})
+
+		Convey("GetLastModifiedFile() with bad pattern return no files and a warning", func() {
+			dir := NewPathDir(".")
+			SetBuffers(nil)
+			fosfreaddir = testfosfreaddir
+			lastModifiedFile := dir.GetLastModifiedFile("^g.*$")
+			So(len(lastModifiedFile), ShouldEqual, 0)
+			So(OutString(), ShouldBeEmpty)
+			So(ErrString(), ShouldEqualNL, `      [*Path.GetFiles] (*Path.GetDateOrderedFiles) (*Path.GetLastModifiedFile) (func)
+        NO FILE in '.\' for '^g.*$'`)
+			fosfreaddir = ifosfreaddir
+		})
+
+		Convey("GetLastModifiedFile() with patterns return selected files, ordered alphabetically", func() {
+			dir := NewPathDir(".")
+			SetBuffers(nil)
+			fosfreaddir = testfosfreaddir
+			lastModifiedFile := dir.GetLastModifiedFile("f[236]")
+			So(lastModifiedFile, ShouldEqual, `f2`)
+			So(NoOutput(), ShouldBeTrue)
+
+			lastModifiedFile = dir.GetLastModifiedFile(`.*\.go`)
+			So(lastModifiedFile, ShouldEqual, `f1.go`)
+			So(NoOutput(), ShouldBeTrue)
+
+			fosfreaddir = ifosfreaddir
+		})
+
+	})
+
 }
 
 type testFileInfo struct {

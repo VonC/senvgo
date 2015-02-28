@@ -318,7 +318,7 @@ func (f byName) Swap(i, j int) {
 	f[i], f[j] = f[j], f[i]
 }
 
-// GetDateOrderedFiles returns files of a folder sorted alphabetically.
+// GetNameOrderedFiles returns files of a folder sorted alphabetically.
 // Not recursive.
 func (dir *Path) GetNameOrderedFiles(pattern string) []os.FileInfo {
 	// pdbg("Look in '%v' for '%v'\n", dir, pattern)
@@ -327,6 +327,23 @@ func (dir *Path) GetNameOrderedFiles(pattern string) []os.FileInfo {
 	sort.Sort(byName(filteredList))
 	res = filteredList
 	return res
+}
+
+// GetLastModifiedFile returns the name of the last modified file in a dir
+// (provided its name match the pattern: no pattern means any file).
+// returns empty string if error or no files.
+func (dir *Path) GetLastModifiedFile(pattern string) string {
+	// pdbg("Look in '%v' for '%v'\n", dir, pattern)
+	filteredList := dir.GetDateOrderedFiles(pattern)
+	if filteredList == nil {
+		godbg.Pdbgf("Error while accessing dir '%v'\n", dir)
+		return ""
+	}
+	if len(filteredList) == 0 {
+		return ""
+	}
+	// pdbg("t: '%v' => '%v'\n", filteredList, filteredList[0])
+	return filteredList[0].Name()
 }
 
 // PathWriter computes final PATH of a collection of programs
