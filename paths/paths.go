@@ -346,11 +346,11 @@ func (dir *Path) GetLastModifiedFile(pattern string) string {
 	return filteredList[0].Name()
 }
 
-// Delete all content (files and subfolders) of a directory.
+// DeleteFolder deletes all content (files and subfolders) of a directory.
 // Then delete the directoriy itself
 // Does nothing if dir is a file.
 // return the error ot the first os.RemoveAll issue
-func (dir *Path) DeleteFolderContent() error {
+func (dir *Path) DeleteFolder() error {
 	if dir.IsDir() == false {
 		return nil
 	}

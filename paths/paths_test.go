@@ -813,6 +813,17 @@ func TestPath(t *testing.T) {
 
 	})
 
+	Convey("Tests for DeleteFolder()", t, func() {
+		Convey("DeleteFolder() does nothing if it is a file", func() {
+			dir := NewPathDir("path_test.go")
+			SetBuffers(nil)
+			err := dir.DeleteFolder()
+			So(OutString(), ShouldBeEmpty)
+			So(ErrString(), ShouldEqualNL, `open path_test.go\: The system cannot find the file specified.`)
+			So(err, ShouldBeNil)
+			So(dir.Exists(), ShouldBeTrue)
+		})
+	})
 }
 
 type testFileInfo struct {
