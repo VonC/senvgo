@@ -346,6 +346,35 @@ func (dir *Path) GetLastModifiedFile(pattern string) string {
 	return filteredList[0].Name()
 }
 
+// Delete all content (files and subfolders) of a directory.
+// Then delete the directoriy itself
+// Does nothing if dir is a file.
+// return the error ot the first os.RemoveAll issue
+func (dir *Path) DeleteFolderContent() error {
+	if dir.IsDir() == false {
+		return nil
+	}
+	files := dir.GetFiles("")
+	if files == nil {
+		return fmt.Errorf("error while getting files from dir '%v'\n", dir)
+	}
+	var err, res error
+	for _, fi := range files {
+		fpath := filepath.Join(dir.String(), fi.Name())
+		err := os.RemoveAll(fpath)
+		if err != nil {
+			res = fmt.Errorf("error removing file '%v' in '%v': '%v'\n", fi.Name(), dir, err)
+			return res
+		}
+	}
+	err = os.RemoveAll(dir.String())
+	if err != nil {
+		res = fmt.Errorf("error removing dir '%v': '%v'\n", dir, err)
+		return res
+	}
+	return nil
+}
+
 // PathWriter computes final PATH of a collection of programs
 type PathWriter interface {
 	// WritePath writes in a writer `set PATH=`... with all prgs PATH.
