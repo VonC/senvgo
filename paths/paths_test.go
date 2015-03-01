@@ -845,17 +845,26 @@ func TestPath(t *testing.T) {
 			So(NoOutput(), ShouldBeTrue)
 			fosremoveall = ifosremoveall
 		})
-			So(OutString(), ShouldBeEmpty)
-			fosfreaddir = ifosfreaddir
+		Convey("DeleteFolder() can fail deleting the folder itself", func() {
+			dir := NewPathDir("..")
+			SetBuffers(nil)
+			fosremoveall = testosremoveall
+			err := dir.DeleteFolder()
+			So(err, ShouldNotBeEmpty)
+			So(err.Error(), ShouldEqualNL, `error removing dir '..\': 'Error deleting folder '..\''`)
+			So(NoOutput(), ShouldBeTrue)
+			fosremoveall = ifosremoveall
 		})
-
 	})
 }
 
 func testosremoveall(name string) (err error) {
-	//Perrdbgf("'%v'", name)
+	// Perrdbgf("'%v'", name)
 	if name == `paths_test.go` {
 		return fmt.Errorf("Error deleting '%v'", name)
+	}
+	if name == `..\` {
+		return fmt.Errorf("Error deleting folder '%v'", name)
 	}
 	// by default, simulate successfull removal
 	return nil
