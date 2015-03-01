@@ -346,6 +346,12 @@ func (dir *Path) GetLastModifiedFile(pattern string) string {
 	return filteredList[0].Name()
 }
 
+var fosremoveall func(path string) (err error)
+
+func ifosremoveall(path string) (err error) {
+	return os.RemoveAll(path)
+}
+
 // DeleteFolder deletes all content (files and subfolders) of a directory.
 // Then delete the directoriy itself
 // Does nothing if dir is a file.
@@ -361,13 +367,13 @@ func (dir *Path) DeleteFolder() error {
 	var err, res error
 	for _, fi := range files {
 		fpath := filepath.Join(dir.String(), fi.Name())
-		err := os.RemoveAll(fpath)
+		err := fosremoveall(fpath)
 		if err != nil {
 			res = fmt.Errorf("error removing file '%v' in '%v': '%v'\n", fi.Name(), dir, err)
 			return res
 		}
 	}
-	err = os.RemoveAll(dir.String())
+	err = fosremoveall(dir.String())
 	if err != nil {
 		res = fmt.Errorf("error removing dir '%v': '%v'\n", dir, err)
 		return res
@@ -402,4 +408,5 @@ func init() {
 	fosmkdirall = ifosmkdirall
 	fosopenfile = ifosopenfile
 	fosopen = ifosopen
+	fosremoveall = ifosremoveall
 }

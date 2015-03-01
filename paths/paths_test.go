@@ -835,8 +835,30 @@ func TestPath(t *testing.T) {
       Error while reading dir '..\..\': 'Error file.Readdir for '..\..\' (-1)'`)
 			fosfreaddir = ifosfreaddir
 		})
+		Convey("DeleteFolder() can fail deleting one of the files", func() {
+			dir := NewPathDir(".")
+			SetBuffers(nil)
+			fosremoveall = testosremoveall
+			err := dir.DeleteFolder()
+			So(err, ShouldNotBeEmpty)
+			So(err.Error(), ShouldEqualNL, `error removing file 'paths_test.go' in '.\': 'Error deleting 'paths_test.go''`)
+			So(NoOutput(), ShouldBeTrue)
+			fosremoveall = ifosremoveall
+		})
+			So(OutString(), ShouldBeEmpty)
+			fosfreaddir = ifosfreaddir
+		})
 
 	})
+}
+
+func testosremoveall(name string) (err error) {
+	//Perrdbgf("'%v'", name)
+	if name == `paths_test.go` {
+		return fmt.Errorf("Error deleting '%v'", name)
+	}
+	// by default, simulate successfull removal
+	return nil
 }
 
 type testFileInfo struct {
