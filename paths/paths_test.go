@@ -855,6 +855,16 @@ func TestPath(t *testing.T) {
 			So(NoOutput(), ShouldBeTrue)
 			fosremoveall = ifosremoveall
 		})
+		Convey("DeleteFolder() can delete the folder and its content", func() {
+			dir := NewPathDir("../..")
+			ifosremoveall("xxx")
+			SetBuffers(nil)
+			fosremoveall = testosremoveall
+			err := dir.DeleteFolder()
+			So(err, ShouldBeNil)
+			So(NoOutput(), ShouldBeTrue)
+			fosremoveall = ifosremoveall
+		})
 	})
 }
 
