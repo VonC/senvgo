@@ -821,8 +821,21 @@ func TestPath(t *testing.T) {
 			So(OutString(), ShouldBeEmpty)
 			So(ErrString(), ShouldEqualNL, `open path_test.go\: The system cannot find the file specified.`)
 			So(err, ShouldBeNil)
-			So(dir.Exists(), ShouldBeTrue)
+			So(dir.Exists(), ShouldBeFalse)
 		})
+		Convey("DeleteFolder() can fail listing the files", func() {
+			dir := NewPathDir("../..")
+			SetBuffers(nil)
+			fosopen = ifosopen
+			fosfreaddir = testfosfreaddir
+			err := dir.DeleteFolder()
+			So(err, ShouldNotBeEmpty)
+			So(OutString(), ShouldBeEmpty)
+			So(ErrString(), ShouldEqualNL, `    [*Path.GetFiles] (*Path.DeleteFolder) (func)
+      Error while reading dir '..\..\': 'Error file.Readdir for '..\..\' (-1)'`)
+			fosfreaddir = ifosfreaddir
+		})
+
 	})
 }
 
