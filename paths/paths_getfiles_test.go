@@ -15,7 +15,8 @@ func TestPathGetFiles(t *testing.T) {
 	Convey("Tests for GetFiles(pattern)", t, func() {
 
 		Convey("GetFiles() returns empty list is not IsDir", func() {
-			dir := NewPathDir("xxx")
+			SetBuffers(nil)
+			dir := NewPathDir("xxx1")
 			files := dir.GetFiles("")
 			SetBuffers(nil)
 			So(len(files), ShouldEqual, 0)
@@ -102,7 +103,7 @@ func TestPathGetFiles(t *testing.T) {
 	Convey("Tests for GetDateOrderedFiles(pattern)", t, func() {
 
 		Convey("GetDateOrderedFiles() returns empty list is not IsDir", func() {
-			dir := NewPathDir("xxx")
+			dir := NewPathDir("xxx2")
 			files := dir.GetDateOrderedFiles("")
 			SetBuffers(nil)
 			So(len(files), ShouldEqual, 0)
@@ -190,7 +191,7 @@ func TestPathGetFiles(t *testing.T) {
 	Convey("Tests for GetNameOrderedFiles(pattern)", t, func() {
 
 		Convey("GetNameOrderedFiles() returns empty list is not IsDir", func() {
-			dir := NewPathDir("xxx")
+			dir := NewPathDir("xxx3")
 			files := dir.GetNameOrderedFiles("")
 			SetBuffers(nil)
 			So(len(files), ShouldEqual, 0)
@@ -278,7 +279,7 @@ func TestPathGetFiles(t *testing.T) {
 	Convey("Tests for GetLastModifiedFile(pattern)", t, func() {
 
 		Convey("GetLastModifiedFile() returns empty list is not IsDir", func() {
-			dir := NewPathDir("xxx")
+			dir := NewPathDir("xxx4")
 			lastModifiedFile := dir.GetLastModifiedFile("")
 			SetBuffers(nil)
 			So(len(lastModifiedFile), ShouldEqual, 0)
@@ -408,7 +409,7 @@ func TestPathGetFiles(t *testing.T) {
 		})
 		Convey("DeleteFolder() can delete the folder and its content", func() {
 			dir := NewPathDir("../..")
-			ifosremoveall("xxx")
+			ifosremoveall("xxx5")
 			SetBuffers(nil)
 			fosremoveall = testosremoveall
 			err := dir.DeleteFolder()
@@ -470,37 +471,4 @@ func testfosopen(name string) (file *os.File, err error) {
 	}
 	fmt.Printf("testfosopen '%v' => %+v\n", name, file)
 	return nil, nil
-}
-
-func testfosopenfile(name string, flag int, perm os.FileMode) (file *os.File, err error) {
-	if name == "paths_test.go" {
-		return ifosopenfile(name, flag, perm)
-	}
-	if name == "paths.go" && flag&os.O_APPEND != 0 {
-		return nil, fmt.Errorf("Error os.OpenFile O_APPEND for '%s'", name)
-	}
-	if name == "xxx" {
-		return nil, fmt.Errorf("Error os.OpenFile O_CREATE for '%s'", name)
-	}
-	return nil, nil
-}
-
-func testfosremove(name string) error {
-	ifosremove("xxx")
-	return nil
-}
-
-func testfosmkdirall(path string, perm os.FileMode) error {
-	if path == "err" {
-		return fmt.Errorf("testfosmkdirall error on path '%s'", path)
-	}
-	return nil
-}
-
-func testerrfstat(f *os.File) (fi os.FileInfo, err error) {
-	return nil, fmt.Errorf("fstat error on '%+v'", f.Name())
-}
-func testerrosfstat(name string) (fi os.FileInfo, err error) {
-	err = fmt.Errorf("os.Stat() error on '%s'", name)
-	return nil, err
 }

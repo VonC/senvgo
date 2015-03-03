@@ -457,3 +457,36 @@ func TestPath(t *testing.T) {
 		})
 	})
 }
+
+func testfosopenfile(name string, flag int, perm os.FileMode) (file *os.File, err error) {
+	if name == "paths_test.go" {
+		return ifosopenfile(name, flag, perm)
+	}
+	if name == "paths.go" && flag&os.O_APPEND != 0 {
+		return nil, fmt.Errorf("Error os.OpenFile O_APPEND for '%s'", name)
+	}
+	if name == "xxx" {
+		return nil, fmt.Errorf("Error os.OpenFile O_CREATE for '%s'", name)
+	}
+	return nil, nil
+}
+
+func testfosremove(name string) error {
+	ifosremove("xxx")
+	return nil
+}
+
+func testfosmkdirall(path string, perm os.FileMode) error {
+	if path == "err" {
+		return fmt.Errorf("testfosmkdirall error on path '%s'", path)
+	}
+	return nil
+}
+
+func testerrfstat(f *os.File) (fi os.FileInfo, err error) {
+	return nil, fmt.Errorf("fstat error on '%+v'", f.Name())
+}
+func testerrosfstat(name string) (fi os.FileInfo, err error) {
+	err = fmt.Errorf("os.Stat() error on '%s'", name)
+	return nil, err
+}
