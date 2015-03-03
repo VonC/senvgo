@@ -223,9 +223,31 @@ func (p *Path) MustOpenFile(append bool) (file *os.File) {
 	return file
 }
 
+var ffpabs func(path string) (string, error)
+
+func iffpabs(path string) (string, error) {
+	return filepath.Abs(path)
+}
+
+// Abs returns the absolute path if it can, or nil if error
+// The error is printed on stderr
+// If the path ends with a separator, said separator is preserved
+func (p *Path) Abs() *Path {
+	res, err := ffpabs(p.path)
+	if err != nil {
+		fmt.Fprintf(godbg.Err(), "Unable to get full absollute path for '%v'\n%v\n", p.path, err)
+		return nil
+	}
+	if strings.HasSuffix(p.path, string(filepath.Separator)) {
+		return NewPathDir(res)
+	}
+	return NewPath(res)
+}
+
 func init() {
 	fstat = ifstat
 	fosstat = ifosstat
 	fosmkdirall = ifosmkdirall
 	fosopenfile = ifosopenfile
+	ffpabs = iffpabs
 }
