@@ -471,6 +471,14 @@ Error filepath.Abs for 'xxxabs'
 `)
 			ffpabs = iffpabs
 		})
+		Convey("Abs() for a file returns a file (no trailing separator)", func() {
+			p := NewPath("paths_test.go")
+			SetBuffers(nil)
+			ap := p.Abs()
+			So(ap, ShouldNotBeNil)
+			So(ap.String(), ShouldEndWith, `github.com\VonC\senvgo\paths\paths_test.go`)
+			So(NoOutput(), ShouldBeTrue)
+		})
 	})
 }
 
