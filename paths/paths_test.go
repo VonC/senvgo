@@ -3,6 +3,7 @@ package paths
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"testing"
 
 	. "github.com/VonC/godbg"
@@ -456,6 +457,28 @@ func TestPath(t *testing.T) {
 			f = p.MustOpenFile(true)
 		})
 	})
+	Convey("Tests for Abs()", t, func() {
+
+		Convey("Abs() fails is error, returns nil", func() {
+			p := NewPath("xxxabs")
+			ffpabs = testfpabs
+			SetBuffers(nil)
+			ap := p.Abs()
+			So(ap, ShouldBeNil)
+			So(OutString(), ShouldBeEmpty)
+			So(ErrString(), ShouldEqual, `Unable to get full absollute path for 'xxxabs'
+Error filepath.Abs for 'xxxabs'
+`)
+			ffpabs = iffpabs
+		})
+	})
+}
+
+func testfpabs(path string) (string, error) {
+	if path == "xxxabs" {
+		return "", fmt.Errorf("Error filepath.Abs for '%s'", path)
+	}
+	return filepath.Abs(path)
 }
 
 func testfosopenfile(name string, flag int, perm os.FileMode) (file *os.File, err error) {
