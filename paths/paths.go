@@ -244,6 +244,17 @@ func (p *Path) Abs() *Path {
 	return NewPath(res)
 }
 
+// Dir is filepath.Dir() for Path:
+// It returns all but the last element of path, typically the path's directory
+// Its result still ends with a file separator
+func (p *Path) Dir() *Path {
+	pp := p.path
+	for strings.HasSuffix(pp, string(filepath.Separator)) {
+		pp = pp[:len(pp)-1]
+	}
+	return NewPathDir(filepath.Dir(pp))
+}
+
 func init() {
 	fstat = ifstat
 	fosstat = ifosstat
