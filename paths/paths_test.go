@@ -499,6 +499,7 @@ Error filepath.Abs for 'xxxabs'
 
 		})
 	})
+
 	Convey("Tests for Dir()", t, func() {
 
 		Convey("Dir() of a file returns the parent folder", func() {
@@ -515,6 +516,26 @@ Error filepath.Abs for 'xxxabs'
 			pp := p.Dir()
 			So(NoOutput(), ShouldBeTrue)
 			So(pp.String(), ShouldEndWith, `\github.com\VonC\`)
+		})
+	})
+
+	Convey("Tests for Base()", t, func() {
+
+		Convey("Base() of a file path returns the file", func() {
+			p := NewPath("./paths_test.go")
+			SetBuffers(nil)
+			pp := p.Base()
+			So(NoOutput(), ShouldBeTrue)
+			So(pp, ShouldEqual, `paths_test.go`)
+		})
+		Convey("Base() of a folder path returns the folder (without trailing separator)", func() {
+			p := NewPathDir("../..")
+			p = p.Abs()
+			So(p.String(), ShouldEndWith, `\github.com\VonC\`)
+			SetBuffers(nil)
+			pp := p.Base()
+			So(NoOutput(), ShouldBeTrue)
+			So(pp, ShouldEqual, `VonC`)
 		})
 	})
 

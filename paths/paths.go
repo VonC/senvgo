@@ -255,6 +255,18 @@ func (p *Path) Dir() *Path {
 	return NewPathDir(filepath.Dir(pp))
 }
 
+// Base is filepath.Base():
+// It returns the last element of path. 
+// Trailing path separators are removed before extracting the last element.
+func (p *Path) Base() string {
+	pp := p.path
+	for strings.HasSuffix(pp, string(filepath.Separator)) {
+		pp = pp[:len(pp)-1]
+	}
+	return filepath.Base(pp)
+}
+
+
 func init() {
 	fstat = ifstat
 	fosstat = ifosstat
