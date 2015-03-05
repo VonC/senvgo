@@ -340,6 +340,14 @@ func (p *Path) IsGz() bool {
 	return p.isExt(".gz")
 }
 
+// SetExtGz() add a .gz to the path after removing its current extension
+// For file or folder.
+// Don't add .gz if, after removing extension, its ends with .gz
+// For instance a.gz.xxx => a.gz
+func (p *Path) SetExtGz() *Path {
+	return p.setExt(".gz")
+}
+
 func init() {
 	fstat = ifstat
 	fosstat = ifosstat
