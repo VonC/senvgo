@@ -308,6 +308,24 @@ func (p *Path) RemoveExtension() *Path {
 	return NewPath(sp)
 }
 
+// SetExtTar() add a .tar to the path after removing its current extension
+// For file or folder.
+// Don't add .tar if, after removing extension, its ends with .tar
+// For instance a.tar.gz => a.tar
+func (p *Path) SetExtTar() *Path {
+	if p.IsTar() {
+		return p
+	}
+	p = p.RemoveExtension()
+	if p.IsTar() {
+		return p
+	}
+	if p.EndsWithSeparator() {
+		return p.AddNoSep(".tar").SetDir()
+	}
+	return p.AddNoSep(".tar")
+}
+
 func init() {
 	fstat = ifstat
 	fosstat = ifosstat

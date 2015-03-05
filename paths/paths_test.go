@@ -634,6 +634,13 @@ Error filepath.Abs for 'xxxabs'
 			So(NoOutput(), ShouldBeTrue)
 			So(pp.String(), ShouldEqual, `c\d\e\`)
 
+			p = NewPathDir("h/i/k.ext1.ext2")
+			So(p.String(), ShouldEqual, `h\i\k.ext1.ext2\`)
+			SetBuffers(nil)
+			pp = p.RemoveExtension()
+			So(NoOutput(), ShouldBeTrue)
+			So(pp.String(), ShouldEqual, `h\i\k.ext1\`)
+
 		})
 
 		Convey("A path NOT ending with .xxx is unchanged", func() {
@@ -642,6 +649,57 @@ Error filepath.Abs for 'xxxabs'
 			pp := p.RemoveExtension()
 			So(NoOutput(), ShouldBeTrue)
 			So(pp.String(), ShouldEqual, `f\g`)
+		})
+	})
+
+	Convey("Tests for SetExtTar()", t, func() {
+
+		Convey("A path ending with .tar is unchanged", func() {
+			p := NewPath("a/b.tar")
+			SetBuffers(nil)
+			pp := p.SetExtTar()
+			So(NoOutput(), ShouldBeTrue)
+			So(pp.String(), ShouldEqual, `a\b.tar`)
+			So(pp, ShouldEqual, p)
+
+			p = NewPathDir("c/d/e.tar")
+			So(p.String(), ShouldEqual, `c\d\e.tar\`)
+			SetBuffers(nil)
+			pp = p.SetExtTar()
+			So(NoOutput(), ShouldBeTrue)
+			So(pp.String(), ShouldEqual, `c\d\e.tar\`)
+			So(pp, ShouldEqual, p)
+
+		})
+
+		Convey("A path NOT ending with .tar is added .tar", func() {
+			p := NewPath("f/g.ext")
+			SetBuffers(nil)
+			pp := p.SetExtTar()
+			So(NoOutput(), ShouldBeTrue)
+			So(pp.String(), ShouldEqual, `f\g.tar`)
+
+			p = NewPathDir("h/i/k.ext1.ext2")
+			So(p.String(), ShouldEqual, `h\i\k.ext1.ext2\`)
+			SetBuffers(nil)
+			pp = p.SetExtTar()
+			So(NoOutput(), ShouldBeTrue)
+			So(pp.String(), ShouldEqual, `h\i\k.ext1.tar\`)
+		})
+
+		Convey("A path ending with .tar.xxx only removes .xxx", func() {
+			p := NewPath("l/m.tar.ext")
+			SetBuffers(nil)
+			pp := p.SetExtTar()
+			So(NoOutput(), ShouldBeTrue)
+			So(pp.String(), ShouldEqual, `l\m.tar`)
+
+			p = NewPathDir("n/o/p.tar.gz")
+			So(p.String(), ShouldEqual, `n\o\p.tar.gz\`)
+			SetBuffers(nil)
+			pp = p.SetExtTar()
+			So(NoOutput(), ShouldBeTrue)
+			So(pp.String(), ShouldEqual, `n\o\p.tar\`)
 		})
 	})
 
