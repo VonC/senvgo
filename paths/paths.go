@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/VonC/godbg"
@@ -273,6 +274,18 @@ func (p *Path) Dot() *Path {
 		return p
 	}
 	return NewPath("." + string(filepath.Separator) + p.path)
+}
+
+var hasTarRx, _ = regexp.Compile(`\.tar(?:\.[^\.]+)?$`)
+
+// HarTar checks if a file and with .tar(.xxx)
+// For example a.tar.gz has tar.
+func (p Path) HasTar() bool {
+	matches := hasTarRx.FindAllStringSubmatchIndex(p.String(), -1)
+	if len(matches) > 0 {
+		return true
+	}
+	return false
 }
 
 func init() {

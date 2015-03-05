@@ -560,6 +560,32 @@ Error filepath.Abs for 'xxxabs'
 		})
 	})
 
+	Convey("Tests for HasTar()", t, func() {
+
+		Convey("A path including .tar has tar", func() {
+			p := NewPath("a.tar")
+			SetBuffers(nil)
+			b := p.HasTar()
+			So(NoOutput(), ShouldBeTrue)
+			So(b, ShouldBeTrue)
+
+			p = NewPath("b.tar.gz")
+			SetBuffers(nil)
+			b = p.HasTar()
+			So(NoOutput(), ShouldBeTrue)
+			So(b, ShouldBeTrue)
+
+		})
+
+		Convey("A path NOT including .tar has NOT tar", func() {
+			p := NewPath("abc")
+			SetBuffers(nil)
+			b := p.HasTar()
+			So(NoOutput(), ShouldBeTrue)
+			So(b, ShouldBeFalse)
+		})
+	})
+
 }
 
 func testfpabs(path string) (string, error) {
