@@ -595,10 +595,11 @@ Error filepath.Abs for 'xxxabs'
 
 	Convey("Tests for IsXxx()", t, func() {
 
-		fnames := []string{"IsTar", "IsGz"}
+		fnames := []string{"IsTar", "IsGz", "Is7z"}
+		exts := []string{".tar", ".gz", ".7z"}
 
 		Convey("A path ending with .xxx is xxx", func() {
-			for i, ext := range []string{".tar", ".gz"} {
+			for i, ext := range exts {
 				fname := fnames[i]
 				p := NewPath("a" + ext)
 				SetBuffers(nil)
@@ -615,7 +616,7 @@ Error filepath.Abs for 'xxxabs'
 		})
 
 		Convey("A path NOT ending with .xxx is NOT xxx", func() {
-			for i, ext := range []string{".tar", ".gz"} {
+			for i, ext := range exts {
 				fname := fnames[i]
 				p := NewPath(fmt.Sprintf("abc%s.yyy", ext))
 				SetBuffers(nil)
@@ -662,8 +663,8 @@ Error filepath.Abs for 'xxxabs'
 
 	Convey("Tests for SetExtXxx()", t, func() {
 
-		fnames := []string{"SetExtTar", "SetExtGz"}
-		exts := []string{".tar", ".gz"}
+		fnames := []string{"SetExtTar", "SetExtGz", "SetExt7z"}
+		exts := []string{".tar", ".gz", ".7z"}
 
 		Convey("A path ending with .tar is unchanged", func() {
 			for i, ext := range exts {

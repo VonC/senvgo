@@ -334,7 +334,7 @@ func (p *Path) setExt(ext string) *Path {
 	return p.AddNoSep(ext)
 }
 
-// IsGz checks if a path ends with .tar
+// IsGz checks if a path ends with .gz
 // For file or folder
 func (p *Path) IsGz() bool {
 	return p.isExt(".gz")
@@ -346,6 +346,20 @@ func (p *Path) IsGz() bool {
 // For instance a.gz.xxx => a.gz
 func (p *Path) SetExtGz() *Path {
 	return p.setExt(".gz")
+}
+
+// IsGz checks if a path ends with .7z
+// For file or folder
+func (p *Path) Is7z() bool {
+	return p.isExt(".7z")
+}
+
+// SetExtGz() add a .7z to the path after removing its current extension
+// For file or folder.
+// Don't add .7z if, after removing extension, its ends with .7z
+// For instance a.7z.xxx => a.7z
+func (p *Path) SetExt7z() *Path {
+	return p.setExt(".7z")
 }
 
 func init() {
