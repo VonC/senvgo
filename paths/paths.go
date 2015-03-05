@@ -288,10 +288,14 @@ func (p Path) HasTar() bool {
 	return false
 }
 
+func (p *Path) isExt(ext string) bool {
+	return filepath.Ext(p.NoSep().String()) == ext
+}
+
 // IsTar checks if a path ends with .tar
 // For file or folder
 func (p *Path) IsTar() bool {
-	return filepath.Ext(p.NoSep().String()) == ".tar"
+	return p.isExt(".tar")
 }
 
 // RemoveExtension removes .tar if path ends with .tar
@@ -324,6 +328,12 @@ func (p *Path) SetExtTar() *Path {
 		return p.AddNoSep(".tar").SetDir()
 	}
 	return p.AddNoSep(".tar")
+}
+
+// IsGz checks if a path ends with .tar
+// For file or folder
+func (p *Path) IsGz() bool {
+	return p.isExt(".gz")
 }
 
 func init() {
