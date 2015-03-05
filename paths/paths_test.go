@@ -660,24 +660,29 @@ Error filepath.Abs for 'xxxabs'
 		})
 	})
 
-	Convey("Tests for SetExtTar()", t, func() {
+	Convey("Tests for SetExtXxx()", t, func() {
+
+		fnames := []string{"SetExtTar", "SetExtGz"}
+		exts := []string{".tar", ".gz"}
 
 		Convey("A path ending with .tar is unchanged", func() {
-			p := NewPath("a/b.tar")
-			SetBuffers(nil)
-			pp := p.SetExtTar()
-			So(NoOutput(), ShouldBeTrue)
-			So(pp.String(), ShouldEqual, `a\b.tar`)
-			So(pp, ShouldEqual, p)
+			for i, ext := range exts {
+				fname := fnames[i]
+				p := NewPath("a/b" + ext)
+				SetBuffers(nil)
+				pp := p.callFunc(fname).Interface().(*Path)
+				So(NoOutput(), ShouldBeTrue)
+				So(pp.String(), ShouldEqual, `a\b`+ext)
+				So(pp, ShouldEqual, p)
 
-			p = NewPathDir("c/d/e.tar")
-			So(p.String(), ShouldEqual, `c\d\e.tar\`)
-			SetBuffers(nil)
-			pp = p.SetExtTar()
-			So(NoOutput(), ShouldBeTrue)
-			So(pp.String(), ShouldEqual, `c\d\e.tar\`)
-			So(pp, ShouldEqual, p)
-
+				p = NewPathDir("c/d/e" + ext)
+				So(p.String(), ShouldEqual, `c\d\e`+ext+`\`)
+				SetBuffers(nil)
+				pp = p.callFunc(fname).Interface().(*Path)
+				So(NoOutput(), ShouldBeTrue)
+				So(pp.String(), ShouldEqual, `c\d\e`+ext+`\`)
+				So(pp, ShouldEqual, p)
+			}
 		})
 
 		Convey("A path NOT ending with .tar is added .tar", func() {
