@@ -294,6 +294,20 @@ func (p *Path) IsTar() bool {
 	return filepath.Ext(p.NoSep().String()) == ".tar"
 }
 
+// RemoveExtension removes .tar if path ends with .tar
+// Preserves file separator indicating a folder
+func (p *Path) RemoveExtension() *Path {
+	sp := p.NoSep().String()
+	ext := filepath.Ext(sp)
+	if ext != "" {
+		sp = sp[:len(sp)-len(ext)]
+	}
+	if p.EndsWithSeparator() {
+		return NewPathDir(sp)
+	}
+	return NewPath(sp)
+}
+
 func init() {
 	fstat = ifstat
 	fosstat = ifosstat

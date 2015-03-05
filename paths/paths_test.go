@@ -618,6 +618,33 @@ Error filepath.Abs for 'xxxabs'
 		})
 	})
 
+	Convey("Tests for RemoveExtension()", t, func() {
+
+		Convey("A path ending with .xxx extension removes the extension", func() {
+			p := NewPath("a/b.tar")
+			SetBuffers(nil)
+			pp := p.RemoveExtension()
+			So(NoOutput(), ShouldBeTrue)
+			So(pp.String(), ShouldEqual, `a\b`)
+
+			p = NewPathDir("c/d/e.tar")
+			So(p.String(), ShouldEqual, `c\d\e.tar\`)
+			SetBuffers(nil)
+			pp = p.RemoveExtension()
+			So(NoOutput(), ShouldBeTrue)
+			So(pp.String(), ShouldEqual, `c\d\e\`)
+
+		})
+
+		Convey("A path NOT ending with .xxx is unchanged", func() {
+			p := NewPath("f/g")
+			SetBuffers(nil)
+			pp := p.RemoveExtension()
+			So(NoOutput(), ShouldBeTrue)
+			So(pp.String(), ShouldEqual, `f\g`)
+		})
+	})
+
 }
 
 func testfpabs(path string) (string, error) {
