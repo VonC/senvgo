@@ -539,6 +539,27 @@ Error filepath.Abs for 'xxxabs'
 		})
 	})
 
+	Convey("Tests for Dot()", t, func() {
+
+		Convey("A path starting with ./ is returned unchanged", func() {
+			p := NewPath("./ab")
+			So(p.String(), ShouldEqual, `.\ab`)
+			SetBuffers(nil)
+			pp := p.Dot()
+			So(NoOutput(), ShouldBeTrue)
+			So(pp.String(), ShouldEqual, `.\ab`)
+		})
+
+		Convey("A path NOT starting with ./ is returned prefixed with ./", func() {
+			p := NewPath("abc")
+			So(p.String(), ShouldEqual, `abc`)
+			SetBuffers(nil)
+			pp := p.Dot()
+			So(NoOutput(), ShouldBeTrue)
+			So(pp.String(), ShouldEqual, `.\abc`)
+		})
+	})
+
 }
 
 func testfpabs(path string) (string, error) {

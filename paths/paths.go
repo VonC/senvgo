@@ -256,7 +256,7 @@ func (p *Path) Dir() *Path {
 }
 
 // Base is filepath.Base():
-// It returns the last element of path. 
+// It returns the last element of path.
 // Trailing path separators are removed before extracting the last element.
 func (p *Path) Base() string {
 	pp := p.path
@@ -266,6 +266,14 @@ func (p *Path) Base() string {
 	return filepath.Base(pp)
 }
 
+// Dot return a path prefixed with ".\" (dot plus file separator)
+// If it already starts with ./, returns the same path
+func (p *Path) Dot() *Path {
+	if strings.HasPrefix(p.path, "."+string(filepath.Separator)) {
+		return p
+	}
+	return NewPath("." + string(filepath.Separator) + p.path)
+}
 
 func init() {
 	fstat = ifstat
