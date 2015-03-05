@@ -586,6 +586,32 @@ Error filepath.Abs for 'xxxabs'
 		})
 	})
 
+	Convey("Tests for IsTar()", t, func() {
+
+		Convey("A path ending with .tar is tar", func() {
+			p := NewPath("a.tar")
+			SetBuffers(nil)
+			b := p.IsTar()
+			So(NoOutput(), ShouldBeTrue)
+			So(b, ShouldBeTrue)
+
+			p = NewPathDir("b.tar")
+			SetBuffers(nil)
+			b = p.IsTar()
+			So(NoOutput(), ShouldBeTrue)
+			So(b, ShouldBeFalse)
+
+		})
+
+		Convey("A path NOT ending with .tar is NOT tar", func() {
+			p := NewPath("abc.tar.gz")
+			SetBuffers(nil)
+			b := p.IsTar()
+			So(NoOutput(), ShouldBeTrue)
+			So(b, ShouldBeFalse)
+		})
+	})
+
 }
 
 func testfpabs(path string) (string, error) {

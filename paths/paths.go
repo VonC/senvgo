@@ -288,6 +288,12 @@ func (p Path) HasTar() bool {
 	return false
 }
 
+// IsTar checks if a path ends with .tar
+// False if folder
+func (p *Path) IsTar() bool {
+	return filepath.Ext(p.String()) == ".tar"
+}
+
 func init() {
 	fstat = ifstat
 	fosstat = ifosstat
