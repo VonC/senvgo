@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
 
 	. "github.com/VonC/godbg"
@@ -592,30 +593,35 @@ Error filepath.Abs for 'xxxabs'
 		})
 	})
 
-	Convey("Tests for IsTar()", t, func() {
+	Convey("Tests for IsXxx()", t, func() {
 
-		Convey("A path ending with .tar is tar", func() {
-			p := NewPath("a.tar")
-			SetBuffers(nil)
-			b := p.IsTar()
-			So(NoOutput(), ShouldBeTrue)
-			So(b, ShouldBeTrue)
+		fnames := []string{"IsTar", "IsGz"}
+		for i, ext := range []string{".tar", ".gz"} {
+			fname := fnames[i]
 
-			p = NewPathDir("b.tar")
-			SetBuffers(nil)
-			b = p.IsTar()
-			So(NoOutput(), ShouldBeTrue)
-			So(b, ShouldBeTrue)
+			Convey("A path ending with .xxx is xxx", func() {
+				p := NewPath("a" + ext)
+				SetBuffers(nil)
+				b := p.callFunc(fname).Bool()
+				So(NoOutput(), ShouldBeTrue)
+				So(b, ShouldBeTrue)
 
-		})
+				p = NewPathDir("b" + ext)
+				SetBuffers(nil)
+				b = p.callFunc(fname).Bool()
+				So(NoOutput(), ShouldBeTrue)
+				So(b, ShouldBeTrue)
 
-		Convey("A path NOT ending with .tar is NOT tar", func() {
-			p := NewPath("abc.tar.gz")
-			SetBuffers(nil)
-			b := p.IsTar()
-			So(NoOutput(), ShouldBeTrue)
-			So(b, ShouldBeFalse)
-		})
+			})
+
+			Convey("A path NOT ending with .xxx is NOT xxx", func() {
+				p := NewPath(fmt.Sprintf("abc%s.yyy", ext))
+				SetBuffers(nil)
+				b := p.callFunc(fname).Bool()
+				So(NoOutput(), ShouldBeTrue)
+				So(b, ShouldBeFalse)
+			})
+		}
 	})
 
 	Convey("Tests for RemoveExtension()", t, func() {
@@ -703,6 +709,14 @@ Error filepath.Abs for 'xxxabs'
 		})
 	})
 
+}
+
+func (p *Path) callFunc(fname string) reflect.Value {
+	stype := reflect.ValueOf(p)
+	sfunc := stype.MethodByName(fname)
+	ret := sfunc.Call([]reflect.Value{})
+	val := ret[0]
+	return val
 }
 
 func testfpabs(path string) (string, error) {
