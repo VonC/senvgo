@@ -317,17 +317,21 @@ func (p *Path) RemoveExtension() *Path {
 // Don't add .tar if, after removing extension, its ends with .tar
 // For instance a.tar.gz => a.tar
 func (p *Path) SetExtTar() *Path {
-	if p.IsTar() {
+	return p.setExt(".tar")
+}
+
+func (p *Path) setExt(ext string) *Path {
+	if p.isExt(ext) {
 		return p
 	}
 	p = p.RemoveExtension()
-	if p.IsTar() {
+	if p.isExt(ext) {
 		return p
 	}
 	if p.EndsWithSeparator() {
-		return p.AddNoSep(".tar").SetDir()
+		return p.AddNoSep(ext).SetDir()
 	}
-	return p.AddNoSep(".tar")
+	return p.AddNoSep(ext)
 }
 
 // IsGz checks if a path ends with .tar
