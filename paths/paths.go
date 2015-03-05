@@ -96,7 +96,7 @@ func (p *Path) Add(s string) *Path {
 	return NewPath(pp.path + s)
 }
 
-// Add adds a Path to a Path
+// AddP adds a Path to a Path
 // no check is done regarding the absolute path of the argument
 func (p *Path) AddP(path *Path) *Path {
 	return p.Add(path.path)
@@ -123,7 +123,7 @@ func (p *Path) AddNoSep(s string) *Path {
 	return NewPath(pp.path + s)
 }
 
-// Add adds a Path to a Path, making sure the resulting path doesn't end with a file separator
+// AddPNoSep adds a Path to a Path, making sure the resulting path doesn't end with a file separator
 // no check is done regarding the absolute path of the argument
 func (p *Path) AddPNoSep(path *Path) *Path {
 	return p.AddNoSep(path.String())
@@ -173,7 +173,7 @@ func ifosmkdirall(path string, perm os.FileMode) error {
 	return os.MkdirAll(path, perm)
 }
 
-// MkDir creates a directory named path, along with any necessary parents,
+// MkdirAll creates a directory named path, along with any necessary parents,
 // and return true if created, false otherwise.
 // Any error is printed on Stderr
 func (p *Path) MkdirAll() bool {
