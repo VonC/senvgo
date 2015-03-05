@@ -575,6 +575,12 @@ Error filepath.Abs for 'xxxabs'
 			So(NoOutput(), ShouldBeTrue)
 			So(b, ShouldBeTrue)
 
+			p = NewPathDir("c.tar")
+			SetBuffers(nil)
+			b = p.HasTar()
+			So(NoOutput(), ShouldBeTrue)
+			So(b, ShouldBeTrue)
+
 		})
 
 		Convey("A path NOT including .tar has NOT tar", func() {
@@ -599,7 +605,7 @@ Error filepath.Abs for 'xxxabs'
 			SetBuffers(nil)
 			b = p.IsTar()
 			So(NoOutput(), ShouldBeTrue)
-			So(b, ShouldBeFalse)
+			So(b, ShouldBeTrue)
 
 		})
 

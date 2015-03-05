@@ -281,7 +281,7 @@ var hasTarRx, _ = regexp.Compile(`\.tar(?:\.[^\.]+)?$`)
 // HarTar checks if a file and with .tar(.xxx)
 // For example a.tar.gz has tar.
 func (p Path) HasTar() bool {
-	matches := hasTarRx.FindAllStringSubmatchIndex(p.String(), -1)
+	matches := hasTarRx.FindAllStringSubmatchIndex(p.NoSep().String(), -1)
 	if len(matches) > 0 {
 		return true
 	}
@@ -289,9 +289,9 @@ func (p Path) HasTar() bool {
 }
 
 // IsTar checks if a path ends with .tar
-// False if folder
+// For file or folder
 func (p *Path) IsTar() bool {
-	return filepath.Ext(p.String()) == ".tar"
+	return filepath.Ext(p.NoSep().String()) == ".tar"
 }
 
 func init() {
