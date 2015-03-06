@@ -414,7 +414,7 @@ func (p *Path) NoExt() *Path {
 	return res
 }
 
-// IsZipOr7z returns true if PAth (file or folder) ends with .zip or .tar
+// IsZipOr7z returns true if Path (file or folder) ends with .zip or .tar
 func (p *Path) IsZipOr7z() bool {
 	return p.IsZip() || p.Is7z()
 }
@@ -429,6 +429,11 @@ func (p *Path) IsExe() bool {
 // For file or folder
 func (p *Path) IsMsi() bool {
 	return p.isExt(".msi")
+}
+
+// IsExeOrMsi returns true if Path (file or folder) ends with .exe or .msi
+func (p *Path) IsExeOrMsi() bool {
+	return p.IsExe() || p.IsMsi()
 }
 
 func init() {
