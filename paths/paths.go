@@ -388,6 +388,11 @@ func (p *Path) IsTar7z() bool {
 	return p.isExt(".tar.7z")
 }
 
+// isPortableCompressed checks if path is ending with .zip or .tar.gz or .tar.7z
+func (p *Path) IsPortableCompressed() bool {
+	return p.IsZip() || p.IsTarGz() || p.IsTar7z()
+}
+
 func init() {
 	fstat = ifstat
 	fosstat = ifosstat

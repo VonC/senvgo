@@ -717,6 +717,61 @@ Error filepath.Abs for 'xxxabs'
 		})
 	})
 
+	Convey("Tests for IsPortableCompressed()", t, func() {
+
+		Convey("A path ending with portable compressed extensions passes", func() {
+			p := NewPath("a/b.zip")
+			SetBuffers(nil)
+			b := p.IsPortableCompressed()
+			So(NoOutput(), ShouldBeTrue)
+			So(b, ShouldBeTrue)
+
+			p = NewPathDir("c/d/e.tar.gz")
+			So(p.String(), ShouldEqual, `c\d\e.tar.gz\`)
+			SetBuffers(nil)
+			b = p.IsPortableCompressed()
+			So(NoOutput(), ShouldBeTrue)
+			So(b, ShouldBeTrue)
+
+			p = NewPathDir("h/i/k.tar.7z")
+			So(p.String(), ShouldEqual, `h\i\k.tar.7z\`)
+			SetBuffers(nil)
+			b = p.IsPortableCompressed()
+			So(NoOutput(), ShouldBeTrue)
+			So(b, ShouldBeTrue)
+
+		})
+
+		Convey("A path NOT with portable compressed extensions doesn't pass", func() {
+			p := NewPath("f/g.zip.xxx")
+			SetBuffers(nil)
+			b := p.IsPortableCompressed()
+			So(NoOutput(), ShouldBeTrue)
+			So(b, ShouldBeFalse)
+
+			p = NewPathDir("c/d/e.gz.tar")
+			So(p.String(), ShouldEqual, `c\d\e.gz.tar\`)
+			SetBuffers(nil)
+			b = p.IsPortableCompressed()
+			So(NoOutput(), ShouldBeTrue)
+			So(b, ShouldBeFalse)
+
+			p = NewPathDir("h/i/k.tar.7z1")
+			So(p.String(), ShouldEqual, `h\i\k.tar.7z1\`)
+			SetBuffers(nil)
+			b = p.IsPortableCompressed()
+			So(NoOutput(), ShouldBeTrue)
+			So(b, ShouldBeFalse)
+
+			p = NewPathDir("l/m/n.xxx.tar.7z")
+			So(p.String(), ShouldEqual, `l\m\n.xxx.tar.7z\`)
+			SetBuffers(nil)
+			b = p.IsPortableCompressed()
+			So(NoOutput(), ShouldBeTrue)
+			So(b, ShouldBeFalse)
+		})
+	})
+
 }
 
 func (p *Path) callFunc(fname string) reflect.Value {
