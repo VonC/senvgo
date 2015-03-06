@@ -799,6 +799,20 @@ Error filepath.Abs for 'xxxabs'
 
 	})
 
+	Convey("Tests for IsEmpty()", t, func() {
+
+		Convey("A path nil or empty is empty", func() {
+			var p *Path
+			So(IsEmpty(p), ShouldBeTrue)
+			p = NewPath("")
+			So(IsEmpty(p), ShouldBeTrue)
+			p = p.Add("a")
+			// Perrdbgf("p='%+v'", p)
+			So(IsEmpty(p), ShouldBeFalse)
+
+		})
+
+	})
 }
 
 func (p *Path) callFunc(fname string) reflect.Value {

@@ -436,6 +436,11 @@ func (p *Path) IsExeOrMsi() bool {
 	return p.IsExe() || p.IsMsi()
 }
 
+// IsEmpty checks if p is nil or has an empty path
+func IsEmpty(p *Path) bool {
+	return p == nil || p.path == ""
+}
+
 func init() {
 	fstat = ifstat
 	fosstat = ifosstat
