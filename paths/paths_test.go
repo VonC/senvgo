@@ -595,14 +595,15 @@ Error filepath.Abs for 'xxxabs'
 
 	Convey("Tests for IsXxx()", t, func() {
 
-		fnames := []string{"IsTar", "IsGz", "Is7z", "IsZip", "IsTarGz", "IsTar7z", "IsZipOr7z", "IsZipOr7z"}
-		exts := []string{".tar", ".gz", ".7z", ".zip", ".tar.gz", ".tar.7z", ".zip", ".7z"}
+		fnames := []string{"IsTar", "IsGz", "Is7z", "IsZip", "IsTarGz", "IsTar7z", "IsZipOr7z", "IsZipOr7z", "IsExe"}
+		exts := []string{".tar", ".gz", ".7z", ".zip", ".tar.gz", ".tar.7z", ".zip", ".7z", ".exe"}
 
 		Convey("A path ending with .xxx is xxx", func() {
 			for i, ext := range exts {
 				fname := fnames[i]
 				p := NewPath("a" + ext)
 				SetBuffers(nil)
+				//Perrdbgf("fname='%v', p='%v'", fname, p)
 				b := p.callFunc(fname).Bool()
 				So(NoOutput(), ShouldBeTrue)
 				So(b, ShouldBeTrue)
