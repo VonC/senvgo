@@ -289,7 +289,15 @@ func (p Path) HasTar() bool {
 }
 
 func (p *Path) isExt(ext string) bool {
-	return filepath.Ext(p.NoSep().String()) == ext
+	sp := p.NoSep().String()
+	sext := ""
+	anext := filepath.Ext(sp)
+	for anext != "" {
+		sp = sp[:len(sp)-len(anext)]
+		sext = anext + sext
+		anext = filepath.Ext(sp)
+	}
+	return sext == ext
 }
 
 // IsTar checks if a path ends with .tar
