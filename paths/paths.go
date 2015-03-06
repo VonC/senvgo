@@ -393,6 +393,27 @@ func (p *Path) IsPortableCompressed() bool {
 	return p.IsZip() || p.IsTarGz() || p.IsTar7z()
 }
 
+// NoExt removes extension (any .xxx.yyy path), for file or folder
+// Preserve the final path separator for folder
+// Returns the same p object if no extension found
+func (p *Path) NoExt() *Path {
+	endssep := p.EndsWithSeparator()
+	sp := p.NoSep().String()
+	anext := filepath.Ext(sp)
+	if anext == "" {
+		return p
+	}
+	for anext != "" {
+		sp = sp[:len(sp)-len(anext)]
+		anext = filepath.Ext(sp)
+	}
+	if endssep {
+		sp = sp + "/"
+	}
+	res := NewPath(sp)
+	return res
+}
+
 func init() {
 	fstat = ifstat
 	fosstat = ifosstat

@@ -772,6 +772,32 @@ Error filepath.Abs for 'xxxabs'
 		})
 	})
 
+	Convey("Tests for NoExt()", t, func() {
+
+		Convey("A path with no extension is returned", func() {
+			p := NewPath("a/b")
+			SetBuffers(nil)
+			pp := p.NoExt()
+			So(NoOutput(), ShouldBeTrue)
+			So(p, ShouldEqual, pp)
+		})
+
+		Convey("A path with extension is returned without extension", func() {
+			p := NewPath("c/d.tar")
+			SetBuffers(nil)
+			pp := p.NoExt()
+			So(NoOutput(), ShouldBeTrue)
+			So(pp.String(), ShouldEqual, `c\d`)
+
+			p = NewPathDir("c/d.tar.gz")
+			SetBuffers(nil)
+			pp = p.NoExt()
+			So(NoOutput(), ShouldBeTrue)
+			So(pp.String(), ShouldEqual, `c\d\`)
+		})
+
+	})
+
 }
 
 func (p *Path) callFunc(fname string) reflect.Value {
