@@ -419,10 +419,16 @@ func (p *Path) IsZipOr7z() bool {
 	return p.IsZip() || p.Is7z()
 }
 
-// isExe checks if a path ends with .exe
+// IsExe checks if a path ends with .exe
 // For file or folder
 func (p *Path) IsExe() bool {
 	return p.isExt(".exe")
+}
+
+// IsMsi checks if a path ends with .exe
+// For file or folder
+func (p *Path) IsMsi() bool {
+	return p.isExt(".msi")
 }
 
 func init() {

@@ -595,8 +595,8 @@ Error filepath.Abs for 'xxxabs'
 
 	Convey("Tests for IsXxx()", t, func() {
 
-		fnames := []string{"IsTar", "IsGz", "Is7z", "IsZip", "IsTarGz", "IsTar7z", "IsZipOr7z", "IsZipOr7z", "IsExe"}
-		exts := []string{".tar", ".gz", ".7z", ".zip", ".tar.gz", ".tar.7z", ".zip", ".7z", ".exe"}
+		fnames := []string{"IsTar", "IsGz", "Is7z", "IsZip", "IsTarGz", "IsTar7z", "IsZipOr7z", "IsZipOr7z", "IsExe", "IsMsi"}
+		exts := []string{".tar", ".gz", ".7z", ".zip", ".tar.gz", ".tar.7z", ".zip", ".7z", ".exe", ".msi"}
 
 		Convey("A path ending with .xxx is xxx", func() {
 			for i, ext := range exts {
