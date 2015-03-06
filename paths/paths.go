@@ -414,6 +414,11 @@ func (p *Path) NoExt() *Path {
 	return res
 }
 
+// IsZipOr7z returns true if PAth (file or folder) ends with .zip or .tar
+func (p *Path) IsZipOr7z() bool {
+	return p.IsZip() || p.Is7z()
+}
+
 func init() {
 	fstat = ifstat
 	fosstat = ifosstat
