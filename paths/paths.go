@@ -370,6 +370,24 @@ func (p *Path) SetExt7z() *Path {
 	return p.setExt(".7z")
 }
 
+// isZip checks if a path ends with .zip
+// For file or folder
+func (p *Path) IsZip() bool {
+	return p.isExt(".zip")
+}
+
+// isTarGz checks if a path ends with .tar.gz
+// For file or folder
+func (p *Path) IsTarGz() bool {
+	return p.isExt(".tar.gz")
+}
+
+// isTarSz checks if a path ends with .tar.7z
+// For file or folder
+func (p *Path) IsTar7z() bool {
+	return p.isExt(".tar.7z")
+}
+
 func init() {
 	fstat = ifstat
 	fosstat = ifosstat
