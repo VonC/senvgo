@@ -803,12 +803,12 @@ Error filepath.Abs for 'xxxabs'
 
 		Convey("A path nil or empty is empty", func() {
 			var p *Path
-			So(IsEmpty(p), ShouldBeTrue)
+			So(p.IsEmpty(), ShouldBeTrue)
 			p = NewPath("")
-			So(IsEmpty(p), ShouldBeTrue)
+			So(p.IsEmpty(), ShouldBeTrue)
 			p = p.Add("a")
 			// Perrdbgf("p='%+v'", p)
-			So(IsEmpty(p), ShouldBeFalse)
+			So(p.IsEmpty(), ShouldBeFalse)
 
 		})
 

@@ -437,7 +437,7 @@ func (p *Path) IsExeOrMsi() bool {
 }
 
 // IsEmpty checks if p is nil or has an empty path
-func IsEmpty(p *Path) bool {
+func (p *Path) IsEmpty() bool {
 	return p == nil || p.path == ""
 }
 
