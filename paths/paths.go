@@ -278,7 +278,7 @@ func (p *Path) Dot() *Path {
 
 var hasTarRx, _ = regexp.Compile(`\.tar(?:\.[^\.]+)?$`)
 
-// HarTar checks if a file and with .tar(.xxx)
+// HasTar checks if a file and with .tar(.xxx)
 // For example a.tar.gz has tar.
 func (p Path) HasTar() bool {
 	matches := hasTarRx.FindAllStringSubmatchIndex(p.NoSep().String(), -1)
@@ -320,7 +320,7 @@ func (p *Path) RemoveExtension() *Path {
 	return NewPath(sp)
 }
 
-// SetExtTar() add a .tar to the path after removing its current extension
+// SetExtTar add a .tar to the path after removing its current extension
 // For file or folder.
 // Don't add .tar if, after removing extension, its ends with .tar
 // For instance a.tar.gz => a.tar
@@ -348,7 +348,7 @@ func (p *Path) IsGz() bool {
 	return p.isExt(".gz")
 }
 
-// SetExtGz() add a .gz to the path after removing its current extension
+// SetExtGz add a .gz to the path after removing its current extension
 // For file or folder.
 // Don't add .gz if, after removing extension, its ends with .gz
 // For instance a.gz.xxx => a.gz
@@ -356,13 +356,13 @@ func (p *Path) SetExtGz() *Path {
 	return p.setExt(".gz")
 }
 
-// IsGz checks if a path ends with .7z
+// Is7z checks if a path ends with .7z
 // For file or folder
 func (p *Path) Is7z() bool {
 	return p.isExt(".7z")
 }
 
-// SetExtGz() add a .7z to the path after removing its current extension
+// SetExt7z add a .7z to the path after removing its current extension
 // For file or folder.
 // Don't add .7z if, after removing extension, its ends with .7z
 // For instance a.7z.xxx => a.7z
@@ -370,25 +370,25 @@ func (p *Path) SetExt7z() *Path {
 	return p.setExt(".7z")
 }
 
-// isZip checks if a path ends with .zip
+// IsZip checks if a path ends with .zip
 // For file or folder
 func (p *Path) IsZip() bool {
 	return p.isExt(".zip")
 }
 
-// isTarGz checks if a path ends with .tar.gz
+// IsTarGz checks if a path ends with .tar.gz
 // For file or folder
 func (p *Path) IsTarGz() bool {
 	return p.isExt(".tar.gz")
 }
 
-// isTarSz checks if a path ends with .tar.7z
+// IsTar7z checks if a path ends with .tar.7z
 // For file or folder
 func (p *Path) IsTar7z() bool {
 	return p.isExt(".tar.7z")
 }
 
-// isPortableCompressed checks if path is ending with .zip or .tar.gz or .tar.7z
+// IsPortableCompressed checks if path is ending with .zip or .tar.gz or .tar.7z
 func (p *Path) IsPortableCompressed() bool {
 	return p.IsZip() || p.IsTarGz() || p.IsTar7z()
 }

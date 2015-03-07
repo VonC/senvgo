@@ -41,7 +41,7 @@ func ifioureadfile(filename string) ([]byte, error) {
 	return ioutil.ReadFile(filename)
 }
 
-// SameContentAs checks if two files have the same content.
+// SameFileContentAs checks if two files have the same content.
 // Get both file content in memory.
 func (p *Path) SameFileContentAs(file *Path) bool {
 	if p.EndsWithSeparator() == false && (p == file || p.String() == file.String()) && p.Exists() {
