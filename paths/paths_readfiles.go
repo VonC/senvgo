@@ -35,6 +35,32 @@ func (p *Path) FileContent() string {
 	return content
 }
 
+var fioureadfile func(filename string) ([]byte, error)
+
+func ifioureadfile(filename string) ([]byte, error) {
+	return ioutil.ReadFile(filename)
+}
+
+// SameContentAs checks if two files have the same content.
+// Get both file content in memory.
+func (p *Path) SameFileContentAs(file *Path) bool {
+	if p.EndsWithSeparator() == false && (p == file || p.String() == file.String()) && p.Exists() {
+		return true
+	}
+	contents, err := fioureadfile(p.String())
+	if err != nil {
+		godbg.Pdbgf("Unable to access p '%v'\n'%v'\n", p, err)
+		return false
+	}
+	fileContents, err := fioureadfile(file.String())
+	if err != nil {
+		godbg.Pdbgf("Unable to access file '%v'\n'%v'\n", file, err)
+		return false
+	}
+	return string(contents) == string(fileContents)
+}
+
 func init() {
 	fioureadall = ifioureadall
+	fioureadfile = ifioureadfile
 }

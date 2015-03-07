@@ -58,6 +58,63 @@ func TestPathReadFiles(t *testing.T) {
 		})
 
 	})
+
+	Convey("Tests for SameFileContentAs()", t, func() {
+
+		Convey("SameFileContentAs can fail for a directory", func() {
+			dir := NewPathDir(".")
+			SetBuffers(nil)
+			content := dir.SameFileContentAs(dir)
+			So(content, ShouldBeFalse)
+			So(OutString(), ShouldBeEmpty)
+			So(ErrString(), ShouldEqualNL, `  [*Path.SameFileContentAs] (func)
+    Unable to access p '.\'
+'read .\: The handle is invalid.'`)
+		})
+
+		Convey("SameFileContentAs can fail for a non-existent file", func() {
+			file := NewPath("yyy")
+			SetBuffers(nil)
+			content := file.SameFileContentAs(file)
+			So(content, ShouldBeFalse)
+			So(OutString(), ShouldBeEmpty)
+			So(ErrString(), ShouldEqualNL, `  [*Path.SameFileContentAs] (func)
+    Unable to access p 'yyy'
+'open yyy: The system cannot find the file specified.'`)
+		})
+
+		Convey("SameFileContentAs can fail for an existent file", func() {
+			file1 := NewPath("paths.go")
+			file2 := NewPath("paths_test.go")
+			SetBuffers(nil)
+			fioureadfile = testffioureadfile
+			content := file1.SameFileContentAs(file2)
+			So(content, ShouldBeFalse)
+			So(OutString(), ShouldBeEmpty)
+			So(ErrString(), ShouldEqualNL, `  [*Path.SameFileContentAs] (func)
+    Unable to access file 'paths_test.go'
+'Error (Read) ioutil.ReadFile for 'paths_test.go''`)
+			fioureadfile = ifioureadfile
+		})
+
+		Convey("SameFileContentAs is true when comparing the same file", func() {
+			file := NewPath("../LICENSE.md")
+			SetBuffers(nil)
+			content := file.SameFileContentAs(file)
+			So(content, ShouldBeTrue)
+			So(NoOutput(), ShouldBeTrue)
+		})
+
+		Convey("SameFileContentAs is false when comparing two different files", func() {
+			file1 := NewPath("../LICENSE.md")
+			file2 := NewPath("../README.md")
+			SetBuffers(nil)
+			content := file1.SameFileContentAs(file2)
+			So(content, ShouldBeFalse)
+			So(NoOutput(), ShouldBeTrue)
+		})
+
+	})
 }
 
 func testrfosopen(name string) (file *os.File, err error) {
@@ -72,6 +129,13 @@ var pread *Path
 func testfioureadall(r io.Reader) ([]byte, error) {
 	if pread != nil && pread.String() == `..\README.md` {
 		return nil, fmt.Errorf("Error (Read) ioutil.ReadAll for '%s'", pread)
+	}
+	return nil, nil
+}
+
+func testffioureadfile(filename string) ([]byte, error) {
+	if filename == `paths_test.go` {
+		return nil, fmt.Errorf("Error (Read) ioutil.ReadFile for '%s'", filename)
 	}
 	return nil, nil
 }
