@@ -45,13 +45,13 @@ func cloneZipItem(f *zip.File, dest *Path) bool {
 // Uncompress a zip (without needed 7z.exe),
 // or any other archive file (if  7z.exe is installed).
 // False if not a file, or not an archive
-func (zipPath *Path) Uncompress(dest *Path) bool {
+func (p *Path) Uncompress(dest *Path) bool {
 	if has7z() {
-		return uncompress7z(zipPath, dest, nil, "Unzip", false)
+		return uncompress7z(p, dest, nil, "Unzip", false)
 	}
-	r, err := zip.OpenReader(zipPath.String())
+	r, err := zip.OpenReader(p.String())
 	if err != nil {
-		godbg.Pdbgf("Error while opening zip '%v' for '%v'\n'%v'\n", zipPath, dest, err)
+		godbg.Pdbgf("Error while opening zip '%v' for '%v'\n'%v'\n", p, dest, err)
 		return false
 	}
 	defer r.Close()
