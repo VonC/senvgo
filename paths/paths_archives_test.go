@@ -21,5 +21,16 @@ func TestArchive(t *testing.T) {
     Error while opening zip '.\' for '<nil>'
 'read .\: The handle is invalid.'`)
 		})
+
+		Convey("Uncompress fails if p is not a zip file", func() {
+			p := NewPath("paths.go")
+			SetBuffers(nil)
+			b := p.Uncompress(nil)
+			So(b, ShouldBeFalse)
+			So(OutString(), ShouldBeEmpty)
+			So(ErrString(), ShouldEqualNL, `  [*Path.Uncompress] (func)
+    Error while opening zip 'paths.go' for '<nil>'
+'zip: not a valid zip file'`)
+		})
 	})
 }
