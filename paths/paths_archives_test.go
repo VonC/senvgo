@@ -22,6 +22,17 @@ func TestArchive(t *testing.T) {
 'read .\: The handle is invalid.'`)
 		})
 
+		Convey("Uncompress fails if p is a non-existing file", func() {
+			p := NewPath("xxx")
+			SetBuffers(nil)
+			b := p.Uncompress(nil)
+			So(b, ShouldBeFalse)
+			So(OutString(), ShouldBeEmpty)
+			So(ErrString(), ShouldEqualNL, `  [*Path.Uncompress] (func)
+    Error while opening zip 'xxx' for '<nil>'
+'open xxx: The system cannot find the file specified.'`)
+		})
+
 		Convey("Uncompress fails if p is not a zip file", func() {
 			p := NewPath("paths.go")
 			SetBuffers(nil)
