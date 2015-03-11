@@ -8,20 +8,23 @@ import (
 	"github.com/VonC/godbg"
 )
 
+var testmkd bool = false
+
 // http://stackoverflow.com/questions/20357223/easy-way-to-unzip-file-with-golang
 
 func cloneZipItem(f *zip.File, dest *Path) bool {
 	// Create full directory path
 	path := dest.Add(f.Name)
 	// godbg.Perrdbgf("Creating '%v'", path)
-	if f.FileInfo().IsDir() && !path.MkdirAll() {
+	if f.FileInfo().IsDir() && (testmkd || !path.MkdirAll()) {
+		godbg.Pdbgf("Error while mkdir for zip element: '%v'", f)
 		return false
 	}
 
 	// Clone if item is a file
 	rc, err := f.Open()
 	if err != nil {
-		godbg.Pdbgf("Error while checking if zip element is a file: '%v'\n", f)
+		godbg.Pdbgf("Error while checking if zip element is a file: '%v'", f)
 		return false
 	}
 	defer rc.Close()
@@ -29,13 +32,13 @@ func cloneZipItem(f *zip.File, dest *Path) bool {
 		// Use os.Create() since Zip don't store file permissions.
 		fileCopy, err := os.Create(path.String())
 		if err != nil {
-			godbg.Pdbgf("Error while creating zip element to '%v' from '%v'\nerr='%v'\n", path, f, err)
+			godbg.Pdbgf("Error while creating zip element to '%v' from '%v'\nerr='%v'", path, f, err)
 			return false
 		}
 		_, err = io.Copy(fileCopy, rc)
 		fileCopy.Close()
 		if err != nil {
-			godbg.Pdbgf("Error while copying zip element to '%v' from '%v'\nerr='%v'\n", fileCopy, rc, err)
+			godbg.Pdbgf("Error while copying zip element to '%v' from '%v'\nerr='%v'", fileCopy, rc, err)
 			return false
 		}
 	}
