@@ -43,6 +43,18 @@ func TestArchive(t *testing.T) {
     Error while opening zip 'paths.go' for '<nil>'
 'zip: not a valid zip file'`)
 		})
+
+		Convey("cloneZipItem can fail on a particular item", func() {
+			p := NewPath("testzip.zip")
+			SetBuffers(nil)
+			testmkd = true
+			b := p.Uncompress(NewPath("."))
+			So(b, ShouldBeFalse)
+			So(OutString(), ShouldBeEmpty)
+			So(ErrString(), ShouldEqualNL, `    [cloneZipItem] (*Path.Uncompress) (func)
+      Error while mkdir for zip element: 'testzip'`)
+			testmkd = false
+		})
 	})
 }
 

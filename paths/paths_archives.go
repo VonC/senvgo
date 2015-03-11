@@ -17,7 +17,7 @@ func cloneZipItem(f *zip.File, dest *Path) bool {
 	path := dest.Add(f.Name)
 	// godbg.Perrdbgf("Creating '%v'", path)
 	if f.FileInfo().IsDir() && (testmkd || !path.MkdirAll()) {
-		godbg.Pdbgf("Error while mkdir for zip element: '%v'", f)
+		godbg.Pdbgf("Error while mkdir for zip element: '%v'", f.FileInfo().Name())
 		return false
 	}
 
