@@ -16,6 +16,12 @@ func ifzipfileopen(f *zip.File) (rc io.ReadCloser, err error) {
 	return f.Open()
 }
 
+var foscreate func(name string) (file *os.File, err error)
+
+func ifoscreate(name string) (file *os.File, err error) {
+	return os.Create(name)
+}
+
 // http://stackoverflow.com/questions/20357223/easy-way-to-unzip-file-with-golang
 
 func cloneZipItem(f *zip.File, dest *Path) bool {
@@ -36,7 +42,7 @@ func cloneZipItem(f *zip.File, dest *Path) bool {
 	defer rc.Close()
 	if !f.FileInfo().IsDir() {
 		// Use os.Create() since Zip don't store file permissions.
-		fileCopy, err := os.Create(path.String())
+		fileCopy, err := foscreate(path.String())
 		if err != nil {
 			godbg.Pdbgf("Error while creating zip element to '%v' from '%v'\nerr='%v'", path, f, err)
 			return false
@@ -82,4 +88,5 @@ func uncompress7z(archive, folder, file *Path, msg string, extract bool) bool {
 
 func init() {
 	fzipfileopen = ifzipfileopen
+	foscreate = ifoscreate
 }
