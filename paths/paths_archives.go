@@ -10,6 +10,12 @@ import (
 
 var testmkd bool = false
 
+var fzipfileopen func(f *zip.File) (rc io.ReadCloser, err error)
+
+func ifzipfileopen(f *zip.File) (rc io.ReadCloser, err error) {
+	return f.Open()
+}
+
 // http://stackoverflow.com/questions/20357223/easy-way-to-unzip-file-with-golang
 
 func cloneZipItem(f *zip.File, dest *Path) bool {
@@ -22,9 +28,9 @@ func cloneZipItem(f *zip.File, dest *Path) bool {
 	}
 
 	// Clone if item is a file
-	rc, err := f.Open()
+	rc, err := fzipfileopen(f)
 	if err != nil {
-		godbg.Pdbgf("Error while checking if zip element is a file: '%v'", f)
+		godbg.Pdbgf("Error while checking if zip element is a file: '%v'\n'%v'", f.Name, err)
 		return false
 	}
 	defer rc.Close()
@@ -72,4 +78,8 @@ func has7z() bool {
 
 func uncompress7z(archive, folder, file *Path, msg string, extract bool) bool {
 	return false
+}
+
+func init() {
+	fzipfileopen = ifzipfileopen
 }

@@ -1,6 +1,9 @@
 package paths
 
 import (
+	"archive/zip"
+	"fmt"
+	"io"
 	"testing"
 
 	. "github.com/VonC/godbg"
@@ -55,7 +58,24 @@ func TestArchive(t *testing.T) {
       Error while mkdir for zip element: 'testzip'`)
 			testmkd = false
 		})
+
+		Convey("cloneZipItem can fail on opening a particular item file", func() {
+			p := NewPath("testzip.zip")
+			SetBuffers(nil)
+			fzipfileopen = testfzipfileopen
+			b := p.Uncompress(NewPath("."))
+			So(b, ShouldBeFalse)
+			So(OutString(), ShouldBeEmpty)
+			So(ErrString(), ShouldEqualNL, `    [cloneZipItem] (*Path.Uncompress) (func)
+      Error while checking if zip element is a file: 'testzip/'
+'Error (Open) zip.File for 'testzip/''`)
+			fzipfileopen = ifzipfileopen
+		})
 	})
+}
+
+func testfzipfileopen(f *zip.File) (rc io.ReadCloser, err error) {
+	return nil, fmt.Errorf("Error (Open) zip.File for '%s'", f.Name)
 }
 
 /*
