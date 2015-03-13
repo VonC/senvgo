@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"fmt"
 	"io"
+	"os"
 	"testing"
 
 	. "github.com/VonC/godbg"
@@ -71,11 +72,28 @@ func TestArchive(t *testing.T) {
 'Error (Open) zip.File for 'testzip/''`)
 			fzipfileopen = ifzipfileopen
 		})
+
+		Convey("cloneZipItem can fail on creating a particular item element", func() {
+			p := NewPath("testzip.zip")
+			SetBuffers(nil)
+			foscreate = testfoscreate
+			b := p.Uncompress(NewPath("."))
+			So(b, ShouldBeFalse)
+			So(OutString(), ShouldBeEmpty)
+			So(ErrString(), ShouldEqualNL, `    [cloneZipItem] (*Path.Uncompress) (func)
+      Error while creating zip element to '.\testzip\a.txt' from 'testzip/a.txt'
+err='Error (Create) zip element '.\testzip\a.txt''`)
+			foscreate = ifoscreate
+		})
+
 	})
 }
 
 func testfzipfileopen(f *zip.File) (rc io.ReadCloser, err error) {
 	return nil, fmt.Errorf("Error (Open) zip.File for '%s'", f.Name)
+}
+func testfoscreate(name string) (file *os.File, err error) {
+	return nil, fmt.Errorf("Error (Create) zip element '%s'", name)
 }
 
 /*
