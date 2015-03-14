@@ -87,6 +87,20 @@ err='Error (Create) zip element '.\testzip\a.txt''`)
 			NewPath("testzip").DeleteFolder()
 		})
 
+		Convey("cloneZipItem can fail on copying a particular item element", func() {
+			p := NewPath("testzip.zip")
+			SetBuffers(nil)
+			fiocopy = testfiocopy
+			b := p.Uncompress(NewPath("."))
+			So(b, ShouldBeFalse)
+			So(OutString(), ShouldBeEmpty)
+			So(ErrString(), ShouldEqualNL, `    [cloneZipItem] (*Path.Uncompress) (func)
+      Error while copying zip element to '.\testzip\a.txt' from 'testzip/a.txt'
+err='Error (io.Copy) zip element'`)
+			fiocopy = ifiocopy
+			NewPath("testzip").DeleteFolder()
+		})
+
 	})
 }
 
@@ -95,6 +109,9 @@ func testfzipfileopen(f *zip.File) (rc io.ReadCloser, err error) {
 }
 func testfoscreate(name string) (file *os.File, err error) {
 	return nil, fmt.Errorf("Error (Create) zip element '%s'", name)
+}
+func testfiocopy(dst io.Writer, src io.Reader) (written int64, err error) {
+	return 0, fmt.Errorf("Error (io.Copy) zip element")
 }
 
 /*

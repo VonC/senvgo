@@ -22,6 +22,18 @@ func ifoscreate(name string) (file *os.File, err error) {
 	return os.Create(name)
 }
 
+var fosclose func(f *os.File) (err error)
+
+func ifosclose(f *os.File) (err error) {
+	return f.Close()
+}
+
+var fiocopy func(dst io.Writer, src io.Reader) (written int64, err error)
+
+func ifiocopy(dst io.Writer, src io.Reader) (written int64, err error) {
+	return io.Copy(dst, src)
+}
+
 // http://stackoverflow.com/questions/20357223/easy-way-to-unzip-file-with-golang
 func cloneZipItem(f *zip.File, dest *Path) bool {
 	// Create full directory path
@@ -46,10 +58,10 @@ func cloneZipItem(f *zip.File, dest *Path) bool {
 			godbg.Pdbgf("Error while creating zip element to '%v' from '%v'\nerr='%v'", path, f.Name, err)
 			return false
 		}
-		_, err = io.Copy(fileCopy, rc)
-		fileCopy.Close()
+		defer fileCopy.Close()
+		_, err = fiocopy(fileCopy, rc)
 		if err != nil {
-			godbg.Pdbgf("Error while copying zip element to '%v' from '%v'\nerr='%v'", fileCopy, rc, err)
+			godbg.Pdbgf("Error while copying zip element to '%v' from '%v'\nerr='%v'", fileCopy.Name(), f.Name, err)
 			return false
 		}
 	}
@@ -88,4 +100,6 @@ func uncompress7z(archive, folder, file *Path, msg string, extract bool) bool {
 func init() {
 	fzipfileopen = ifzipfileopen
 	foscreate = ifoscreate
+	fosclose = ifosclose
+	fiocopy = ifiocopy
 }
