@@ -35,7 +35,8 @@ func ifiocopy(dst io.Writer, src io.Reader) (written int64, err error) {
 }
 
 // http://stackoverflow.com/questions/20357223/easy-way-to-unzip-file-with-golang
-func cloneZipItem(f *zip.File, dest *Path) bool {
+func cloneZipItem(f *zip.File, dest *Path) (res bool) {
+	res = true
 	// Create full directory path
 	path := dest.Add(f.Name)
 	// godbg.Perrdbgf("Creating '%v'", path)
@@ -58,14 +59,19 @@ func cloneZipItem(f *zip.File, dest *Path) bool {
 			godbg.Pdbgf("Error while creating zip element to '%v' from '%v'\nerr='%v'", path, f.Name, err)
 			return false
 		}
-		defer fileCopy.Close()
+		defer func() {
+			if err = fosclose(fileCopy); err != nil {
+				godbg.Pdbgf("Error while closing zip element '%v'\nerr='%v'", fileCopy.Name(), err)
+				res = false
+			}
+		}()
 		_, err = fiocopy(fileCopy, rc)
 		if err != nil {
 			godbg.Pdbgf("Error while copying zip element to '%v' from '%v'\nerr='%v'", fileCopy.Name(), f.Name, err)
-			return false
+			res = false
 		}
 	}
-	return true
+	return res
 }
 
 // Uncompress a zip (without needed 7z.exe),
