@@ -84,6 +84,7 @@ func TestArchive(t *testing.T) {
       Error while creating zip element to '.\testzip\a.txt' from 'testzip/a.txt'
 err='Error (Create) zip element '.\testzip\a.txt''`)
 			foscreate = ifoscreate
+			NewPath("testzip").DeleteFolder()
 		})
 
 	})
