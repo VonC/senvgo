@@ -167,4 +167,5 @@ func (dir *Path) DeleteFolder() error {
 func init() {
 	fosopen = ifosopen
 	fosremoveall = ifosremoveall
+	fosfreaddir = ifosfreaddir
 }
