@@ -96,12 +96,14 @@ func cloneZipItem(f *zip.File, dest *Path) (res bool) {
 	return res
 }
 
+var testHas7 = false
+
 // Uncompress a zip (without needed 7z.exe),
 // or any other archive file (if  7z.exe is installed).
 // False if not a file, or not an archive
 func (p *Path) Uncompress(dest *Path) (res bool) {
 	res = true
-	if has7z() {
+	if has7z() || testHas7 {
 		return uncompress7z(p, dest, nil, "Unzip", false)
 	}
 	r, err := zip.OpenReader(p.String())

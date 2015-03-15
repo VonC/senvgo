@@ -153,6 +153,17 @@ err='Error (Close) closing zip element 'testzip.zip''`)
 		})
 
 	})
+
+	Convey("Tests for Uncompress 7z", t, func() {
+
+		Convey("Uncompress can call 7z if path ends with .7z", func() {
+			p := NewPath("testsz.7z")
+			testHas7 = true
+			b := p.Uncompress(NewPath("."))
+			So(b, ShouldBeFalse)
+			testHas7 = false
+		})
+	})
 }
 
 func testfzipfileopen(f *zip.File) (rc io.ReadCloser, err error) {
