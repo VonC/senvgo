@@ -104,15 +104,24 @@ err='Error (io.Copy) zip element'`)
 		Convey("cloneZipItem can fail on closing a particular item element", func() {
 			p := NewPath("testzip.zip")
 			SetBuffers(nil)
-			fosclose = testfosclose
+			foscloseze = testfosclose
 			b := p.Uncompress(NewPath("."))
 			So(b, ShouldBeFalse)
 			So(OutString(), ShouldBeEmpty)
 			So(ErrString(), ShouldEqualNL, `      [func] (cloneZipItem) (*Path.Uncompress) (func)
         Error while closing zip element '.\testzip\a.txt'
 err='Error (Close) closing zip element '.\testzip\a.txt''`)
-			fosclose = ifosclose
+			foscloseze = ifosclose
 			NewPath("testzip").DeleteFolder()
+		})
+
+		Convey("cloneZipItem of a valid zip archives succeed", func() {
+			p := NewPath("testzip.zip")
+			SetBuffers(nil)
+			b := p.Uncompress(NewPath("."))
+			So(b, ShouldBeTrue)
+			So(NoOutput(), ShouldBeTrue)
+			So(NewPath("testzip").DeleteFolder(), ShouldBeNil)
 		})
 
 	})
@@ -127,8 +136,9 @@ func testfoscreate(name string) (file *os.File, err error) {
 func testfiocopy(dst io.Writer, src io.Reader) (written int64, err error) {
 	return 0, fmt.Errorf("Error (io.Copy) zip element")
 }
-func testfosclose(f *os.File) (err error) {
-	return fmt.Errorf("Error (Close) closing zip element '%v'", f.Name())
+func testfosclose(f io.ReadCloser, name string) (err error) {
+	ifosclose(f, name)
+	return fmt.Errorf("Error (Close) closing zip element '%v'", name)
 }
 
 /*
