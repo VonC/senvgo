@@ -103,7 +103,7 @@ var testHas7 = false
 // False if not a file, or not an archive
 func (p *Path) Uncompress(dest *Path) (res bool) {
 	res = true
-	if has7z() || testHas7 {
+	if has7z() {
 		return uncompress7z(p, dest, nil, "Unzip", false)
 	}
 	r, err := zip.OpenReader(p.String())
@@ -128,7 +128,8 @@ func (p *Path) Uncompress(dest *Path) (res bool) {
 }
 
 func has7z() bool {
-	return false
+	p := NewPath("7z/7z.exe")
+	return testHas7 && p.Exists()
 }
 
 func uncompress7z(archive, folder, file *Path, msg string, extract bool) bool {

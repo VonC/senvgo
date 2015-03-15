@@ -16,6 +16,7 @@ func TestArchive(t *testing.T) {
 
 	Convey("Tests for Uncompress", t, func() {
 
+		testHas7 = false
 		Convey("Uncompress fails if p is a folder", func() {
 			p := NewPath(".")
 			SetBuffers(nil)
