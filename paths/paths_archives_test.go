@@ -129,6 +129,20 @@ err='Error (Close) closing zip element 'testzip/''`)
 			NewPath("testzip").DeleteFolder()
 		})
 
+		Convey("cloneZipItem can fail on closing zip archive file", func() {
+			p := NewPath("testzip.zip")
+			SetBuffers(nil)
+			fosclosearc = testfosclose
+			b := p.Uncompress(NewPath("."))
+			So(b, ShouldBeFalse)
+			So(OutString(), ShouldBeEmpty)
+			So(ErrString(), ShouldEqualNL, `    [func] (*Path.Uncompress) (func)
+      Error while closing zip archive 'testzip.zip'
+err='Error (Close) closing zip element 'testzip.zip''`)
+			fosclosearc = ifosclose
+			NewPath("testzip").DeleteFolder()
+		})
+
 		Convey("cloneZipItem of a valid zip archives succeed", func() {
 			p := NewPath("testzip.zip")
 			SetBuffers(nil)
