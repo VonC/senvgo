@@ -1,0 +1,3 @@
+[submodule "paths/7z"]
+	path = paths/7z
+	url = https://github.com/VonC/7z
