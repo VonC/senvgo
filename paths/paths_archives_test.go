@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"testing"
 
 	. "github.com/VonC/godbg"
@@ -156,6 +157,8 @@ err='Error (Close) closing zip element 'testzip.zip''`)
 
 	Convey("Tests for Uncompress 7z", t, func() {
 
+		So(check7z(), ShouldBeNil)
+
 		Convey("Uncompress can call 7z if path ends with .7z", func() {
 			p := NewPath("testsz.7z")
 			testHas7 = true
@@ -164,6 +167,17 @@ err='Error (Close) closing zip element 'testzip.zip''`)
 			testHas7 = false
 		})
 	})
+}
+
+func check7z() error {
+	p := NewPath("7z/7z.exe")
+	if p.Exists() {
+		return nil
+	}
+	cmdStr := "git submodule update --init"
+	out, err := exec.Command("cmd", "/c", cmdStr).Output()
+	Perrdbgf("Init 7z '%v", out)
+	return err
 }
 
 func testfzipfileopen(f *zip.File) (rc io.ReadCloser, err error) {
