@@ -159,6 +159,7 @@ err='Error (Close) closing zip element 'testzip.zip''`)
 	Convey("Tests for Uncompress 7z", t, func() {
 
 		p := NewPath("testzip.zip")
+		folder := NewPath(".")
 		So(check7z(), ShouldBeNil)
 		Convey("fcmd should not be empty", func() {
 			SetBuffers(nil)
@@ -173,6 +174,15 @@ err='Error (Close) closing zip element 'testzip.zip''`)
 			SetBuffers(nil)
 			b := p.uncompress7z(nil, nil, "test", false)
 			So(b, ShouldBeFalse)
+		})
+
+		Convey("uncompress7z is false if fcmd is empty", func() {
+			SetBuffers(nil)
+			fcmd = ""
+			b := p.uncompress7z(folder, nil, "test", false)
+			So(b, ShouldBeFalse)
+			So(fcmd, ShouldBeEmpty)
+			fcmd = "7z/7z.exe"
 		})
 
 		Convey("Uncompress can call 7z if path ends with .7z", func() {
