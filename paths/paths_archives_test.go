@@ -177,7 +177,7 @@ func check7z() error {
 	}
 	cmdStr := "git submodule update --init"
 	out, err := exec.Command("cmd", "/c", cmdStr).Output()
-	Perrdbgf("Init 7z '%v", out)
+	Perrdbgf("Init 7z '%v", string(out))
 	return err
 }
 
