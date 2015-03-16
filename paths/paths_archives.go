@@ -147,10 +147,10 @@ func cmd7z() string {
 
 func (archive *Path) uncompress7z(folder, file *Path, msg string, extract bool) bool {
 	farchive := archive.Abs()
-	ffolder := folder.Abs()
-	if ffolder == nil {
+	if folder.IsEmpty() {
 		return false
 	}
+	ffolder := folder.Abs()
 	cmd7z := cmd7z()
 	if cmd7z == "" {
 		return false
