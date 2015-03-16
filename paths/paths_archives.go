@@ -139,7 +139,11 @@ var fcmd = ""
 func cmd7z() string {
 	cmd := fcmd
 	if fcmd == "" {
-		fcmd = NewPath("test/peazip/latest/res/7z/7z.exe").Abs().String()
+		p := NewPath("test/peazip/latest/res/7z/7z.exe").Abs()
+		if !p.Exists() {
+			return ""
+		}
+		fcmd = p.String()
 		cmd = fcmd
 	}
 	return cmd
