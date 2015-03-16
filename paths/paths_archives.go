@@ -5,7 +5,6 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 
 	"github.com/VonC/godbg"
@@ -140,13 +139,7 @@ var fcmd = ""
 func cmd7z() string {
 	cmd := fcmd
 	if fcmd == "" {
-		cmd = "test/peazip/latest/res/7z/7z.exe"
-		var err error
-		fcmd, err = filepath.Abs(filepath.FromSlash(cmd))
-		if err != nil {
-			godbg.Pdbgf("7z: Unable to get full path for cmd: '%v'\n%v", cmd, err)
-			return ""
-		}
+		fcmd = NewPath("test/peazip/latest/res/7z/7z.exe").Abs().String()
 		cmd = fcmd
 	}
 	return cmd
