@@ -159,6 +159,7 @@ err='Error (Close) closing zip element 'testzip.zip''`)
 	Convey("Tests for Uncompress 7z", t, func() {
 
 		So(check7z(), ShouldBeNil)
+		fcmd = "7z/7z.exe"
 
 		Convey("Uncompress can call 7z if path ends with .7z", func() {
 			p := NewPath("testsz.7z")

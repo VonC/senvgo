@@ -4,6 +4,9 @@ import (
 	"archive/zip"
 	"io"
 	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
 
 	"github.com/VonC/godbg"
 )
@@ -104,7 +107,7 @@ var testHas7 = false
 func (p *Path) Uncompress(dest *Path) (res bool) {
 	res = true
 	if has7z() {
-		return uncompress7z(p, dest, nil, "Unzip", false)
+		return p.uncompress7z(dest, nil, "Unzip", false)
 	}
 	r, err := zip.OpenReader(p.String())
 	if err != nil {
@@ -132,8 +135,58 @@ func has7z() bool {
 	return testHas7 && p.Exists()
 }
 
-func uncompress7z(archive, folder, file *Path, msg string, extract bool) bool {
-	return false
+var fcmd = ""
+
+func cmd7z() string {
+	cmd := fcmd
+	if fcmd == "" {
+		cmd = "test/peazip/latest/res/7z/7z.exe"
+		var err error
+		fcmd, err = filepath.Abs(filepath.FromSlash(cmd))
+		if err != nil {
+			godbg.Pdbgf("7z: Unable to get full path for cmd: '%v'\n%v", cmd, err)
+			return ""
+		}
+		cmd = fcmd
+	}
+	return cmd
+}
+
+func (archive *Path) uncompress7z(folder, file *Path, msg string, extract bool) bool {
+	farchive := archive.Abs()
+	ffolder := folder.Abs()
+	if ffolder == nil {
+		return false
+	}
+	cmd7z := cmd7z()
+	if cmd7z == "" {
+		return false
+	}
+	msg = strings.TrimSpace(msg)
+	if msg != "" {
+		msg = msg + ": "
+	}
+	argFile := ""
+	if !file.IsEmpty() {
+		argFile = file.String()
+	}
+	extractCmd := "x"
+	if extract {
+		extractCmd = "e"
+	}
+	cmd := []string{"/C", cmd7z, extractCmd, "-aoa", "-o" + ffolder.String(), "-pdefault", "-sccUTF-8", farchive.String()}
+	if argFile != "" {
+		cmd = append(cmd, "--", argFile)
+	}
+	scmd := strings.Join(cmd, " ")
+	godbg.Pdbgf("%v'%v'%v => 7zU...\n%v\n", msg, archive, argFile, scmd)
+	c := exec.Command("cmd", cmd...)
+	if out, err := c.Output(); err != nil {
+		godbg.Pdbgf("Error invoking 7ZU '%v'\n''%v' %v'\n%v\n", cmd, string(out), err, scmd)
+		return false
+	}
+	godbg.Pdbgf("%v'%v'%v => 7zU... DONE\n", msg, archive, argFile)
+	return true
 }
 
 func init() {
