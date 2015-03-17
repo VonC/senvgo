@@ -189,11 +189,30 @@ err='Error (Close) closing zip element 'testzip.zip''`)
 			defaultcmd = "7z/7z.exe"
 		})
 
-		Convey("Uncompress can call 7z if path ends with .7z", func() {
+		Convey("Uncompress can uncompress an archive, respecting its directory structure", func() {
+			SetBuffers(nil)
 			testHas7 = true
 			b := p.Uncompress(NewPath("."))
-			So(b, ShouldBeFalse)
+			So(b, ShouldBeTrue)
+			So(NewPath("testzip/a.txt").Exists(), ShouldBeTrue)
+			So(NewPath("testzip/c/abcd.txt").Exists(), ShouldBeTrue)
 			testHas7 = false
+			So(NewPath("testzip").DeleteFolder(), ShouldBeNil)
+		})
+
+		Convey("Uncompress can uncompress an archive, all in one folder", func() {
+			SetBuffers(nil)
+			testHas7 = true
+			dest := NewPath("testzip")
+			So(dest.MkdirAll(), ShouldBeTrue)
+			b := p.uncompress7z(dest, nil, "extract", true)
+			So(b, ShouldBeTrue)
+			So(NewPath("testzip/a.txt").Exists(), ShouldBeTrue)
+			So(NewPath("testzip/abcd.txt").Exists(), ShouldBeTrue)
+			So(OutString(), ShouldBeEmpty)
+			So(ErrString(), ShouldNotBeEmpty)
+			testHas7 = false
+			So(NewPath("testzip").DeleteFolder(), ShouldBeNil)
 		})
 	})
 }
