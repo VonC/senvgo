@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"strings"
 	"testing"
 
 	. "github.com/VonC/godbg"
@@ -187,6 +188,32 @@ err='Error (Close) closing zip element 'testzip.zip''`)
 			So(b, ShouldBeFalse)
 			So(fcmd, ShouldBeEmpty)
 			defaultcmd = "7z/7z.exe"
+		})
+
+		Convey("Uncompress can uncompress an archive, respecting its directory structure", func() {
+			SetBuffers(nil)
+			testHas7 = true
+			up := NewPath("tt.zip")
+			b := up.Uncompress(NewPath("."))
+			So(b, ShouldBeFalse)
+			So(OutString(), ShouldBeEmpty)
+			err := ErrString()
+			So(err, ShouldNotBeEmpty)
+			err = strings.Replace(err, NewPath(".").Abs().String(), "", -1)
+			So(err, ShouldEqualNL, `    [*Path.uncompress7z] (*Path.Uncompress) (func)
+      Unzip: 'tt.zip' => 7zU...
+/C 7z\7z.exe x -aoa -o -pdefault -sccUTF-8 tt.zip
+    [*Path.uncompress7z] (*Path.Uncompress) (func)
+      Error invoking 7ZU '[/C 7z\7z.exe x -aoa -o -pdefault -sccUTF-8 tt.zip]'
+''
+7-Zip [64] 9.22 beta  Copyright (c) 1999-2011 Igor Pavlov  2011-04-18
+
+
+Error:
+cannot find archive
+' exit status 2'
+/C 7z\7z.exe x -aoa -o -pdefault -sccUTF-8 tt.zip`)
+			testHas7 = false
 		})
 
 		Convey("Uncompress can uncompress an archive, respecting its directory structure", func() {
