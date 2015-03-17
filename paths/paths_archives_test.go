@@ -190,7 +190,7 @@ err='Error (Close) closing zip element 'testzip.zip''`)
 			defaultcmd = "7z/7z.exe"
 		})
 
-		Convey("Uncompress can uncompress an archive, respecting its directory structure", func() {
+		Convey("Uncompress fails if archive does not exist", func() {
 			SetBuffers(nil)
 			testHas7 = true
 			up := NewPath("tt.zip")
