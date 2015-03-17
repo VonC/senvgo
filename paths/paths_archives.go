@@ -135,11 +135,12 @@ func has7z() bool {
 }
 
 var fcmd = ""
+var defaultcmd = "test/peazip/latest/res/7z/7z.exe"
 
 func cmd7z() string {
 	cmd := fcmd
 	if fcmd == "" {
-		p := NewPath("test/peazip/latest/res/7z/7z.exe").Abs()
+		p := NewPath(defaultcmd).Abs()
 		if !p.Exists() {
 			return ""
 		}

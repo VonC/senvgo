@@ -163,11 +163,14 @@ err='Error (Close) closing zip element 'testzip.zip''`)
 		So(check7z(), ShouldBeNil)
 		Convey("fcmd should not be empty", func() {
 			SetBuffers(nil)
+			So(fcmd, ShouldBeEmpty)
 			fc := cmd7z()
 			So(fc, ShouldBeEmpty)
-			fcmd = "7z/7z.exe"
+			defaultcmd = "7z/7z.exe"
 			fc = cmd7z()
-			So(fc, ShouldEndWith, `7z/7z.exe`)
+			So(fc, ShouldEndWith, `VonC\senvgo\paths\7z\7z.exe`)
+			defaultcmd = "test/peazip/latest/res/7z/7z.exe"
+			fcmd = ""
 		})
 
 		Convey("uncompress7z is false if destination folder is empty", func() {
@@ -179,10 +182,11 @@ err='Error (Close) closing zip element 'testzip.zip''`)
 		Convey("uncompress7z is false if fcmd is empty", func() {
 			SetBuffers(nil)
 			fcmd = ""
+			defaultcmd = "test/peazip/latest/res/7z/7z.exe"
 			b := p.uncompress7z(folder, nil, "test", false)
 			So(b, ShouldBeFalse)
 			So(fcmd, ShouldBeEmpty)
-			fcmd = "7z/7z.exe"
+			defaultcmd = "7z/7z.exe"
 		})
 
 		Convey("Uncompress can call 7z if path ends with .7z", func() {
