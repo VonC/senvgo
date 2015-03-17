@@ -150,6 +150,8 @@ func cmd7z() string {
 	return cmd
 }
 
+// By default, uses the 7z command 'x', preserving the directory structures in archives.
+// If extract is true, it uses the 7z command 'e', which unzips or expands an archive
 func (archive *Path) uncompress7z(folder, file *Path, msg string, extract bool) bool {
 	farchive := archive.Abs()
 	if folder.IsEmpty() {

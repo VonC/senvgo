@@ -214,6 +214,25 @@ err='Error (Close) closing zip element 'testzip.zip''`)
 			testHas7 = false
 			So(NewPath("testzip").DeleteFolder(), ShouldBeNil)
 		})
+
+		Convey("Uncompress can extract a file of an archive", func() {
+			SetBuffers(nil)
+			testHas7 = true
+			dest := NewPath("testzip")
+			// Let's *not* create the destination folder: a file extract from an archive creates it
+			b := p.uncompress7z(dest, NewPath("testzip/a.txt"), "extract file", true)
+			So(b, ShouldBeTrue)
+			b = p.uncompress7z(dest, NewPath("testzip/c/abcd.txt"), "extract file", true)
+			So(b, ShouldBeTrue)
+			So(NewPath("testzip/a.txt").Exists(), ShouldBeTrue)
+			So(NewPath("testzip/b.txt").Exists(), ShouldBeFalse)
+			So(NewPath("testzip/abcd.txt").Exists(), ShouldBeTrue)
+			So(NewPath("testzip/c/abcd.txt").Exists(), ShouldBeFalse)
+			So(OutString(), ShouldBeEmpty)
+			So(ErrString(), ShouldNotBeEmpty)
+			testHas7 = false
+			So(NewPath("testzip").DeleteFolder(), ShouldBeNil)
+		})
 	})
 }
 
