@@ -264,14 +264,22 @@ cannot find archive
 
 	Convey("Tests for list7z", t, func() {
 
-		defaultcmd = "7z/7z.exe"
+		defaultcmd = ""
+		fcmd = ""
 		So(check7z(), ShouldBeNil)
+		p := NewPath("testzip.zip")
 
-		Convey("list7z is empty is archive is empty", func() {
+		Convey("list7z is empty if archive is empty", func() {
 			var nilp *Path
 			//So(nilp.list7z(""), ShouldBeEmpty)
 			nilp = NewPath("")
 			So(nilp.list7z(""), ShouldBeEmpty)
+		})
+		Convey("list7z is empty if cmd7z is empty", func() {
+			fcmd = ""
+			defaultcmd = ""
+			So(p.list7z(""), ShouldBeEmpty)
+			defaultcmd = "7z/7z.exe"
 		})
 	})
 }

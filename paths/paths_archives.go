@@ -142,7 +142,7 @@ func cmd7z() string {
 	cmd := fcmd
 	if fcmd == "" {
 		p := NewPath(defaultcmd).Abs()
-		if !p.Exists() {
+		if p == nil || !p.Exists() {
 			return ""
 		}
 		fcmd = p.String()
