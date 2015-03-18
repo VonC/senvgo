@@ -295,6 +295,18 @@ cannot find archive
 			So(res, ShouldContainSubstring, `....A            6            6  testzip\c\abcd.txt`)
 			So(res, ShouldContainSubstring, `6            6  1 files, 0 folders`)
 		})
+		Convey("list7z errs when the archive does not exist", func() {
+			defaultcmd = "7z/7z.exe"
+			narch := NewPath("ttt.zip")
+			SetBuffers(nil)
+			res := narch.list7z("abcd.txt")
+			So(NoOutput(), ShouldBeFalse)
+			So(OutString(), ShouldBeEmpty)
+			So(res, ShouldBeEmpty)
+			So(ErrString(), ShouldContainSubstring, `Error:`)
+			So(ErrString(), ShouldContainSubstring, `cannot find archive`)
+			So(ErrString(), ShouldContainSubstring, `' exit status 2'`)
+		})
 	})
 }
 
