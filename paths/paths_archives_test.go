@@ -273,27 +273,43 @@ cannot find archive
 			var nilp *Path
 			//So(nilp.list7z(""), ShouldBeEmpty)
 			nilp = NewPath("")
+			SetBuffers(nil)
 			So(nilp.list7z(""), ShouldBeEmpty)
+			So(NoOutput(), ShouldBeFalse)
+			So(OutString(), ShouldBeEmpty)
+			So(ErrString(), ShouldContainSubstring, `The filename, directory name, or volume label syntax is incorrect`)
 		})
 		Convey("list7z is empty if cmd7z is empty", func() {
 			fcmd = ""
 			defaultcmd = ""
+			SetBuffers(nil)
 			So(p.list7z(""), ShouldBeEmpty)
+			So(NoOutput(), ShouldBeFalse)
+			So(OutString(), ShouldBeEmpty)
+			So(ErrString(), ShouldContainSubstring, `The filename, directory name, or volume label syntax is incorrect`)
 			defaultcmd = "7z/7z.exe"
 		})
 		Convey("list7z is not empty when reading a archive", func() {
 			defaultcmd = "7z/7z.exe"
+			SetBuffers(nil)
 			res := p.list7z("")
+			So(NoOutput(), ShouldBeFalse)
 			So(res, ShouldContainSubstring, `3 files, 2 folders`)
 			So(res, ShouldContainSubstring, `Type = zip`)
 			So(res, ShouldContainSubstring, `Physical Size = 1188`)
 			So(res, ShouldContainSubstring, `....A            6            6  testzip\c\abcd.txt`)
+			So(OutString(), ShouldBeEmpty)
+			So(ErrString(), ShouldContainSubstring, `VonC\senvgo\paths\7z\7z.exe l -r`)
 		})
 		Convey("list7z is not empty when reading a file in an archive", func() {
 			defaultcmd = "7z/7z.exe"
+			SetBuffers(nil)
 			res := p.list7z("abcd.txt")
 			So(res, ShouldContainSubstring, `....A            6            6  testzip\c\abcd.txt`)
+			So(NoOutput(), ShouldBeFalse)
 			So(res, ShouldContainSubstring, `6            6  1 files, 0 folders`)
+			So(OutString(), ShouldBeEmpty)
+			So(ErrString(), ShouldContainSubstring, `VonC\senvgo\paths\7z\7z.exe l -r`)
 		})
 		Convey("list7z errs when the archive does not exist", func() {
 			defaultcmd = "7z/7z.exe"
