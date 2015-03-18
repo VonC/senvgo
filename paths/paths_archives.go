@@ -192,7 +192,7 @@ func (archive *Path) uncompress7z(folder, file *Path, msg string, extract bool) 
 
 func (archive *Path) list7z(file string) string {
 	farchive := archive.Abs()
-	if farchive == nil {
+	if farchive.IsEmpty() {
 		return ""
 	}
 	cmd := cmd7z()

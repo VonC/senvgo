@@ -261,6 +261,19 @@ cannot find archive
 			So(NewPath("testzip").DeleteFolder(), ShouldBeNil)
 		})
 	})
+
+	Convey("Tests for list7z", t, func() {
+
+		defaultcmd = "7z/7z.exe"
+		So(check7z(), ShouldBeNil)
+
+		Convey("list7z is empty is archive is empty", func() {
+			var nilp *Path
+			//So(nilp.list7z(""), ShouldBeEmpty)
+			nilp = NewPath("")
+			So(nilp.list7z(""), ShouldBeEmpty)
+		})
+	})
 }
 
 func check7z() error {
