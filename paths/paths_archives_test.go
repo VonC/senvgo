@@ -289,6 +289,12 @@ cannot find archive
 			So(res, ShouldContainSubstring, `Physical Size = 1188`)
 			So(res, ShouldContainSubstring, `....A            6            6  testzip\c\abcd.txt`)
 		})
+		Convey("list7z is not empty when reading a file in an archive", func() {
+			defaultcmd = "7z/7z.exe"
+			res := p.list7z("abcd.txt")
+			So(res, ShouldContainSubstring, `....A            6            6  testzip\c\abcd.txt`)
+			So(res, ShouldContainSubstring, `6            6  1 files, 0 folders`)
+		})
 	})
 }
 
