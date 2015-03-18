@@ -2,6 +2,7 @@ package paths
 
 import (
 	"archive/zip"
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
@@ -187,6 +188,32 @@ func (archive *Path) uncompress7z(folder, file *Path, msg string, extract bool) 
 	}
 	godbg.Pdbgf("%v'%v'%v => 7zU... DONE\n", msg, archive, argFile)
 	return true
+}
+
+func (archive *Path) list7z(file string) string {
+	farchive := archive.Abs()
+	if farchive == nil {
+		return ""
+	}
+	cmd := cmd7z()
+	if cmd == "" {
+		return ""
+	}
+	argFile := ""
+	if file != "" {
+		argFile = " -- " + file
+	}
+	cmd = fmt.Sprintf("%v l -r %v%v", cmd, farchive.String(), argFile)
+	godbg.Pdbgf("'%v'%v => 7zL...\n%v\n", archive, argFile, cmd)
+	c := exec.Command("cmd", "/C", cmd)
+	res := ""
+	if out, err := c.Output(); err != nil {
+		godbg.Pdbgf("Error invoking 7ZL '%v'\n'%v' %v'\n", cmd, string(out), err)
+	} else {
+		res = string(out)
+	}
+	godbg.Pdbgf("'%v'%v => 7zL... DONE\n'%v'\n", archive, argFile, res)
+	return res
 }
 
 func init() {
