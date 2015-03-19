@@ -216,6 +216,55 @@ func (archive *Path) list7z(file string) string {
 	return res
 }
 
+func (archive *Path) compress7z(folder, file *Path, msg, format string) bool {
+	farchive := archive.Abs()
+	if farchive.IsEmpty() {
+		return false
+	}
+	ffolder := NewPath("")
+	if !folder.IsEmpty() {
+		ffolder = folder.Abs()
+	}
+	if ffolder.IsEmpty() {
+		return false
+	}
+	cmd7z := cmd7z()
+	if cmd7z == "" {
+		return false
+	}
+	cmd := []string{"/C", cmd7z, "a", "-t" + format}
+	msg = strings.TrimSpace(msg)
+	if msg != "" {
+		msg = msg + ": "
+	}
+	deflate := "-mm=Deflate"
+	if format == "gzip" {
+		deflate = ""
+	}
+	cmd = append(cmd, deflate)
+	cmd = append(cmd, "-mmt=on", "-mx5", "-mfb=32", "-mpass=1", "-sccUTF-8", "-mem=AES256")
+	parentfolder := ffolder.Dir()
+	cmd = append(cmd, fmt.Sprintf(`-w%s`, parentfolder), farchive.String(), ffolder.NoSep().String())
+	if !file.IsEmpty() {
+		cmd = append(cmd, "--", file.String())
+	}
+	scmd := strings.Join(cmd, " ")
+	// C:\Users\vonc\prog\go\src\github.com\VonC\senvgo>
+	// "R:\test\peazip\peazip_portable-5.3.1.WIN64\res\7z\7z.exe" a -tzip -mm=Deflate -mmt=on -mx5 -mfb=32 -mpass=1 -sccUTF-8 -mem=AES256 "-wR:\test\python2\" "R:\test\python2\python-2.7.6.amd64.zip" "R:\test\python2\python-2.7.6.amd64"
+	// http://stackoverflow.com/questions/7845130/properly-pass-arguments-to-go-exec
+	//cmd = fmt.Sprintf(`%v a -t%v%v -mmt=on -mx5 -mfb=32 -mpass=1 -sccUTF-8 -mem=AES256 -w%v %v %v%v`, cmd, format, deflate, parentfolder, farchive, ffolder.NoSep(), argFile)
+	godbg.Pdbgf("msg '%v' for archive '%v' argFile '%v' format '%v', ffolder '%v', deflate '%v' => 7zC...\n'%v'", msg, archive, file, format, ffolder, deflate, scmd)
+	c := exec.Command("cmd", cmd...)
+	out, err := c.CombinedOutput()
+	if err != nil {
+		godbg.Pdbgf("Error invoking 7zC '%v'\nout='%v' => err='%v'\n", cmd, string(out), err)
+		return false
+	}
+	godbg.Pdbgf("out '%v'", string(out))
+	godbg.Pdbgf("msg '%v' for archive '%v' argFile '%v' format '%v', ffolder '%v', deflate '%v' => 7zC... DONE\n'%v'", msg, archive, file, format, ffolder, deflate, scmd)
+	return true
+}
+
 func init() {
 	fzipfileopen = ifzipfileopen
 	foscreate = ifoscreate
