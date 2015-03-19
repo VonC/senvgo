@@ -324,6 +324,41 @@ cannot find archive
 			So(ErrString(), ShouldContainSubstring, `' exit status 2'`)
 		})
 	})
+
+	Convey("Tests for compress7z", t, func() {
+
+		defaultcmd = ""
+		fcmd = ""
+		So(check7z(), ShouldBeNil)
+		p := NewPath("7z")
+
+		Convey("compress7z is false if archive is empty", func() {
+			var nilp *Path
+			//So(nilp.list7z(""), ShouldBeEmpty)
+			nilp = NewPath("")
+			SetBuffers(nil)
+			So(nilp.compress7z(nil, nil, "", ""), ShouldBeFalse)
+			So(NoOutput(), ShouldBeFalse)
+			So(OutString(), ShouldBeEmpty)
+			So(ErrString(), ShouldContainSubstring, `The filename, directory name, or volume label syntax is incorrect`)
+		})
+		Convey("compress7z is false if folder is empty", func() {
+			fcmd = ""
+			defaultcmd = ""
+			SetBuffers(nil)
+			So(p.compress7z(nil, nil, "", ""), ShouldBeFalse)
+			So(NoOutput(), ShouldBeTrue)
+			defaultcmd = "7z/7z.exe"
+		})
+		Convey("compress7z is false if cmd7z is empty", func() {
+			fcmd = ""
+			defaultcmd = ""
+			SetBuffers(nil)
+			So(p.compress7z(nil, nil, "", ""), ShouldBeFalse)
+			So(NoOutput(), ShouldBeTrue)
+			defaultcmd = "7z/7z.exe"
+		})
+	})
 }
 
 func check7z() error {
