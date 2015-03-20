@@ -482,6 +482,15 @@ Error filepath.Abs for 'xxxabs'
 			So(NoOutput(), ShouldBeTrue)
 		})
 
+		Convey("Abs() for a non existing file returns a file (no trailing separator)", func() {
+			p := NewPath("www.zzz")
+			SetBuffers(nil)
+			ap := p.Abs()
+			So(ap, ShouldNotBeNil)
+			So(ap.String(), ShouldEndWith, `github.com\VonC\senvgo\paths\www.zzz`)
+			So(NoOutput(), ShouldBeTrue)
+		})
+
 		Convey("Abs() for a folder returns a folder (trailing separator)", func() {
 			p := NewPath(".")
 			SetBuffers(nil)
