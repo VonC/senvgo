@@ -331,6 +331,7 @@ cannot find archive
 		fcmd = ""
 		So(check7z(), ShouldBeNil)
 		p := NewPath("7z")
+		pc := NewPath("7zx.zip")
 
 		Convey("compress7z is false if archive is empty", func() {
 			var nilp *Path
@@ -338,9 +339,7 @@ cannot find archive
 			nilp = NewPath("")
 			SetBuffers(nil)
 			So(nilp.compress7z(nil, nil, "", ""), ShouldBeFalse)
-			So(NoOutput(), ShouldBeFalse)
-			So(OutString(), ShouldBeEmpty)
-			So(ErrString(), ShouldContainSubstring, `The filename, directory name, or volume label syntax is incorrect`)
+			So(NoOutput(), ShouldBeTrue)
 		})
 		Convey("compress7z is false if folder is empty", func() {
 			fcmd = ""
@@ -354,8 +353,10 @@ cannot find archive
 			fcmd = ""
 			defaultcmd = ""
 			SetBuffers(nil)
-			So(p.compress7z(nil, nil, "", ""), ShouldBeFalse)
-			So(NoOutput(), ShouldBeTrue)
+			So(p.compress7z(pc, nil, "", ""), ShouldBeFalse)
+			So(NoOutput(), ShouldBeFalse)
+			So(OutString(), ShouldBeEmpty)
+			So(ErrString(), ShouldContainSubstring, `The filename, directory name, or volume label syntax is incorrect`)
 			defaultcmd = "7z/7z.exe"
 		})
 	})

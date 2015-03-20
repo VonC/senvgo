@@ -216,16 +216,19 @@ func (archive *Path) list7z(file string) string {
 	return res
 }
 
-func (archive *Path) compress7z(folder, file *Path, msg, format string) bool {
-	farchive := archive.Abs()
-	if farchive.IsEmpty() {
-		return false
-	}
+func (folder *Path) compress7z(archive, file *Path, msg, format string) bool {
 	ffolder := NewPath("")
 	if !folder.IsEmpty() {
 		ffolder = folder.Abs()
 	}
 	if ffolder.IsEmpty() {
+		return false
+	}
+	farchive := NewPath("")
+	if !archive.IsEmpty() {
+		farchive = archive.Abs()
+	}
+	if farchive.IsEmpty() {
 		return false
 	}
 	cmd7z := cmd7z()
