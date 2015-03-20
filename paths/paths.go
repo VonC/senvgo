@@ -236,7 +236,7 @@ func iffpabs(path string) (string, error) {
 func (p *Path) Abs() *Path {
 	res, err := ffpabs(p.path)
 	if err != nil {
-		fmt.Fprintf(godbg.Err(), "Unable to get full absollute path for '%v'\n%v\n", p.path, err)
+		fmt.Fprintf(godbg.Err(), "Unable to get full absolute path for '%v'\n%v\n", p.path, err)
 		return nil
 	}
 	if strings.HasSuffix(p.path, string(filepath.Separator)) {

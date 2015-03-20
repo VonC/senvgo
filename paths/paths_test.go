@@ -467,7 +467,7 @@ func TestPath(t *testing.T) {
 			ap := p.Abs()
 			So(ap, ShouldBeNil)
 			So(OutString(), ShouldBeEmpty)
-			So(ErrString(), ShouldEqual, `Unable to get full absollute path for 'xxxabs'
+			So(ErrString(), ShouldEqual, `Unable to get full absolute path for 'xxxabs'
 Error filepath.Abs for 'xxxabs'
 `)
 			ffpabs = iffpabs
