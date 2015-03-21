@@ -216,7 +216,7 @@ func (archive *Path) list7z(file string) string {
 	return res
 }
 
-func (folder *Path) compress7z(archive, file *Path, msg, format string) bool {
+func (folder *Path) compress7z(archive *Path, msg, format string) bool {
 	ffolder := NewPath("")
 	if !folder.IsEmpty() {
 		ffolder = folder.Abs()
@@ -247,16 +247,13 @@ func (folder *Path) compress7z(archive, file *Path, msg, format string) bool {
 	cmd = append(cmd, deflate)
 	cmd = append(cmd, "-mmt=on", "-mx5", "-mfb=32", "-mpass=1", "-sccUTF-8", "-mem=AES256")
 	parentfolder := ffolder.Dir()
-	cmd = append(cmd, fmt.Sprintf(`-w%s`, parentfolder), farchive.String(), ffolder.NoSep().String())
-	if !file.IsEmpty() {
-		cmd = append(cmd, "--", file.String())
-	}
+	cmd = append(cmd, fmt.Sprintf(`-w%s`, parentfolder), farchive.String(), "--", ffolder.NoSep().String())
 	scmd := strings.Join(cmd, " ")
 	// C:\Users\vonc\prog\go\src\github.com\VonC\senvgo>
 	// "R:\test\peazip\peazip_portable-5.3.1.WIN64\res\7z\7z.exe" a -tzip -mm=Deflate -mmt=on -mx5 -mfb=32 -mpass=1 -sccUTF-8 -mem=AES256 "-wR:\test\python2\" "R:\test\python2\python-2.7.6.amd64.zip" "R:\test\python2\python-2.7.6.amd64"
 	// http://stackoverflow.com/questions/7845130/properly-pass-arguments-to-go-exec
 	//cmd = fmt.Sprintf(`%v a -t%v%v -mmt=on -mx5 -mfb=32 -mpass=1 -sccUTF-8 -mem=AES256 -w%v %v %v%v`, cmd, format, deflate, parentfolder, farchive, ffolder.NoSep(), argFile)
-	godbg.Pdbgf("msg '%v' for archive '%v' argFile '%v' format '%v', ffolder '%v', deflate '%v' => 7zC...\n'%v'", msg, archive, file, format, ffolder, deflate, scmd)
+	godbg.Pdbgf("msg '%v' for archive '%v' format '%v', ffolder '%v', deflate '%v' => 7zC...\n'%v'", msg, archive, format, ffolder, deflate, scmd)
 	c := exec.Command("cmd", cmd...)
 	out, err := c.CombinedOutput()
 	if err != nil {
@@ -264,7 +261,7 @@ func (folder *Path) compress7z(archive, file *Path, msg, format string) bool {
 		return false
 	}
 	godbg.Pdbgf("out '%v'", string(out))
-	godbg.Pdbgf("msg '%v' for archive '%v' argFile '%v' format '%v', ffolder '%v', deflate '%v' => 7zC... DONE\n'%v'", msg, archive, file, format, ffolder, deflate, scmd)
+	godbg.Pdbgf("msg '%v' for archive '%v' format '%v', ffolder '%v', deflate '%v' => 7zC... DONE\n'%v'", msg, archive, format, ffolder, deflate, scmd)
 	return true
 }
 

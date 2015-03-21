@@ -338,14 +338,14 @@ cannot find archive
 			//So(nilp.list7z(""), ShouldBeEmpty)
 			nilp = NewPath("")
 			SetBuffers(nil)
-			So(nilp.compress7z(nil, nil, "", ""), ShouldBeFalse)
+			So(nilp.compress7z(nil, "", ""), ShouldBeFalse)
 			So(NoOutput(), ShouldBeTrue)
 		})
 		Convey("compress7z is false if folder is empty", func() {
 			fcmd = ""
 			defaultcmd = ""
 			SetBuffers(nil)
-			So(p.compress7z(nil, nil, "", ""), ShouldBeFalse)
+			So(p.compress7z(nil, "", ""), ShouldBeFalse)
 			So(NoOutput(), ShouldBeTrue)
 			defaultcmd = "7z/7z.exe"
 		})
@@ -353,11 +353,48 @@ cannot find archive
 			fcmd = ""
 			defaultcmd = ""
 			SetBuffers(nil)
-			So(p.compress7z(pc, nil, "", ""), ShouldBeFalse)
+			So(p.compress7z(pc, "", ""), ShouldBeFalse)
 			So(NoOutput(), ShouldBeFalse)
 			So(OutString(), ShouldBeEmpty)
 			So(ErrString(), ShouldContainSubstring, `The filename, directory name, or volume label syntax is incorrect`)
 			defaultcmd = "7z/7z.exe"
+		})
+		Convey("compress7z compresses folder in zip", func() {
+			defaultcmd = "7z/7z.exe"
+			SetBuffers(nil)
+			So(p.compress7z(pc, "test", "zip"), ShouldBeTrue)
+			So(NoOutput(), ShouldBeFalse)
+			So(OutString(), ShouldBeEmpty)
+			So(ErrString(), ShouldContainSubstring, `Compressing  7z\.git`)
+			So(ErrString(), ShouldContainSubstring, `Compressing  7z\7z.dll`)
+			So(ErrString(), ShouldContainSubstring, `Compressing  7z\7z.exe`)
+			So(ErrString(), ShouldContainSubstring, `Compressing  7z\7zCon.sfx`)
+			So(ErrString(), ShouldContainSubstring, `Compressing  7z\License.txt`)
+			So(ErrString(), ShouldContainSubstring, `Compressing  7z\note.txt`)
+			So(ErrString(), ShouldContainSubstring, `Everything is Ok`)
+			So(os.Remove(pc.String()), ShouldBeNil)
+		})
+		Convey("compress7z fails to compress archive in gzip if not tar", func() {
+			// http://sourceforge.net/p/p7zip/discussion/383044/thread/c0da3655/
+			defaultcmd = "7z/7z.exe"
+			SetBuffers(nil)
+			pc = NewPath("7zx.gzip")
+			So(p.compress7z(pc, "test", "gzip"), ShouldBeFalse)
+			So(NoOutput(), ShouldBeFalse)
+			So(OutString(), ShouldBeEmpty)
+			So(ErrString(), ShouldContainSubstring, `Incorrect command line`)
+			So(ErrString(), ShouldContainSubstring, `exit status 7`)
+		})
+
+		Convey("compress7z compresses a file in zip", func() {
+			defaultcmd = "7z/7z.exe"
+			SetBuffers(nil)
+			So(NewPath("7z/License.txt").compress7z(pc, "test", "zip"), ShouldBeTrue)
+			So(NoOutput(), ShouldBeFalse)
+			So(OutString(), ShouldBeEmpty)
+			So(ErrString(), ShouldContainSubstring, `Compressing  License.txt`)
+			So(ErrString(), ShouldContainSubstring, `Everything is Ok`)
+			So(os.Remove(pc.String()), ShouldBeNil)
 		})
 	})
 }
