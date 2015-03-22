@@ -11,7 +11,7 @@ import (
 	"github.com/VonC/godbg"
 )
 
-var testmkd bool = false
+var testmkd = false
 
 var fzipfileopen func(f *zip.File) (rc io.ReadCloser, err error)
 
@@ -153,7 +153,8 @@ func cmd7z() string {
 
 // By default, uses the 7z command 'x', preserving the directory structures in archives.
 // If extract is true, it uses the 7z command 'e', which unzips or expands an archive
-func (archive *Path) uncompress7z(folder, file *Path, msg string, extract bool) bool {
+func (p *Path) uncompress7z(folder, file *Path, msg string, extract bool) bool {
+	archive := p
 	farchive := archive.Abs()
 	if folder.IsEmpty() {
 		return false
@@ -190,7 +191,8 @@ func (archive *Path) uncompress7z(folder, file *Path, msg string, extract bool) 
 	return true
 }
 
-func (archive *Path) list7z(file string) string {
+func (p *Path) list7z(file string) string {
+	archive := p
 	farchive := archive.Abs()
 	if farchive.IsEmpty() {
 		return ""
@@ -216,7 +218,8 @@ func (archive *Path) list7z(file string) string {
 	return res
 }
 
-func (folder *Path) compress7z(archive *Path, msg, format string) bool {
+func (p *Path) compress7z(archive *Path, msg, format string) bool {
+	folder := p
 	ffolder := NewPath("")
 	if !folder.IsEmpty() {
 		ffolder = folder.Abs()
