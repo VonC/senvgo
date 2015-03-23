@@ -9,9 +9,9 @@ import (
 	"github.com/VonC/senvgo/paths"
 )
 
-type EnvGetter func(key string) string
+type envGetter func(key string) string
 
-var envGetterFunc EnvGetter
+var envGetterFunc envGetter
 var pathsegments []string
 
 func init() {
@@ -31,7 +31,7 @@ func PathSegments() []string {
 var _prgsenv *paths.Path
 var _prgsenvname = "PRGS2"
 
-// Prgsenv() checks if %PRG% is defined.
+// Prgsenv checks if %PRG% is defined.
 // Panics otherwise. Cache the value if defined.
 func Prgsenv() *paths.Path {
 	if _prgsenv != nil {

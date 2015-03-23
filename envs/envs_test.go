@@ -1,7 +1,6 @@
 package envs
 
 import (
-	"fmt"
 	"os"
 	"testing"
 
@@ -32,7 +31,6 @@ func TestPrgsEnv(t *testing.T) {
 	Convey("Envs can returns PRGS environment variable", t, func() {
 
 		Convey("Non-set PRGS env variable means panic", func() {
-			fmt.Println("ok!")
 			SetBuffers(nil)
 			envGetterFunc = testPrgsEnvGetter
 			prgsenvtest = "notset"
@@ -50,7 +48,6 @@ func TestPrgsEnv(t *testing.T) {
 		})
 
 		Convey("Set PRGS env variable means Path dir", func() {
-			fmt.Println("ok!")
 			SetBuffers(nil)
 			envGetterFunc = testPrgsEnvGetter
 			prgsenvtest = "set"
@@ -65,7 +62,6 @@ func TestPrgsEnv(t *testing.T) {
 		})
 
 		Convey("Set PRGS env get twice means cached", func() {
-			fmt.Println("ok!")
 			SetBuffers(nil)
 			_prgsenv = nil
 			envGetterFunc = testPrgsEnvGetter
