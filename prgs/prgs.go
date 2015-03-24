@@ -1,5 +1,8 @@
 package prgs
 
+import "github.com/VonC/senvgo/envs"
+import "github.com/VonC/senvgo/paths"
+
 // Prg is a Program, with all its data (no behavior)
 type prg struct {
 	name string
@@ -20,12 +23,19 @@ type defaultGetter struct{}
 
 var dg defaultGetter
 var getter PGetter
+var _prgs []Prg
 
 func init() {
 	dg = defaultGetter{}
 	getter = dg
 }
 func (df defaultGetter) Get() []Prg {
+	if _prgs != nil && len(_prgs) > 0 {
+		return _prgs
+	}
+	var p *paths.Path
+	p = envs.Prgsenv()
+	p.Add("")
 	return []Prg{}
 }
 
