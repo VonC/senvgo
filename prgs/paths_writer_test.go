@@ -1,4 +1,4 @@
-package paths
+package prgs
 
 import (
 	"bytes"
@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	. "github.com/VonC/godbg"
-	"github.com/VonC/senvgo/prgs"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -27,16 +26,16 @@ func (tw *testWriter) Write(p []byte) (n int, err error) {
 	return tw.w.Write(p)
 }
 
-func (tpw *testPathWriter) WritePath(prgs []prgs.Prg, w io.Writer) error {
-	if err := pw.WritePath(prgs, w); err != nil {
+func (tpw *testPathWriter) WritePath(prgss []Prg, w io.Writer) error {
+	if err := pw.WritePath(prgss, w); err != nil {
 		return err
 	}
 	return nil
 }
 
-func TestMain(t *testing.T) {
+func TestPathWriter(t *testing.T) {
 	tpw := &testPathWriter{b: bytes.NewBuffer(nil)}
-	prgs := []prgs.Prg{&testPrg{name: "prg1"}, &testPrg{name: "prg2"}}
+	prgs := []Prg{&testPrg{name: "prg1"}, &testPrg{name: "prg2"}}
 	Convey("Tests for Path Writer", t, func() {
 
 		Convey("A Path writer writes any empty path if no prgs", func() {
