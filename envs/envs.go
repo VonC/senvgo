@@ -29,7 +29,9 @@ func PathSegments() []string {
 }
 
 var _prgsenv *paths.Path
-var _prgsenvname = "PRGS2"
+
+// Prgsenvname is the environment variable name used to define prgs path
+var Prgsenvname = "PRGS2"
 
 // Prgsenv checks if %PRG% is defined.
 // Panics otherwise. Cache the value if defined.
@@ -37,9 +39,9 @@ func Prgsenv() *paths.Path {
 	if _prgsenv != nil {
 		return _prgsenv
 	}
-	prgse := envGetterFunc(_prgsenvname)
+	prgse := envGetterFunc(Prgsenvname)
 	if prgse == "" {
-		err := fmt.Errorf("no env variable '%s' defined", _prgsenvname)
+		err := fmt.Errorf("no env variable '%s' defined", Prgsenvname)
 		godbg.Pdbgf(err.Error())
 		panic(err)
 	} else {
