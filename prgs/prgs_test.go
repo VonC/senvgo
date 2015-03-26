@@ -1,11 +1,11 @@
 package prgs
 
 import (
+	"os"
 	"testing"
 
 	. "github.com/VonC/godbg"
 	"github.com/VonC/senvgo/envs"
-	"github.com/VonC/senvgo/paths"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -22,13 +22,15 @@ func TestMain(t *testing.T) {
 		SetBuffers(nil)
 		defer func() {
 			if r := recover(); r != nil {
-				Perrdbgf("e")
-				p := paths.NewPath(".")
-				So(len(p.String()), ShouldEqual, 1000)
+				if err := os.Setenv(envs.Prgsenvname, "../test2"); err != nil {
+					panic(err)
+				}
+				p := envs.Prgsenv()
+				So(p.String(), ShouldEqual, `..\test2\`)
 			}
 		}()
 		p := envs.Prgsenv()
-		So(len(p.String()), ShouldEqual, 1000)
+		So(p.String(), ShouldEqual, `..\test2\`)
 	})
 
 	Convey("prgs can get prgs", t, func() {
@@ -36,6 +38,8 @@ func TestMain(t *testing.T) {
 		dg.Get()
 		getter = testGetter{}
 		So(len(Getter().Get()), ShouldEqual, 1)
+		dg = defaultGetter{}
+		getter = dg
 	})
 
 	Convey("Prg implements a Prger", t, func() {
@@ -44,6 +48,8 @@ func TestMain(t *testing.T) {
 			So(p.Name(), ShouldEqual, "prg1")
 			var prg Prg = p
 			So(prg.Name(), ShouldEqual, "prg1")
+			_prgs = []Prg{p, p}
+			So(len(Getter().Get()), ShouldEqual, 2)
 		})
 	})
 
