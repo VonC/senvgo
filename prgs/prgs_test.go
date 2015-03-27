@@ -2,6 +2,7 @@ package prgs
 
 import (
 	"os"
+	"os/exec"
 	"testing"
 
 	. "github.com/VonC/godbg"
@@ -59,5 +60,22 @@ func TestMain(t *testing.T) {
 
 func getRootPath() *paths.Path {
 	p := paths.NewPath("..").Abs()
+	if p == p.NoSubst() {
+		drives := "PQRSTUVWXYZ"
+		for _, drive := range drives {
+			scmd := "subst " + string(drive) + ": " + p.String()
+			Perrdbgf("scmd='%s'", scmd)
+			c := exec.Command("cmd", "/C", scmd)
+			out, err := c.Output()
+			if err != nil {
+				Perrdbgf("err='%s'", err.Error())
+				panic(err)
+			}
+			if string(out) == "" {
+				p = paths.NewPath(string(drive) + ":/")
+				break
+			}
+		}
+	}
 	return p
 }
