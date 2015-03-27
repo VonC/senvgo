@@ -6,6 +6,7 @@ import (
 
 	. "github.com/VonC/godbg"
 	"github.com/VonC/senvgo/envs"
+	"github.com/VonC/senvgo/paths"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -22,11 +23,12 @@ func TestMain(t *testing.T) {
 		SetBuffers(nil)
 		defer func() {
 			if r := recover(); r != nil {
-				if err := os.Setenv(envs.Prgsenvname, "../test2"); err != nil {
+				p := getRootPath().Add("test2/")
+				if err := os.Setenv(envs.Prgsenvname, p.String()); err != nil {
 					panic(err)
 				}
-				p := envs.Prgsenv()
-				So(p.String(), ShouldEqual, `..\test2\`)
+				p = envs.Prgsenv()
+				So(p.String(), ShouldEndWith, `\test2\`)
 			}
 		}()
 		p := envs.Prgsenv()
@@ -53,4 +55,9 @@ func TestMain(t *testing.T) {
 		})
 	})
 
+}
+
+func getRootPath() *paths.Path {
+	p := paths.NewPath("..").Abs()
+	return p
 }
