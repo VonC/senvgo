@@ -59,14 +59,14 @@ func TestMain(t *testing.T) {
 }
 
 func getRootPath() *paths.Path {
-	p := paths.NewPath("..").Abs()
+	p := paths.NewPath("..").Abs().NoSep()
 	if p == p.NoSubst() {
 		drives := "PQRSTUVWXYZ"
 		for _, drive := range drives {
 			scmd := "subst " + string(drive) + ": " + p.String()
 			Perrdbgf("scmd='%s'", scmd)
 			c := exec.Command("cmd", "/C", scmd)
-			out, err := c.Output()
+			out, err := c.CombinedOutput()
 			if err != nil {
 				Perrdbgf("err='%s'", err.Error())
 				panic(err)
