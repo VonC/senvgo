@@ -38,7 +38,7 @@ func TestMain(t *testing.T) {
 		So(p.String(), ShouldEqual, `..\test2\`)
 	})
 
-	SkipConvey("prgs can get prgs", t, func() {
+	Convey("prgs can get prgs", t, func() {
 		SetBuffers(nil)
 		dg.Get()
 		getter = testGetter{}
@@ -47,7 +47,7 @@ func TestMain(t *testing.T) {
 		getter = dg
 	})
 
-	SkipConvey("Prg implements a Prger", t, func() {
+	Convey("Prg implements a Prger", t, func() {
 		Convey("Prg has a name", func() {
 			p := &prg{name: "prg1"}
 			So(p.Name(), ShouldEqual, "prg1")
