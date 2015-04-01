@@ -63,6 +63,26 @@ func (p *Path) NoSubst() *Path {
 	return p
 }
 
+// Subst returns the path using a subst path.
+// If no subst ormatching subst, returns the same object.
+// If matching subst, returns new path with the short SUBSTed form.
+func (p *Path) Subst() *Path {
+	if len(getSubst()) == 0 || p.IsEmpty() {
+		return p
+	}
+	// godbg.Perrdbgf("Subst on path '%v'", p)
+	for drive, sp := range getSubst() {
+		// godbg.Perrdbgf("Subst drive='%v, sp='%v': p.path='%v'", drive, sp, p.path)
+		if strings.HasPrefix(p.path, sp) {
+			np := strings.Replace(p.path, sp, drive, -1)
+			np = strings.Replace(np, drive+"\\", drive, -1)
+			// godbg.Perrdbgf("Subst from '%v' to '%v'", p.path, np)
+			return NewPath(np)
+		}
+	}
+	return p
+}
+
 func init() {
 	fcmdgetsubst = ifcmdgetsubst
 }

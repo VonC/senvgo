@@ -78,6 +78,59 @@ err='Error on subst command execution'`)
 
 	})
 
+	Convey("Tests for Subst", t, func() {
+
+		Convey("Path is returned identical if no subst", func() {
+			subst = make(map[string]string)
+			p := NewPath(".")
+			ps := p.String()
+			SetBuffers(nil)
+			pp := p.Subst()
+			So(p, ShouldEqual, pp)
+			So(ps, ShouldEqual, pp.String())
+			So(NoOutput(), ShouldBeTrue)
+			subst = nil
+		})
+		Convey("Path is returned identical if path is empty", func() {
+			subst = make(map[string]string)
+			subst["a"] = "b"
+			var p *Path
+			SetBuffers(nil)
+			pp := p.Subst()
+			So(p, ShouldEqual, pp)
+			So(pp, ShouldBeNil)
+			So(NoOutput(), ShouldBeTrue)
+			p = NewPath("")
+			ps := p.String()
+			pp = p.Subst()
+			So(p, ShouldEqual, pp)
+			So(ps, ShouldEqual, pp.String())
+			So(NoOutput(), ShouldBeTrue)
+			p = NewPath("c")
+			ps = p.String()
+			pp = p.Subst()
+			So(p, ShouldEqual, pp)
+			So(ps, ShouldEqual, pp.String())
+			So(NoOutput(), ShouldBeTrue)
+			subst = nil
+		})
+
+		Convey("Path is returned in short form if subst is found", func() {
+			p := NewPath("C:/a/b/paths/paths.go")
+			ps := p.String()
+			fcmdgetsubst = testfcmdgetsubst2
+			SetBuffers(nil)
+			pp := p.Subst()
+			So(p, ShouldNotEqual, pp)
+			So(ps, ShouldNotEqual, pp.String())
+			So(pp.String(), ShouldEqual, `P:\paths\paths.go`)
+			So(NoOutput(), ShouldBeTrue)
+			fcmdgetsubst = ifcmdgetsubst
+			subst = nil
+		})
+
+	})
+
 }
 
 func testfcmdgetsubst() (sout string, err error) {
