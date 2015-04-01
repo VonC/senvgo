@@ -44,19 +44,20 @@ func getSubst() map[string]string {
 	return subst
 }
 
-// NoSubst retuns the path no using a subst path.
-// If no subst, returns the same object.
+// NoSubst returns the path no using a subst path.
+// If no subst or matching subst, returns the same object.
+// If matching substs, returns new path with long form.
 func (p *Path) NoSubst() *Path {
 	if len(getSubst()) == 0 || p.IsEmpty() {
 		return p
 	}
 	// godbg.Perrdbgf("No subst on path '%v'", p)
 	for drive, sp := range getSubst() {
-		// godbg.Perrdbgf("No subst drive='%v, sp='%v'", drive, sp)
+		// godbg.Perrdbgf("No subst drive='%v, sp='%v': p.path='%v'", drive, sp, p.path)
 		if strings.HasPrefix(p.path, drive) {
 			np := strings.Replace(p.path, drive, sp+"\\", -1)
 			// godbg.Perrdbgf("Reverse subst from '%v' to '%v'", p.path, np)
-			p.path = np
+			return NewPath(np)
 		}
 	}
 	return p

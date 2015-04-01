@@ -10,7 +10,7 @@ import (
 
 func TestSubst(t *testing.T) {
 
-	Convey("Tests for getSubst", t, func() {
+	Convey("Tests for NoSubst", t, func() {
 
 		Convey("Path is returned identical if no subst", func() {
 			subst = make(map[string]string)
@@ -68,14 +68,16 @@ err='Error on subst command execution'`)
 			fcmdgetsubst = testfcmdgetsubst2
 			SetBuffers(nil)
 			pp := p.NoSubst()
-			So(p, ShouldEqual, pp)
+			So(p, ShouldNotEqual, pp)
 			So(ps, ShouldNotEqual, pp.String())
+			So(pp.String(), ShouldEqual, `C:\a\b\paths\paths.go`)
 			So(NoOutput(), ShouldBeTrue)
 			fcmdgetsubst = ifcmdgetsubst
 			subst = nil
 		})
 
 	})
+
 }
 
 func testfcmdgetsubst() (sout string, err error) {
@@ -85,5 +87,5 @@ func testfcmdgetsubst() (sout string, err error) {
 
 func testfcmdgetsubst2() (sout string, err error) {
 	ifcmdgetsubst()
-	return `P:\: => C:/a/b`, nil
+	return `P:\: => C:\a\b`, nil
 }
