@@ -3,6 +3,7 @@ package prgs
 import (
 	"os"
 	"os/exec"
+	"strings"
 	"testing"
 
 	. "github.com/VonC/godbg"
@@ -67,8 +68,11 @@ func getRootPath() *paths.Path {
 			Perrdbgf("scmd='%s'", scmd)
 			c := exec.Command("cmd", "/C", scmd)
 			out, err := c.CombinedOutput()
+			if strings.Contains(string(out), "Drive already SUBSTed") {
+				continue
+			}
 			if err != nil {
-				Perrdbgf("err='%s'", err.Error())
+				Perrdbgf("out='%s'; err='%s'", out, err.Error())
 				panic(err)
 			}
 			if string(out) == "" {
