@@ -31,6 +31,7 @@ func TestMain(t *testing.T) {
 				}
 				p = envs.Prgsenv()
 				So(p.String(), ShouldEndWith, `\test2\`)
+				So(len(p.String()), ShouldEqual, 9)
 			}
 		}()
 		p := envs.Prgsenv()
@@ -61,7 +62,9 @@ func TestMain(t *testing.T) {
 
 func getRootPath() *paths.Path {
 	p := paths.NewPath("..").Abs().NoSep()
-	if p == p.NoSubst() {
+	ps := p.Subst()
+	// Perrdbgf("p='%v' => p.Subst()='%v'", p.String(), ps.String())
+	if p == p.Subst() {
 		drives := "PQRSTUVWXYZ"
 		for _, drive := range drives {
 			scmd := "subst " + string(drive) + ": " + p.String()
@@ -80,6 +83,8 @@ func getRootPath() *paths.Path {
 				break
 			}
 		}
+	} else {
+		p = ps
 	}
 	return p
 }
