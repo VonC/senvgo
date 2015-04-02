@@ -15,7 +15,7 @@ import (
 type testGetter struct{}
 
 func (tg testGetter) Get() []Prg {
-	return []Prg{&prg{}}
+	return []Prg{&prg{}, &prg{}}
 }
 func TestMain(t *testing.T) {
 
@@ -42,7 +42,7 @@ func TestMain(t *testing.T) {
 		SetBuffers(nil)
 		dg.Get()
 		getter = testGetter{}
-		So(len(Getter().Get()), ShouldEqual, 1)
+		So(len(Getter().Get()), ShouldEqual, 2)
 		dg = defaultGetter{}
 		getter = dg
 	})
