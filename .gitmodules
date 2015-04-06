@@ -1,3 +1,7 @@
 [submodule "paths/7z"]
 	path = paths/7z
 	url = https://github.com/VonC/7z
+[submodule ".deps/godbg"]
+	path = .deps/godbg
+	url = ../godbg
+	branch = master
