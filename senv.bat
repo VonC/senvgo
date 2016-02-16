@@ -5,3 +5,8 @@ if "x%PATH:senvgo=%"=="x%PATH%" (
 )
 echo GOPATH=%GOPATH%
 echo PATH=%PATH%
+
+if not exist %GOPATH%src\github.com\VonC\senvgo (
+	mkdir %GOPATH%src\github.com\VonC
+	mklink /J %GOPATH%src\github.com\VonC\senvgo %GOPATH%
+)
