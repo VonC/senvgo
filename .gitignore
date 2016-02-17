@@ -23,3 +23,4 @@ _testmain.go
 /pkg/
 /bin/
 /src/
+coverage.out
