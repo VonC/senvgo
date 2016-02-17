@@ -10,3 +10,6 @@ if not exist %GOPATH%src\github.com\VonC\senvgo (
 	mkdir %GOPATH%src\github.com\VonC
 	mklink /J %GOPATH%src\github.com\VonC\senvgo %GOPATH%
 )
+if not exist %GOPATH%src\vendor (
+	mklink /J %GOPATH%src\vendor %GOPATH%\vendor
+)
